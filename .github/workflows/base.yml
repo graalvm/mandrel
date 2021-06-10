@@ -49,6 +49,7 @@ env:
   MX_PATH: ${{ github.workspace }}/mx
   MX_PYTHON_VERSION: 3
   QUARKUS_PATH: ${{ github.workspace }}/quarkus
+  MANDREL_IT_PATH: ${{ github.workspace }}/mandrel-integration-tests
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
 
 jobs:
@@ -145,8 +146,8 @@ jobs:
       if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
       run: |
         cd graal/substratevm
-        ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler --components="Native Image,LibGraal" build
-        mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler --components="Native Image,LibGraal" graalvm-home) ${MANDREL_HOME}
+        ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" build
+        mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" graalvm-home) ${MANDREL_HOME}
         ${MANDREL_HOME}/bin/native-image --version
     - name: Tar GraalVM
       if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
@@ -269,7 +270,7 @@ jobs:
       run: rm -r ~/.m2/repository/io/quarkus
 
   native-tests:
-    name: Q ${{ github.event.inputs.quarkus-version }} - ${{ matrix.category }} - OpenJDK11-${{ github.event.inputs.jdk }}
+    name: Q IT ${{ matrix.category }}
     needs:
       - build-quarkus
       - get-test-matrix
@@ -362,3 +363,77 @@ jobs:
         with:
           name: test-reports-native-${{matrix.category}}
           path: 'test-reports.tgz'
+
+  mandrel-integration-tests:
+    name: Q Mandrel IT
+    needs:
+      - build-quarkus
+      - get-test-matrix
+    runs-on: ubuntu-latest
+    env:
+      # leave more space for the actual native compilation and execution
+      MAVEN_OPTS: -Xmx1g
+      # Don't perform performance checks since GH runners are not that stable
+      FAIL_ON_PERF_REGRESSION: false
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: Karm/mandrel-integration-tests
+          fetch-depth: 1
+          path: ${{ env.MANDREL_IT_PATH }}
+      - name: Download Maven Repo
+        uses: actions/download-artifact@v1
+        with:
+          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}
+          path: .
+      - name: Extract Maven Repo
+        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}.tgz -C ~
+      - name: Download Mandrel or OpenJDK11
+        uses: actions/download-artifact@v1
+        with:
+          name: jdk
+          path: .
+      - name: Extract Mandrel or OpenJDK11
+        run: |
+          mkdir -p ${JAVA_HOME}
+          tar -xzvf jdk.tgz -C ${JAVA_HOME} --strip-components=1
+      - name: Update Docker Client User Agent
+        run: |
+          cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json
+      - name: Install gdb
+        run: sudo apt install gdb
+      - name: Build with Maven
+        run: |
+          cd ${MANDREL_IT_PATH}
+          export GRAALVM_HOME="${JAVA_HOME}"
+          export PATH="${GRAALVM_HOME}/bin:$PATH"
+          export QUARKUS_VERSION=${{ github.event.inputs.quarkus-version }}
+          if ! $(expr match "$QUARKUS_VERSION" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
+          then
+            export QUARKUS_VERSION="999-SNAPSHOT"
+          fi
+          echo $QUARKUS_VERSION
+          if [[ ${{ github.event.inputs.builder-image }} == "null" ]]
+          then
+            ${GRAALVM_HOME}/bin/native-image --version
+            mvn clean verify -Dquarkus.native.native-image-xmx=5g \
+              -Dquarkus.version=$QUARKUS_VERSION \
+              -Ptestsuite
+          else
+            mvn clean verify -Dquarkus.native.native-image-xmx=5g \
+              -Dquarkus.version=$QUARKUS_VERSION \
+              -Dquarkus.native.builder-image=${{ github.event.inputs.builder-image }} \
+              -Ptestsuite-builder-image
+          fi
+      - name: Prepare failure archive (if maven failed)
+        if: failure()
+        run: tar czvf test-reports-mandrel-it.tgz ${MANDREL_IT_PATH}/testsuite/target/archived-logs/
+      - name: Upload failure Archive (if maven failed)
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: test-reports-mandrel-it-${{ github.event.inputs.distribution }}-${{ github.event.inputs.version }}-Q${{ needs.get-test-matrix.outputs.quarkus-version }}-${{matrix.category}}
+          path: 'test-reports-mandrel-it.tgz'
