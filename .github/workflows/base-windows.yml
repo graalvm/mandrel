@@ -157,6 +157,8 @@ jobs:
         restore-keys: ${{ runner.os }}-mx-
     - name: Build graalvm native-image
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' #&& github.event.inputs.builder-image == 'null'
+      env:
+        MX_OUTPUT_ROOT_INCLUDES_CONFIG: false
       run: |
         cmd.exe /c "call `"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars64.txt"
         Get-Content "$Env:temp\vcvars64.txt" | Foreach-Object {

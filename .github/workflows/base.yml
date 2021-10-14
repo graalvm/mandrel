@@ -138,6 +138,8 @@ jobs:
         restore-keys: ${{ runner.os }}-mx-
     - name: Get labs OpenJDK 11
       if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      env:
+        MX_OUTPUT_ROOT_INCLUDES_CONFIG: false
       run: |
         mkdir jdk-dl
         ${MX_PATH}/mx fetch-jdk --java-distribution labsjdk-ce-11 --to jdk-dl --alias ${JAVA_HOME}
