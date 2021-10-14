@@ -72,12 +72,12 @@ jobs:
         fetch-depth: 1
         ref: ${{ github.event.inputs.version }}
         path: ${{ env.MANDREL_REPO }}
-    - uses: actions/checkout@v2
+    - name: Checkout MX
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' #&& github.event.inputs.builder-image == 'null'
-      with:
-        repository: graalvm/mx.git
-        ref: master
-        path: ${{ env.MX_PATH }}
+      run: |
+        VERSION=$(find ${MANDREL_REPO} -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
+        git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
+      shell: bash
     - uses: actions/checkout@v2
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' #&& github.event.inputs.builder-image == 'null'
       with:
@@ -143,12 +143,12 @@ jobs:
         fetch-depth: 1
         ref: ${{ github.event.inputs.version }}
         path: graal
-    - uses: actions/checkout@v2
+    - name: Checkout MX
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' #&& github.event.inputs.builder-image == 'null'
-      with:
-        repository: graalvm/mx.git
-        ref: master
-        path: ${{ env.MX_PATH }}
+      run: |
+        VERSION=$(find ${MANDREL_REPO} -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
+        git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
+      shell: bash
     - uses: actions/cache@v2.1.5
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' #&& github.event.inputs.builder-image == 'null'
       with:
