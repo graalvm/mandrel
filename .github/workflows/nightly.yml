@@ -32,10 +32,10 @@ jobs:
             inputs: '{"quarkus-version": "main", "version": "graal/master", "jdk": "ea"}'
             workflow: 'base-windows.yml'
           - name: "Q main Mandrel build of 21.3-dev"
-            inputs: '{"quarkus-version": "main", "version": "mandrel/21.3", "jdk": "ea"}'
+            inputs: '{"quarkus-version": "main", "version": "mandrel/21.3", "mandrel-packaging-version": "21.3", "jdk": "ea"}'
             workflow: 'base.yml'
           - name: "Q main Mandrel build of 21.3-dev on windows"
-            inputs: '{"quarkus-version": "main", "version": "mandrel/21.3", "jdk": "ea"}'
+            inputs: '{"quarkus-version": "main", "version": "mandrel/21.3", "mandrel-packaging-version": "21.3", "jdk": "ea"}'
             workflow: 'base-windows.yml'
           - name: "Q main GraalVM CE build of latest graal"
             inputs: '{"quarkus-version": "main", "version": "graal/master", "distribution": "graalvm"}'
