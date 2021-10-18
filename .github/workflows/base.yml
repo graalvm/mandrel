@@ -50,7 +50,6 @@ env:
   MX_PYTHON_VERSION: 3
   QUARKUS_PATH: ${{ github.workspace }}/quarkus
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
-  MX_OUTPUT_ROOT_INCLUDES_CONFIG: false
 
 jobs:
   name:
