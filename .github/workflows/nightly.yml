@@ -40,6 +40,9 @@ jobs:
           - name: "Q 2.2 Mandrel 21.2 image from quay.io"
             inputs: '{"quarkus-version": "2.2", "builder-image": "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"}'
             workflow: 'base.yml'
+          - name: "Q 2.2 Mandrel 21.3 image from quay.io"
+            inputs: '{"quarkus-version": "2.2", "builder-image": "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"}'
+            workflow: 'base.yml'
           - name: "Q main Mandrel 21.2 image from quay.io"
             inputs: '{"quarkus-version": "main", "builder-image": "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"}'
             workflow: 'base.yml'
