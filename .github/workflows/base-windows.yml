@@ -147,7 +147,7 @@ jobs:
     - name: Checkout MX
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' #&& github.event.inputs.builder-image == 'null'
       run: |
-        VERSION=$(find ${MANDREL_REPO} -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
+        VERSION=$(find graal -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
@@ -168,10 +168,10 @@ jobs:
         }
         Set-Location graal\substratevm
         mkdir -p "$Env:temp\jdk-dl"
-        & $Env:MX_PATH\mx.cmd --java-home "$Env:JAVA_HOME_11_X64" fetch-jdk --java-home= --java-distribution labsjdk-ce-11 --to "$Env:temp\jdk-dl" --alias $Env:JAVA_HOME
+        & $Env:MX_PATH\mx.cmd --java-home= fetch-jdk --java-distribution labsjdk-ce-11 --to "$Env:temp\jdk-dl" --alias $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\java --version
-        & $Env:MX_PATH\mx.cmd --native=native-image --components='Native Image' build
-        ${graalvm-home} = @(& $Env:MX_PATH\mx.cmd --native=native-image --components='Native Image' graalvm-home)
+        & $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler --components="Native Image,LibGraal" build
+        ${graalvm-home} = @(& $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler --components="Native Image,LibGraal" graalvm-home)
         rm -Recurse -Force $Env:JAVA_HOME
         mv ${graalvm-home} $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\native-image --version

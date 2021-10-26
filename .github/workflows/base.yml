@@ -145,8 +145,8 @@ jobs:
       if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
       run: |
         cd graal/substratevm
-        ${MX_PATH}/mx --native=native-image --components="Native Image" build
-        mv $(${MX_PATH}/mx --native=native-image --components="Native Image" graalvm-home) ${MANDREL_HOME}
+        ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler --components="Native Image,LibGraal" build
+        mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler --components="Native Image,LibGraal" graalvm-home) ${MANDREL_HOME}
         ${MANDREL_HOME}/bin/native-image --version
     - name: Tar GraalVM
       if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
