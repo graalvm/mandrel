@@ -4,9 +4,6 @@ on:
   push:
     paths:
       - '.github/workflows/nightly.yml'
-  pull_request:
-    paths:
-      - '.github/workflows/nightly.yml'
   schedule:
   - cron: '0 2 * * *'
 
