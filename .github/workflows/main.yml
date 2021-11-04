@@ -122,7 +122,7 @@ jobs:
       env: ${{ matrix.env }}
       run: |
         mkdir jdk-dl
-        ${MX_PATH}/mx fetch-jdk --jdk-id ${JDK} --to jdk-dl --alias ${JAVA_HOME}
+        ${MX_PATH}/mx --java-home= fetch-jdk --jdk-id ${JDK} --to jdk-dl --alias ${JAVA_HOME}
     - name: Update dependency cache
       if: ${{ contains(matrix.env.GATE, 'debug') || contains(matrix.env.GATE, 'style') }}
       run: sudo apt update
@@ -132,7 +132,7 @@ jobs:
     - name: Style dependencies
       if: ${{ contains(matrix.env.GATE, 'style') }}
       run: |
-        sudo apt install python-pip python-setuptools 
+        sudo apt install python-pip python-setuptools
         cat common.json |
           jq -r '.deps.common.packages | to_entries[] | select(.key | startswith("pip:")) | (.key | split(":")[1]) + .value' |
           xargs sudo pip install
