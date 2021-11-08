@@ -469,5 +469,5 @@ jobs:
         uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: test-reports-mandrel-it-${{ github.event.inputs.distribution }}-${{ github.event.inputs.version }}-Q${{ needs.get-test-matrix.outputs.quarkus-version }}-${{matrix.category}}
+          name: test-reports-mandrel-it
           path: 'test-reports-mandrel-it.tgz'
