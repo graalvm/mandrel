@@ -94,17 +94,14 @@ jobs:
     - name: Get OpenJDK 11 with static libs
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' #&& github.event.inputs.builder-image == 'null'
       run: |
-        $files = @{
-            "https://api.adoptopenjdk.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/windows/x64/jdk/hotspot/normal/openjdk" = "jdk.zip"
-            "https://api.adoptopenjdk.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/windows/x64/staticlibs/hotspot/normal/openjdk" = "jdk-static-libs.zip"
-        }
         $wc = New-Object System.Net.WebClient
-        foreach ($h in $files.GetEnumerator()) {
-            Write-Host "Processing $($h.Name) -> $($h.Value)"
-            $wc.DownloadFile($($h.Name), "$Env:temp\$($h.Value)")
-            Expand-Archive "$Env:temp\$($h.Value)" -DestinationPath "$Env:temp"
-        }
-        Move-Item -Path "$Env:temp\openjdk*" -Destination $Env:JAVA_HOME
+        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse", "$Env:temp\jdk.zip")
+        Expand-Archive "$Env:temp\jdk.zip" -DestinationPath "$Env:temp"
+        Move-Item -Path "$Env:temp\jdk-*" -Destination $Env:JAVA_HOME
+        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/windows/x64/staticlibs/hotspot/normal/eclipse", "$Env:temp\jdk-staticlibs.zip")
+        Expand-Archive "$Env:temp\jdk-staticlibs.zip" -DestinationPath "$Env:temp"
+        Move-Item -Path "$Env:temp\jdk-*\lib\static" -Destination $Env:JAVA_HOME\lib\
+        Remove-Item -Recurse "$Env:temp\jdk-*"
         & $Env:JAVA_HOME\bin\java -version
     - name: Build Mandrel
       if: github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' #&& github.event.inputs.builder-image == 'null'
@@ -217,10 +214,10 @@ jobs:
     #   if: github.event.inputs.builder-image != 'null'
     #   run: |
     #     $wc = New-Object System.Net.WebClient
-    #     $url="https://api.adoptopenjdk.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/windows/x64/jdk/hotspot/normal/openjdk"
+    #     $url="https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse"
     #     $wc.DownloadFile($($url), "jdk.zip")
     #     Expand-Archive "jdk.zip" -DestinationPath "$Env:temp"
-    #     Move-Item -Path "$Env:temp\openjdk*" -Destination $Env:JAVA_HOME
+    #     Move-Item -Path "$Env:temp\jdk-*" -Destination $Env:JAVA_HOME
     #     & $Env:JAVA_HOME\bin\java -version
     - name: Archive JDK
       if: github.event.inputs.build-from-source == 'false' #|| github.event.inputs.builder-image != 'null'
@@ -281,7 +278,7 @@ jobs:
         restore-keys: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
     - name: Build quarkus
       run: |
-        curl -L https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/openjdk -o jdk.tar.gz
+        curl -L https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
         export JAVA_HOME=$(pwd)/openjdk
         echo ${JAVA_HOME}
         mkdir -p ${JAVA_HOME}

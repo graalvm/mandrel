@@ -90,8 +90,8 @@ jobs:
     - name: Get OpenJDK 11 with static libs
       if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
       run: |
-        curl -sL https://api.adoptopenjdk.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/jdk/hotspot/normal/openjdk -o jdk.tar.gz
-        curl -sL https://api.adoptopenjdk.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/openjdk -o jdk-static-libs.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
         mkdir -p ${JAVA_HOME}
         tar xf jdk.tar.gz -C ${JAVA_HOME} --strip-components=1
         tar xf jdk-static-libs.tar.gz -C ${JAVA_HOME} --strip-components=1
@@ -185,7 +185,7 @@ jobs:
     - name: Get OpenJDK11-${{ github.event.inputs.jdk }}
       if: ${{ github.event.inputs.builder-image != 'null' }}
       run: |
-        curl -sL https://api.adoptopenjdk.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/jdk/hotspot/normal/openjdk -o jdk.tgz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
     - name: Persist Mandrel or OpenJDK
       if: ${{ github.event.inputs.build-from-source == 'false' || github.event.inputs.builder-image != 'null' }}
       uses: actions/upload-artifact@v2
