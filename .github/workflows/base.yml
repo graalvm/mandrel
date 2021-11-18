@@ -74,8 +74,8 @@ jobs:
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK 11 with static libs
       run: |
-        curl -sL https://api.adoptopenjdk.net/v3/binary/latest/11/${{ matrix.jdk }}/linux/x64/jdk/hotspot/normal/openjdk -o jdk.tar.gz
-        curl -sL https://api.adoptopenjdk.net/v3/binary/latest/11/${{ matrix.jdk }}/linux/x64/staticlibs/hotspot/normal/openjdk -o jdk-static-libs.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ matrix.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ matrix.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
         mkdir -p ${JAVA_HOME}
         tar xf jdk.tar.gz -C ${JAVA_HOME} --strip-components=1
         tar xf jdk-static-libs.tar.gz -C ${JAVA_HOME} --strip-components=1
