@@ -64,7 +64,7 @@ jobs:
     name: ${{ github.event.inputs.name }}
     runs-on: ubuntu-latest
     steps:
-      - run: true
+      - run: echo "${{ toJson(github.event.inputs) }}"
 
   build-mandrel:
     name: Mandrel ${{ github.event.inputs.version }} build - OpenJDK11-${{ github.event.inputs.jdk }}
