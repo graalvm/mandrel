@@ -76,17 +76,14 @@ jobs:
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK 11 with static libs
       run: |
-        $files = @{
-            "https://api.adoptopenjdk.net/v3/binary/latest/11/${{ matrix.jdk }}/windows/x64/jdk/hotspot/normal/openjdk" = "jdk.zip"
-            "https://api.adoptopenjdk.net/v3/binary/latest/11/${{ matrix.jdk }}/windows/x64/staticlibs/hotspot/normal/openjdk" = "jdk-static-libs.zip"
-        }
         $wc = New-Object System.Net.WebClient
-        foreach ($h in $files.GetEnumerator()) {
-            Write-Host "Processing $($h.Name) -> $($h.Value)"
-            $wc.DownloadFile($($h.Name), "$Env:temp\$($h.Value)")
-            Expand-Archive "$Env:temp\$($h.Value)" -DestinationPath "$Env:temp"
-        }
-        Move-Item -Path "$Env:temp\openjdk*" -Destination $Env:JAVA_HOME
+        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/11/${{ matrix.jdk }}/windows/x64/jdk/hotspot/normal/eclipse", "$Env:temp\jdk.zip")
+        Expand-Archive "$Env:temp\jdk.zip" -DestinationPath "$Env:temp"
+        Move-Item -Path "$Env:temp\jdk-*" -Destination $Env:JAVA_HOME
+        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/11/${{ matrix.jdk }}/windows/x64/staticlibs/hotspot/normal/eclipse", "$Env:temp\jdk-staticlibs.zip")
+        Expand-Archive "$Env:temp\jdk-staticlibs.zip" -DestinationPath "$Env:temp"
+        Move-Item -Path "$Env:temp\jdk-*\lib\static" -Destination $Env:JAVA_HOME\lib\
+        Remove-Item -Recurse "$Env:temp\jdk-*"
         & $Env:JAVA_HOME\bin\java -version
     - name: Build Mandrel
       run: |
@@ -166,7 +163,7 @@ jobs:
         restore-keys: base-windows-${{ matrix.quarkus-version }}-maven-
     - name: Build quarkus
       run: |
-        curl -L https://api.adoptopenjdk.net/v3/binary/latest/11/${{ matrix.jdk }}/linux/x64/jdk/hotspot/normal/openjdk -o jdk.tar.gz
+        curl -L https://api.adoptium.net/v3/binary/latest/11/${{ matrix.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
         export JAVA_HOME=$(pwd)/openjdk
         echo ${JAVA_HOME}
         mkdir -p ${JAVA_HOME}
