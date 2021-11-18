@@ -26,11 +26,16 @@ on:
         description: 'Mandrel packaging version to test (branch, tag, or commit)'
         default: "master"
       build-from-source:
+        type: boolean
         description: 'Build Mandrel from source instead of grabing a release'
-        default: "true"
+        default: true
       jdk:
+        type: choice
         description: 'OpenJDK 11 to use, ga or ea (only needed when building from source)'
         default: "ga"
+        options:
+          - "ga"
+          - "ea"
       # Builder image can't be tested on Windows due to https://github.com/actions/virtual-environments/issues/1143
       # builder-image:
       #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
