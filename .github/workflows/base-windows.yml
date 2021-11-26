@@ -272,6 +272,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        fetch-depth: 1
+        path: workflow-mandrel
+    - uses: actions/checkout@v2
+      with:
         repository: ${{ github.event.inputs.quarkus-repo }}
         fetch-depth: 1
         ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
@@ -281,6 +285,15 @@ jobs:
         path: ~/.m2/repository
         key: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
+    - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
+      # See https://github.com/Karm/mandrel-integration-tests/pull/64
+      shell: bash
+      run: |
+        if [ "${{ github.event.inputs.quarkus-version }}" == "2.2" ]
+        then
+          cd quarkus
+          bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ github.event.inputs.quarkus-version }}
+        fi
     - name: Build quarkus
       run: |
         curl -L https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
@@ -318,6 +331,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          path: workflow-mandrel
       - name: Download Maven Repo
         if: startsWith(matrix.os-name, 'windows')
         uses: actions/download-artifact@v1
@@ -363,6 +380,16 @@ jobs:
         shell: bash
         run: |
           cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json
+      - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
+        if: startsWith(matrix.os-name, 'windows')
+        # See https://github.com/Karm/mandrel-integration-tests/pull/64
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.quarkus-version }}" == "2.2" ]
+          then
+            cd quarkus
+            bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ github.event.inputs.quarkus-version }}
+          fi
       - name: Build with Maven
         if: startsWith(matrix.os-name, 'windows')
         env:
@@ -458,7 +485,8 @@ jobs:
             exit 1
           }
           $QUARKUS_VERSION=${{ github.event.inputs.quarkus-version }}
-          if (! ($QUARKUS_VERSION -match "^.*\.(Final|CR|Alpha|Beta)[0-9]?$")) {
+          # Don't use SNAPSHOT version for 2.2 and release tags
+          if (! ($QUARKUS_VERSION -match "^(2\.2|.*\.(Final|CR|Alpha|Beta)[0-9]?)$")) {
             $QUARKUS_VERSION="999-SNAPSHOT"
           }
           Write-Host "$QUARKUS_VERSION"
