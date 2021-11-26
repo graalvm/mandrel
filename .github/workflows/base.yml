@@ -140,6 +140,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        fetch-depth: 1
+        path: workflow-mandrel
+    - uses: actions/checkout@v2
+      with:
         repository: quarkusio/quarkus
         fetch-depth: 1
         ref: ${{ matrix.quarkus-version }}
@@ -159,6 +163,14 @@ jobs:
         mkdir -p ${JAVA_HOME}
         tar xzf jdk-${{ matrix.jdk }}.tgz -C ${JAVA_HOME} --strip-components=1
         ${JAVA_HOME}/bin/java -version
+    - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
+      # See https://github.com/Karm/mandrel-integration-tests/pull/64
+      run: |
+        if [ "${{ matrix.quarkus-version }}" == "2.2" ]
+        then
+          cd quarkus
+          bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ matrix.quarkus-version }}
+        fi
     - name: Build quarkus
       run: |
         cd ${QUARKUS_PATH}
@@ -188,6 +200,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.get-quarkus-versions.outputs.tests-matrix) }}
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          path: workflow-mandrel
       - name: Download Maven Repo
         if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v1
@@ -226,6 +242,15 @@ jobs:
         shell: bash
         run: |
           cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json
+      - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
+        if: "!startsWith(matrix.os-name, 'windows')"
+        # See https://github.com/Karm/mandrel-integration-tests/pull/64
+        run: |
+          if [ "${{ matrix.quarkus-version }}" == "2.2" ]
+          then
+            cd quarkus
+            bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ matrix.quarkus-version }}
+          fi
       - name: Build with Maven
         if: "!startsWith(matrix.os-name, 'windows')"
         env:
@@ -296,7 +321,8 @@ jobs:
           export GRAALVM_HOME="${JAVA_HOME}"
           export PATH="${GRAALVM_HOME}/bin:$PATH"
           export QUARKUS_VERSION=${{ matrix.quarkus-version }}
-          if ! $(expr match "$QUARKUS_VERSION" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
+          # Don't use SNAPSHOT version for 2.2 and release tags
+          if ! $(expr match "$QUARKUS_VERSION" "^\(2\.2\|.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?\)$" > /dev/null)
           then
             export QUARKUS_VERSION="999-SNAPSHOT"
           fi
