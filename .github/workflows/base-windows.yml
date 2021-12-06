@@ -280,6 +280,7 @@ jobs:
   mandrel-integration-tests:
     name: Q Mandrel IT - ${{ matrix.quarkus-version}}-${{ matrix.jdk }}
     needs:
+      - build-mandrel
       - build-quarkus
       - get-quarkus-versions
     runs-on: windows-latest
