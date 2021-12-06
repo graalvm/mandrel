@@ -398,6 +398,9 @@ jobs:
   mandrel-integration-tests:
     name: Q Mandrel IT
     needs:
+      - build-mandrel
+      - build-graal
+      - get-jdk
       - build-quarkus
       - get-test-matrix
     runs-on: ubuntu-latest
