@@ -32,11 +32,23 @@ jobs:
             inputs: '{"quarkus-version": "main", "version": "graal/master", "distribution": "graalvm"}'
             workflow: 'base.yml'
           ####
-          # Test Quarkus main with supported Mandrel versions using the Quay.io images
+          # Test Quarkus main with 22.0-dev built as Mandrel and GraalVM
           ####
-          - name: "Q 2.2 Mandrel 21.2 image from quay.io"
-            inputs: '{"quarkus-version": "2.2", "builder-image": "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"}'
+          - name: "Q main Mandrel build of 22.0-dev"
+            inputs: '{"quarkus-version": "main", "version": "mandrel/22.0", "jdk": "ea", "mandrel-packaging-version": "22.0"}'
             workflow: 'base.yml'
+          - name: "Q main Mandrel build of 22.0-dev on windows"
+            inputs: '{"quarkus-version": "main", "version": "mandrel/22.0", "jdk": "ea", "mandrel-packaging-version": "22.0"}'
+            workflow: 'base-windows.yml'
+          - name: "Q main GraalVM CE build of 22.0-dev"
+            inputs: '{"quarkus-version": "main", "repo": "oracle/graal", "version": "release/graal-vm/22.0", "distribution": "graalvm"}'
+            workflow: 'base.yml'
+          ####
+          # Test Quarkus with supported Mandrel versions using the Quay.io images
+          ####
+          # - name: "Q 2.2 Mandrel 21.2 image from quay.io"
+          #   inputs: '{"quarkus-version": "2.2", "builder-image": "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"}'
+          #   workflow: 'base.yml'
           - name: "Q 2.2 Mandrel 21.3 image from quay.io"
             inputs: '{"quarkus-version": "2.2", "builder-image": "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"}'
             workflow: 'base.yml'
