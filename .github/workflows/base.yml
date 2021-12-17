@@ -1,28 +1,35 @@
 name: Mandrel-Quarkus tests
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      name:
-        description: 'The human-friendly name of this workflow'
-        default: "Mandrel-Quarkus tests"
       quarkus-version:
+        type: string
         description: 'Quarkus version to test (branch, tag, commit, or "latest")'
         # "latest" is replaced by the latest release available in maven
         default: "main"
       quarkus-repo:
+        type: string
         description: 'The Quarkus repository to be used'
         default: 'quarkusio/quarkus'
       repo:
+        type: string
         description: 'The Mandrel/Graal repository to be used'
         default: 'graalvm/mandrel'
       version:
+        type: string
         description: 'Mandrel version to test (branch, tag, or commit)'
         default: "graal/master"
       mandrel-packaging-version:
+        type: string
         description: 'Mandrel packaging version to test (branch, tag, or commit)'
         default: "master"
+      mandrel-packaging-repo:
+        type: string
+        description: 'Mandrel packaging repository to be used'
+        default: "graalvm/mandrel-packaging"
       distribution:
+        type: string
         description: 'Distribution to build, mandrel or graalvm'
         default: "mandrel"
       build-from-source:
@@ -30,13 +37,11 @@ on:
         description: 'Build Mandrel from source instead of grabing a release'
         default: true
       jdk:
-        type: choice
+        type: string
         description: 'OpenJDK 11 to use, ga or ea (only needed when building from source)'
         default: "ga"
-        options:
-          - "ga"
-          - "ea"
       builder-image:
+        type: string
         description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
         default: "null"
 
@@ -58,53 +63,82 @@ env:
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
 
 jobs:
-  name:
-    name: ${{ github.event.inputs.name }}
+  get-test-matrix:
+    name: Get test matrix
     runs-on: ubuntu-latest
+    outputs:
+      quarkus-version: ${{ steps.version.outputs.quarkus-version }}
+      tests-matrix: ${{ steps.version.outputs.tests-matrix }}
+      artifacts-suffix: ${{ steps.suffix.outputs.suffix }}
     steps:
-      - run: echo "${{ toJson(github.event.inputs) }}"
+    - id: suffix
+      run: |
+        export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j '. | to_entries[] | "-\(.value)"' | tr '":<>|*?\\r\n\/' '-')
+        echo $SUFFIX
+        echo "::set-output name=suffix::$SUFFIX"
+    - name: Get Quarkus version and test matrix
+      id: version
+      run: |
+        if [ ${{ inputs.quarkus-version }} == "latest" ]
+        then
+          export QUARKUS_VERSION=$(curl https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/latest/ {print $3}')
+        else
+          export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
+        fi
+        if [ "$QUARKUS_VERSION" == "" ]
+        then
+          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
+        fi
+        echo ${QUARKUS_VERSION}
+        echo "::set-output name=quarkus-version::${QUARKUS_VERSION}"
+        curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
+        tests_json=$(tr -d '\n' < native-tests.json)
+        echo ${tests_json}
+        echo "::set-output name=tests-matrix::${tests_json}"
 
   build-mandrel:
-    name: Mandrel ${{ github.event.inputs.version }} build - OpenJDK11-${{ github.event.inputs.jdk }}
+    name: Mandrel ${{ inputs.version }} build - OpenJDK11-${{ inputs.jdk }}
     runs-on: ubuntu-latest
+    needs:
+      - get-test-matrix
     steps:
     - uses: actions/checkout@v2
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null'}}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
-        repository: ${{ github.event.inputs.repo }}
+        repository: ${{ inputs.repo }}
         fetch-depth: 1
-        ref: ${{ github.event.inputs.version }}
+        ref: ${{ inputs.version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Checkout MX
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       run: |
         VERSION=$(find ${MANDREL_REPO} -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
     - uses: actions/checkout@v2
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       with:
-        repository: graalvm/mandrel-packaging
-        ref: ${{ github.event.inputs.mandrel-packaging-version }}
+        repository: ${{ inputs.mandrel-packaging-repo }}
+        ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
     - uses: actions/cache@v2.1.5
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK 11 with static libs
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       run: |
-        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
-        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
         mkdir -p ${JAVA_HOME}
         tar xf jdk.tar.gz -C ${JAVA_HOME} --strip-components=1
         tar xf jdk-static-libs.tar.gz -C ${JAVA_HOME} --strip-components=1
         echo ${JAVA_HOME}
         ${JAVA_HOME}/bin/java --version
     - name: Build Mandrel
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       run: |
         ${JAVA_HOME}/bin/java -ea ${MANDREL_PACKAGING_REPO}/build.java \
           --mx-home ${MX_PATH} \
@@ -114,72 +148,76 @@ jobs:
         ${MANDREL_HOME}/bin/native-image --version
         mv mandrel-java11-linux-amd64-*.tar.gz ${{ github.workspace }}/jdk.tgz
     - name: Persist Mandrel build
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       uses: actions/upload-artifact@v2
       with:
-        name: jdk
+        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
   build-graal:
-    name: GraalVM CE ${{ github.event.inputs.version }} build
+    name: GraalVM CE ${{ inputs.version }} build
     runs-on: ubuntu-latest
+    needs:
+      - get-test-matrix
     steps:
     - uses: actions/checkout@v2
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null'}}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       with:
-        repository: ${{ github.event.inputs.repo }}
+        repository: ${{ inputs.repo }}
         fetch-depth: 1
-        ref: ${{ github.event.inputs.version }}
+        ref: ${{ inputs.version }}
         path: graal
     - name: Checkout MX
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
         VERSION=$(find graal -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
     - uses: actions/cache@v2.1.5
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Get labs OpenJDK 11
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
         mkdir jdk-dl
         ${MX_PATH}/mx --java-home= fetch-jdk --java-distribution labsjdk-ce-11 --to jdk-dl --alias ${JAVA_HOME}
     - name: Build graalvm native-image
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
         cd graal/substratevm
         ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" build
         mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" graalvm-home) ${MANDREL_HOME}
         ${MANDREL_HOME}/bin/native-image --version
     - name: Tar GraalVM
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: tar czvf jdk.tgz  -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})
     - name: Persist Mandrel build
-      if: ${{ github.event.inputs.build-from-source == 'true' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+      if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       uses: actions/upload-artifact@v2
       with:
-        name: jdk
+        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
   get-jdk:
-    name: Get Mandrel/GraalVM CE ${{ github.event.inputs.version }} or OpenJDK11-${{ github.event.inputs.jdk }}
+    name: Get Mandrel/GraalVM CE ${{ inputs.version }} or OpenJDK11-${{ inputs.jdk }}
     runs-on: ubuntu-latest
+    needs:
+      - get-test-matrix
     steps:
-    - name: Get Mandrel ${{ github.event.inputs.version }}
-      if: ${{ github.event.inputs.build-from-source == 'false' && github.event.inputs.distribution == 'mandrel' && github.event.inputs.builder-image == 'null' }}
+    - name: Get Mandrel ${{ inputs.version }}
+      if: ${{ inputs.build-from-source == false && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       run: |
-        VERSION=${{ github.event.inputs.version }}
+        VERSION=${{ inputs.version }}
         curl \
           -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java11-linux-amd64-${VERSION##mandrel-}.tar.gz \
           -o jdk.tgz
-    - name: Get GraalVM CE ${{ github.event.inputs.version }}
-      if: ${{ github.event.inputs.build-from-source == 'false' && github.event.inputs.distribution == 'graalvm' && github.event.inputs.builder-image == 'null' }}
+    - name: Get GraalVM CE ${{ inputs.version }}
+      if: ${{ inputs.build-from-source == false && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
-        VERSION=${{ github.event.inputs.version }}
+        VERSION=${{ inputs.version }}
         curl \
           -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java11-linux-amd64-${VERSION##vm-}.tar.gz \
           -o graalvm.tgz
@@ -188,46 +226,19 @@ jobs:
         ${JAVA_HOME}/bin/gu install native-image
         ${JAVA_HOME}/bin/native-image --version
         tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
-    - name: Get OpenJDK11-${{ github.event.inputs.jdk }}
-      if: ${{ github.event.inputs.builder-image != 'null' }}
+    - name: Get OpenJDK11-${{ inputs.jdk }}
+      if: ${{ inputs.builder-image != 'null' }}
       run: |
-        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ github.event.inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
+        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
     - name: Persist Mandrel or OpenJDK
-      if: ${{ github.event.inputs.build-from-source == 'false' || github.event.inputs.builder-image != 'null' }}
+      if: ${{ inputs.build-from-source == false || inputs.builder-image != 'null' }}
       uses: actions/upload-artifact@v2
       with:
-        name: jdk
+        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
-  get-test-matrix:
-    name: Get test matrix
-    runs-on: ubuntu-latest
-    outputs:
-      quarkus-version: ${{ steps.version.outputs.quarkus-version }}
-      tests-matrix: ${{ steps.version.outputs.tests-matrix }}
-    steps:
-    - name: Get Quarkus version and test matrix
-      id: version
-      run: |
-        if [ ${{ github.event.inputs.quarkus-version }} == "latest" ]
-        then
-          export QUARKUS_VERSION=$(curl https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/latest/ {print $3}')
-        else
-          export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ github.event.inputs.quarkus-repo }} | grep "refs/heads/${{ github.event.inputs.quarkus-version }}$\|refs/tags/${{ github.event.inputs.quarkus-version }}$" | cut -f 1)
-        fi
-        if [ "$QUARKUS_VERSION" == "" ]
-        then
-          export QUARKUS_VERSION=${{ github.event.inputs.quarkus-version }}
-        fi
-        echo ${QUARKUS_VERSION}
-        echo "::set-output name=quarkus-version::${QUARKUS_VERSION}"
-        curl --output native-tests.json https://raw.githubusercontent.com/${{ github.event.inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
-        tests_json=$(tr -d '\n' < native-tests.json)
-        echo ${tests_json}
-        echo "::set-output name=tests-matrix::${tests_json}"
-
   build-quarkus:
-    name: Quarkus ${{ github.event.inputs.quarkus-version }} - OpenJDK11-${{ github.event.inputs.jdk }}
+    name: Quarkus ${{ inputs.quarkus-version }} - OpenJDK11-${{ inputs.jdk }}
     runs-on: ubuntu-latest
     needs:
       - get-test-matrix
@@ -243,7 +254,7 @@ jobs:
         path: workflow-mandrel
     - uses: actions/checkout@v2
       with:
-        repository: ${{ github.event.inputs.quarkus-repo }}
+        repository: ${{ inputs.quarkus-repo }}
         fetch-depth: 1
         ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
         path: ${{ env.QUARKUS_PATH }}
@@ -255,7 +266,7 @@ jobs:
     - name: Download Mandrel or OpenJDK11
       uses: actions/download-artifact@v1
       with:
-        name: jdk
+        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: .
     - name: Extract Mandrel or OpenJDK11
       shell: bash
@@ -266,10 +277,10 @@ jobs:
     - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
       # See https://github.com/Karm/mandrel-integration-tests/pull/64
       run: |
-        if [ "${{ github.event.inputs.quarkus-version }}" == "2.2" ]
+        if [ "${{ inputs.quarkus-version }}" == "2.2" ]
         then
           cd quarkus
-          bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ github.event.inputs.quarkus-version }}
+          bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ inputs.quarkus-version }}
         fi
     - name: Build quarkus
       run: |
@@ -277,12 +288,12 @@ jobs:
         mvn -e -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml  -Dquickly
     - name: Tar Maven Repo
       shell: bash
-      run: tar -czvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}.tgz -C ~ .m2/repository
+      run: tar -czvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~ .m2/repository
     - name: Persist Maven Repo
       uses: actions/upload-artifact@v2
       with:
-        name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}
-        path: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}.tgz
+        name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        path: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz
     - name: Delete Local Artifacts From Cache
       shell: bash
       run: rm -r ~/.m2/repository/io/quarkus
@@ -310,17 +321,17 @@ jobs:
         if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v1
         with:
-          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}
+          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Maven Repo
         if: "!startsWith(matrix.os-name, 'windows')"
         shell: bash
-        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}.tgz -C ~
+        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~
       - name: Download Mandrel or OpenJDK11
         if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v1
         with:
-          name: jdk
+          name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Mandrel or OpenJDK11
         if: "!startsWith(matrix.os-name, 'windows')"
@@ -331,7 +342,7 @@ jobs:
       - uses: actions/checkout@v2
         if: "!startsWith(matrix.os-name, 'windows')"
         with:
-          repository: ${{ github.event.inputs.quarkus-repo }}
+          repository: ${{ inputs.quarkus-repo }}
           fetch-depth: 1
           ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
           path: ${{ env.QUARKUS_PATH }}
@@ -347,10 +358,10 @@ jobs:
         if: "!startsWith(matrix.os-name, 'windows')"
         # See https://github.com/Karm/mandrel-integration-tests/pull/64
         run: |
-          if [ "${{ github.event.inputs.quarkus-version }}" == "2.2" ]
+          if [ "${{ inputs.quarkus-version }}" == "2.2" ]
           then
             cd quarkus
-            bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ github.event.inputs.quarkus-version }}
+            bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ inputs.quarkus-version }}
           fi
       - name: Build with Maven
         if: "!startsWith(matrix.os-name, 'windows')"
@@ -361,12 +372,12 @@ jobs:
         run: |
           cd ${QUARKUS_PATH}
           export GRAALVM_HOME="${JAVA_HOME}"
-          if [[ ${{ github.event.inputs.builder-image }} == "null" ]]
+          if [[ ${{ inputs.builder-image }} == "null" ]]
           then
             export BUILDER_IMAGE=""
             ${GRAALVM_HOME}/bin/native-image --version
           else
-            export BUILDER_IMAGE="-Dquarkus.native.container-build=true -Dquarkus.native.builder-image=${{ github.event.inputs.builder-image }}"
+            export BUILDER_IMAGE="-Dquarkus.native.container-build=true -Dquarkus.native.builder-image=${{ inputs.builder-image }}"
           fi
           # Backwards compatibility with Quarkus < 2.x native-tests.json
           if ! echo $TEST_MODULES | grep ',' > /dev/null
@@ -392,15 +403,12 @@ jobs:
         uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: test-reports-native-${{matrix.category}}
+          name: test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports.tgz'
 
   mandrel-integration-tests:
     name: Q Mandrel IT
     needs:
-      - build-mandrel
-      - build-graal
-      - get-jdk
       - build-quarkus
       - get-test-matrix
     runs-on: ubuntu-latest
@@ -421,14 +429,14 @@ jobs:
       - name: Download Maven Repo
         uses: actions/download-artifact@v1
         with:
-          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}
+          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Maven Repo
-        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ github.event.inputs.jdk }}.tgz -C ~
+        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~
       - name: Download Mandrel or OpenJDK11
         uses: actions/download-artifact@v1
         with:
-          name: jdk
+          name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Mandrel or OpenJDK11
         run: |
@@ -444,14 +452,14 @@ jobs:
           cd ${MANDREL_IT_PATH}
           export GRAALVM_HOME="${JAVA_HOME}"
           export PATH="${GRAALVM_HOME}/bin:$PATH"
-          export QUARKUS_VERSION=${{ github.event.inputs.quarkus-version }}
+          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
           # Don't use SNAPSHOT version for 2.2 and release tags
           if ! $(expr match "$QUARKUS_VERSION" "^\(2\.2\|.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?\)$" > /dev/null)
           then
             export QUARKUS_VERSION="999-SNAPSHOT"
           fi
           echo $QUARKUS_VERSION
-          if [[ ${{ github.event.inputs.builder-image }} == "null" ]]
+          if [[ ${{ inputs.builder-image }} == "null" ]]
           then
             ${GRAALVM_HOME}/bin/native-image --version
             mvn clean verify -Dquarkus.native.native-image-xmx=5g \
@@ -460,7 +468,7 @@ jobs:
           else
             mvn clean verify -Dquarkus.native.native-image-xmx=5g \
               -Dquarkus.version=$QUARKUS_VERSION \
-              -Dquarkus.native.builder-image=${{ github.event.inputs.builder-image }} \
+              -Dquarkus.native.builder-image=${{ inputs.builder-image }} \
               -Ptestsuite-builder-image
           fi
       - name: Prepare failure archive (if maven failed)
@@ -470,5 +478,5 @@ jobs:
         uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: test-reports-mandrel-it
+          name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports-mandrel-it.tgz'

@@ -1,0 +1,69 @@
+# Enable base.yml to be executed as a dispatch workflow with:
+#
+# gh workflow run base-windows-wrapper.yml \
+#  -f quarkus-repo=gsmet/quarkus -f quarkus-version=2.2.4-backports-1 \
+#  -f builder-image="quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
+name: Mandrel-Quarkus windows tests wrapper
+
+on:
+  workflow_dispatch:
+    inputs:
+      quarkus-version:
+        type: string
+        description: 'Quarkus version to test (branch, tag, commit, or "latest")'
+        # "latest" is replaced by the latest release available in maven
+        default: "main"
+      quarkus-repo:
+        type: string
+        description: 'The Quarkus repository to be used'
+        default: 'quarkusio/quarkus'
+      repo:
+        type: string
+        description: 'The Mandrel/Graal repository to be used'
+        default: 'graalvm/mandrel'
+      version:
+        type: string
+        description: 'Mandrel version to test (branch, tag, or commit)'
+        default: "graal/master"
+      mandrel-packaging-version:
+        type: string
+        description: 'Mandrel packaging version to test (branch, tag, or commit)'
+        default: "master"
+      mandrel-packaging-repo:
+        type: string
+        description: 'Mandrel packaging repository to be used'
+        default: "graalvm/mandrel-packaging"
+      distribution:
+        type: string
+        description: 'Distribution to build, mandrel or graalvm'
+        default: "mandrel"
+      build-from-source:
+        type: boolean
+        description: 'Build Mandrel from source instead of grabing a release'
+        default: true
+      jdk:
+        type: choice
+        description: 'OpenJDK 11 to use, ga or ea (only needed when building from source)'
+        default: "ga"
+        options:
+          - "ga"
+          - "ea"
+      builder-image:
+        type: string
+        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+        default: "null"
+
+jobs:
+  delegate:
+    uses: zakkak/mandrel/.github/workflows/base-windows.yml@reusable-workflows
+    with:
+      quarkus-version: ${{ github.event.inputs.quarkus-version }}
+      quarkus-repo: ${{ github.event.inputs.quarkus-repo }}
+      repo: ${{ github.event.inputs.repo }}
+      version: ${{ github.event.inputs.version }}
+      mandrel-packaging-version: ${{ github.event.inputs.mandrel-packaging-version }}
+      mandrel-packaging-repo: ${{ github.event.inputs.mandrel-packaging-repo }}
+      distribution: ${{ github.event.inputs.distribution }}
+      build-from-source: ${{ github.event.inputs.build-from-source }}
+      jdk: ${{ github.event.inputs.jdk }}
+      builder-image: ${{ github.event.inputs.builder-image }}
