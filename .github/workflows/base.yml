@@ -97,7 +97,7 @@ jobs:
         echo "::set-output name=tests-matrix::${tests_json}"
 
   build-mandrel:
-    name: Mandrel ${{ inputs.version }} build - OpenJDK11-${{ inputs.jdk }}
+    name: Mandrel build
     runs-on: ubuntu-latest
     needs:
       - get-test-matrix
@@ -155,7 +155,7 @@ jobs:
         path: jdk.tgz
 
   build-graal:
-    name: GraalVM CE ${{ inputs.version }} build
+    name: GraalVM CE build
     runs-on: ubuntu-latest
     needs:
       - get-test-matrix
@@ -202,7 +202,7 @@ jobs:
         path: jdk.tgz
 
   get-jdk:
-    name: Get Mandrel/GraalVM CE ${{ inputs.version }} or OpenJDK11-${{ inputs.jdk }}
+    name: Get JDK
     runs-on: ubuntu-latest
     needs:
       - get-test-matrix
@@ -238,7 +238,7 @@ jobs:
         path: jdk.tgz
 
   build-quarkus:
-    name: Quarkus ${{ inputs.quarkus-version }} - OpenJDK11-${{ inputs.jdk }}
+    name: Quarkus build
     runs-on: ubuntu-latest
     needs:
       - get-test-matrix

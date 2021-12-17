@@ -14,21 +14,21 @@ jobs:
   # Test Quarkus main with latest graal sources built as Mandrel and GraalVM
   ####
   q-main-mandrel-latest:
-    name: "Q main Mandrel build of latest graal"
+    name: "Q main M latest"
     uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
     with:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "ea"
   q-main-mandrel-latest-win:
-    name: "Q main Mandrel build of latest graal on windows"
+    name: "Q main M latest windows"
     uses: zakkak/mandrel/.github/workflows/base-windows.yml@reusable-workflows
     with:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "ea"
   q-main-graal-latest:
-    name: "Q main GraalVM CE build of latest graal"
+    name: "Q main G latest"
     uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
     with:
       quarkus-version: "main"
@@ -38,7 +38,7 @@ jobs:
   # Test Quarkus main with 22_0-dev built as Mandrel and GraalVM
   ####
   q-main-mandrel-22_0-dev:
-    name: "Q main Mandrel build of 22.0-dev"
+    name: "Q main M 22.0-dev"
     uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
     with:
       quarkus-version: "main"
@@ -46,7 +46,7 @@ jobs:
       jdk: "ea"
       mandrel-packaging-version: "22.0"
   q-main-mandrel-22_0-dev-win:
-    name: "Q main Mandrel build of 22.0-dev on windows"
+    name: "Q main M 22.0-dev windows"
     uses: zakkak/mandrel/.github/workflows/base-windows.yml@reusable-workflows
     with:
       quarkus-version: "main"
@@ -54,7 +54,7 @@ jobs:
       jdk: "ea"
       mandrel-packaging-version: "22.0"
   q-main-graal-22_0-dev:
-    name: "Q main GraalVM CE build of 22.0-dev"
+    name: "Q main G 22.0-dev"
     uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
     with:
       quarkus-version: "main"
@@ -65,19 +65,19 @@ jobs:
   # Test Quarkus with supported Mandrel versions using the Quay.io images
   ####
   # q-2_2-mandrel-21_2-quayio:
-  #   name: "Q 2.2 Mandrel 21.2 image from quay.io"
+  #   name: "Q 2.2 M 21.2 image"
   #   uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
   #   with:
   #     quarkus-version: "2.2"
   #     builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"
   q-2_2-mandrel-21_3-quayio:
-    name: "Q 2.2 Mandrel 21.3 image from quay.io"
+    name: "Q 2.2 M 21.3 image"
     uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
     with:
       quarkus-version: "2.2"
       builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
   q-main-mandrel-21_2-quayio:
-    name: "Q main Mandrel 21.3 image from quay.io"
+    name: "Q main M 21.3 image"
     uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
     with:
       quarkus-version: "main"
@@ -86,14 +86,14 @@ jobs:
   # Test Quarkus main with supported Mandrel versions using the release archives
   ####
   #q-main-mandrel-20_3-release
-  #  name: "Q main Mandrel 20.3 release"
+  #  name: "Q main M 20.3 release"
   #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
   #  with:
   #    quarkus-version: "main"
   #     version: "mandrel-20.3.1.2-Final"
   #     build-from-source: "false"
   #q-main-mandrel-21_0-release
-  #  name: "Q main Mandrel 21.0 release"
+  #  name: "Q main M 21.0 release"
   #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
   #  with:
   #    quarkus-version: "main"
@@ -103,7 +103,7 @@ jobs:
   # Test Quarkus main with supported GraalVM versions using the release archives
   ####
   #q-main-graal-20_3-release
-  #  name: "Q main GraalVM-CE 20.3 release"
+  #  name: "Q main G 20.3 release"
   #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
   #  with:
   #    quarkus-version: "main"
@@ -111,7 +111,7 @@ jobs:
   #     build-from-source: "false"
   #     distribution: "graalvm"
   #q-main-graal-21_0-release
-  #  name: "Q main GraalVM-CE 21.0 release"
+  #  name: "Q main G 21.0 release"
   #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
   #  with:
   #    quarkus-version: "main"
