@@ -34,21 +34,21 @@ jobs:
   ####
   q-main-mandrel-latest:
     name: "Q main M latest"
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "ea"
   q-main-mandrel-latest-win:
     name: "Q main M latest windows"
-    uses: zakkak/mandrel/.github/workflows/base-windows.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "ea"
   q-main-graal-latest:
     name: "Q main G latest"
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
@@ -58,7 +58,7 @@ jobs:
   ####
   q-main-mandrel-22_0-dev:
     name: "Q main M 22.0-dev"
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "mandrel/22.0"
@@ -66,7 +66,7 @@ jobs:
       mandrel-packaging-version: "22.0"
   q-main-mandrel-22_0-dev-win:
     name: "Q main M 22.0-dev windows"
-    uses: zakkak/mandrel/.github/workflows/base-windows.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
       quarkus-version: "main"
       version: "mandrel/22.0"
@@ -74,7 +74,7 @@ jobs:
       mandrel-packaging-version: "22.0"
   q-main-graal-22_0-dev:
     name: "Q main G 22.0-dev"
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       repo: "oracle/graal"
@@ -85,19 +85,19 @@ jobs:
   ####
   # q-2_2-mandrel-21_2-quayio:
   #   name: "Q 2.2 M 21.2 image"
-  #   uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
   #   with:
   #     quarkus-version: "2.2"
   #     builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"
   q-2_2-mandrel-21_3-quayio:
     name: "Q 2.2 M 21.3 image"
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "2.2"
       builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
   q-main-mandrel-21_2-quayio:
     name: "Q main M 21.3 image"
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
@@ -106,14 +106,14 @@ jobs:
   ####
   #q-main-mandrel-20_3-release
   #  name: "Q main M 20.3 release"
-  #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+  #  uses: graalvm/mandrel/.github/workflows/base.yml@default
   #  with:
   #    quarkus-version: "main"
   #     version: "mandrel-20.3.1.2-Final"
   #     build-from-source: "false"
   #q-main-mandrel-21_0-release
   #  name: "Q main M 21.0 release"
-  #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+  #  uses: graalvm/mandrel/.github/workflows/base.yml@default
   #  with:
   #    quarkus-version: "main"
   #     version: "mandrel-21.0.0.0-Final"
@@ -123,7 +123,7 @@ jobs:
   ####
   #q-main-graal-20_3-release
   #  name: "Q main G 20.3 release"
-  #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+  #  uses: graalvm/mandrel/.github/workflows/base.yml@default
   #  with:
   #    quarkus-version: "main"
   #     version: "vm-20.3.2"
@@ -131,7 +131,7 @@ jobs:
   #     distribution: "graalvm"
   #q-main-graal-21_0-release
   #  name: "Q main G 21.0 release"
-  #  uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+  #  uses: graalvm/mandrel/.github/workflows/base.yml@default
   #  with:
   #    quarkus-version: "main"
   #     version: "vm-21.1.0"

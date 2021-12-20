@@ -55,7 +55,7 @@ on:
 
 jobs:
   delegate:
-    uses: zakkak/mandrel/.github/workflows/base.yml@reusable-workflows
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: ${{ github.event.inputs.quarkus-version }}
       quarkus-repo: ${{ github.event.inputs.quarkus-repo }}
