@@ -250,6 +250,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        repository: graalvm/mandrel
         fetch-depth: 1
         path: workflow-mandrel
     - uses: actions/checkout@v2
@@ -315,6 +316,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
       - name: Download Maven Repo
