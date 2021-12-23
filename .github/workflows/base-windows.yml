@@ -303,7 +303,7 @@ jobs:
         if [ "${{ inputs.quarkus-version }}" == "2.2" ]
         then
           cd quarkus
-          bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ inputs.quarkus-version }}
+          bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
         fi
     - name: Build quarkus
       run: |
@@ -400,7 +400,7 @@ jobs:
           if [ "${{ inputs.quarkus-version }}" == "2.2" ]
           then
             cd quarkus
-            bash ../workflow-mandrel/.github/update_quarkus_version.sh ${{ inputs.quarkus-version }}
+            bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
           fi
       - name: Build with Maven
         if: startsWith(matrix.os-name, 'windows')
