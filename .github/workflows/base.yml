@@ -82,6 +82,9 @@ jobs:
         if [ ${{ inputs.quarkus-version }} == "latest" ]
         then
           export QUARKUS_VERSION=$(curl https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/latest/ {print $3}')
+        elif $(expr match "${{ inputs.quarkus-version }}" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
+        then
+          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
         else
           export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
         fi
@@ -454,7 +457,7 @@ jobs:
           cd ${MANDREL_IT_PATH}
           export GRAALVM_HOME="${JAVA_HOME}"
           export PATH="${GRAALVM_HOME}/bin:$PATH"
-          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
+          export QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
           # Don't use SNAPSHOT version for 2.2 and release tags
           if ! $(expr match "$QUARKUS_VERSION" "^\(2\.2\|.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?\)$" > /dev/null)
           then
