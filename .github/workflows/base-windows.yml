@@ -502,7 +502,7 @@ jobs:
             Write-Host "Cannot find native-image tool. Quitting..."
             exit 1
           }
-          $QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
+          $QUARKUS_VERSION="${{ needs.get-test-matrix.outputs.quarkus-version }}"
           # Don't use SNAPSHOT version for 2.2 and release tags
           if (${{ inputs.quarkus-version }} -eq "2.2") {
             $QUARKUS_VERSION="2.2.999"
