@@ -459,7 +459,10 @@ jobs:
           export PATH="${GRAALVM_HOME}/bin:$PATH"
           export QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
           # Don't use SNAPSHOT version for 2.2 and release tags
-          if ! $(expr match "$QUARKUS_VERSION" "^\(2\.2\|.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?\)$" > /dev/null)
+          if [ "${{ inputs.quarkus-version }}" == "2.2" ]
+          then
+            export QUARKUS_VERSION=2.2.999
+          elif ! $(expr match "$QUARKUS_VERSION" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
           then
             export QUARKUS_VERSION="999-SNAPSHOT"
           fi
