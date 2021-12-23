@@ -80,19 +80,19 @@ jobs:
     - name: Get Quarkus version and test matrix
       id: version
       run: |
-        if [ ${{ github.event.inputs.quarkus-version }} == "latest" ]
+        if [ ${{ inputs.quarkus-version }} == "latest" ]
         then
           export QUARKUS_VERSION=$(curl https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/latest/ {print $3}')
         else
-          export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ github.event.inputs.quarkus-repo }} | grep "refs/heads/${{ github.event.inputs.quarkus-version }}$\|refs/tags/${{ github.event.inputs.quarkus-version }}$" | cut -f 1)
+          export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
         fi
         if [ "$QUARKUS_VERSION" == "" ]
         then
-          export QUARKUS_VERSION=${{ github.event.inputs.quarkus-version }}
+          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
         fi
         echo ${QUARKUS_VERSION}
         echo "::set-output name=quarkus-version::${QUARKUS_VERSION}"
-        curl --output native-tests.json https://raw.githubusercontent.com/${{ github.event.inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
+        curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
         tests_json=$(tr -d '\n' < native-tests.json)
         echo ${tests_json}
         echo "::set-output name=tests-matrix::${tests_json}"
