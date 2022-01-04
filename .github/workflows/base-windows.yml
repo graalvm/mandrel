@@ -504,7 +504,7 @@ jobs:
           }
           $QUARKUS_VERSION="${{ needs.get-test-matrix.outputs.quarkus-version }}"
           # Don't use SNAPSHOT version for 2.2 and release tags
-          if (${{ inputs.quarkus-version }} -eq "2.2") {
+          if ("${{ inputs.quarkus-version }}" -eq "2.2") {
             $QUARKUS_VERSION="2.2.999"
           } elseif (! ($QUARKUS_VERSION -match "^.*\.(Final|CR|Alpha|Beta)[0-9]?$")) {
             $QUARKUS_VERSION="999-SNAPSHOT"
