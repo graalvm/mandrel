@@ -43,7 +43,7 @@ on:
         default: true
       jdk:
         type: choice
-        description: 'OpenJDK to use. One of 11/ga, 11/ea, 17/ga, 17/ea (/ga and /ea suffices are only relevant when building from source)'
+        description: 'OpenJDK to use. One of 11/ga, 11/ea, 17/ga, 17/ea (/ga and /ea suffixes are only relevant when building from source)'
         default: "11/ga"
         options:
           - "11/ga"
