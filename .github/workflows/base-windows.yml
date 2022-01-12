@@ -38,8 +38,8 @@ on:
         default: true
       jdk:
         type: string
-        description: 'OpenJDK 11 to use, ga or ea (only needed when building from source)'
-        default: "ga"
+        description: 'OpenJDK to use. One of 11/ga, 11/ea, 17/ga, 17/ea (only needed when building from source)'
+        default: "11/ga"
       # Builder image can't be tested on Windows due to https://github.com/actions/virtual-environments/issues/1143
       # builder-image:
       #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
@@ -132,14 +132,14 @@ jobs:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
-    - name: Get OpenJDK 11 with static libs
+    - name: Get OpenJDK with static libs
       if: inputs.build-from-source == true && inputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       run: |
         $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse", "$Env:temp\jdk.zip")
+        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse", "$Env:temp\jdk.zip")
         Expand-Archive "$Env:temp\jdk.zip" -DestinationPath "$Env:temp"
         Move-Item -Path "$Env:temp\jdk-*" -Destination $Env:JAVA_HOME
-        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/windows/x64/staticlibs/hotspot/normal/eclipse", "$Env:temp\jdk-staticlibs.zip")
+        $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/windows/x64/staticlibs/hotspot/normal/eclipse", "$Env:temp\jdk-staticlibs.zip")
         Expand-Archive "$Env:temp\jdk-staticlibs.zip" -DestinationPath "$Env:temp"
         Move-Item -Path "$Env:temp\jdk-*\lib\static" -Destination $Env:JAVA_HOME\lib\
         Remove-Item -Recurse "$Env:temp\jdk-*"
@@ -168,7 +168,7 @@ jobs:
       if: inputs.build-from-source == true && inputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       uses: actions/upload-artifact@v2
       with:
-        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
   build-graal:
@@ -208,7 +208,7 @@ jobs:
         }
         Set-Location graal\substratevm
         mkdir -p "$Env:temp\jdk-dl"
-        & $Env:MX_PATH\mx.cmd --java-home= fetch-jdk --java-distribution labsjdk-ce-11 --to "$Env:temp\jdk-dl" --alias $Env:JAVA_HOME
+        & $Env:MX_PATH\mx.cmd --java-home= fetch-jdk --java-distribution labsjdk-ce-$(("${{ inputs.jdk }}" -split "/")[0]) --to "$Env:temp\jdk-dl" --alias $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\java --version
         & $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" build
         ${graalvm-home} = @(& $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" graalvm-home)
@@ -223,11 +223,11 @@ jobs:
       if: inputs.build-from-source == true && inputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       uses: actions/upload-artifact@v2
       with:
-        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
   get-jdk:
-    name: Get JDK
+    name: Get JDK ${{ inputs.jdk }}
     runs-on: windows-latest
     needs:
       - get-test-matrix
@@ -238,7 +238,7 @@ jobs:
         $VERSION="${{ inputs.version }}"
         $VERSION_SHORT=@($VERSION -replace 'mandrel-')
         $wc = New-Object System.Net.WebClient
-        $url="$Env:GITHUB_SERVER_URL/graalvm/mandrel/releases/download/${VERSION}/mandrel-java11-windows-amd64-${VERSION_SHORT}.zip"
+        $url="$Env:GITHUB_SERVER_URL/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(("${{ inputs.jdk }}" -split "/")[0])-windows-amd64-${VERSION_SHORT}.zip"
         $wc.DownloadFile($($url), "mandrel.zip")
         Expand-Archive "mandrel.zip" -DestinationPath "$Env:temp"
         Move-Item -Path "$Env:temp\mandrel-*" -Destination $Env:JAVA_HOME
@@ -249,17 +249,17 @@ jobs:
         $VERSION="${{ inputs.version }}"
         $VERSION_SHORT=@($VERSION -replace 'vm-')
         $wc = New-Object System.Net.WebClient
-        $url="$Env:GITHUB_SERVER_URL/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java11-windows-amd64-${VERSION_SHORT}.zip"
+        $url="$Env:GITHUB_SERVER_URL/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(("${{ inputs.jdk }}" -split "/")[0])-windows-amd64-${VERSION_SHORT}.zip"
         $wc.DownloadFile($($url), "graalvm.zip")
         Expand-Archive "graalvm.zip" -DestinationPath "$Env:temp"
         Move-Item -Path "$Env:temp\graalvm-*" -Destination $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\gu install native-image
         & $Env:JAVA_HOME\bin\native-image --version
-    # - name: Get OpenJDK11-${{ inputs.jdk }}
+    # - name: Get OpenJDK ${{ inputs.jdk }}
     #   if: inputs.builder-image != 'null'
     #   run: |
     #     $wc = New-Object System.Net.WebClient
-    #     $url="https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse"
+    #     $url="https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse"
     #     $wc.DownloadFile($($url), "jdk.zip")
     #     Expand-Archive "jdk.zip" -DestinationPath "$Env:temp"
     #     Move-Item -Path "$Env:temp\jdk-*" -Destination $Env:JAVA_HOME
@@ -272,7 +272,7 @@ jobs:
       if: inputs.build-from-source == false #|| inputs.builder-image != 'null'
       uses: actions/upload-artifact@v2
       with:
-        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
   build-quarkus:
@@ -310,7 +310,7 @@ jobs:
         fi
     - name: Build quarkus
       run: |
-        curl -L https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
+        curl -L https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
         export JAVA_HOME=$(pwd)/openjdk
         echo ${JAVA_HOME}
         mkdir -p ${JAVA_HOME}
@@ -320,12 +320,12 @@ jobs:
         ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly
     - name: Tar Maven Repo
       shell: bash
-      run: tar -I 'pigz -9' -cf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~ .m2/repository
+      run: tar -I 'pigz -9' -cf maven-repo.tgz -C ~ .m2/repository
     - name: Persist Maven Repo
       uses: actions/upload-artifact@v2
       with:
-        name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
-        path: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz
+        name: win-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        path: maven-repo.tgz
     - name: Delete Local Artifacts From Cache
       shell: bash
       run: rm -r ~/.m2/repository/io/quarkus
@@ -354,12 +354,12 @@ jobs:
         if: startsWith(matrix.os-name, 'windows')
         uses: actions/download-artifact@v1
         with:
-          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: win-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Maven Repo
         if: startsWith(matrix.os-name, 'windows')
         shell: bash
-        run: tar -xzf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~
+        run: tar -xzf maven-repo.tgz -C ~
       - uses: actions/checkout@v2
         if: startsWith(matrix.os-name, 'windows')
         with:
@@ -373,11 +373,11 @@ jobs:
           path: ~/.m2/repository
           key: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
-      - name: Download Mandrel or OpenJDK11
+      - name: Download Mandrel or OpenJDK
         if: startsWith(matrix.os-name, 'windows')
         uses: actions/download-artifact@v1
         with:
-          name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract JDK
         if: startsWith(matrix.os-name, 'windows')
@@ -438,7 +438,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: win-test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports.tgz'
 
   mandrel-integration-tests:
@@ -466,15 +466,15 @@ jobs:
       - name: Download Maven Repo
         uses: actions/download-artifact@v1
         with:
-          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: win-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Maven Repo
         shell: bash
-        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~
-      - name: Download Mandrel or OpenJDK11
+        run: tar -xzvf maven-repo.tgz -C ~
+      - name: Download Mandrel or OpenJDK
         uses: actions/download-artifact@v1
         with:
-          name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract JDK
         shell: bash
@@ -519,5 +519,5 @@ jobs:
         uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: win-test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports-mandrel-it.tgz'

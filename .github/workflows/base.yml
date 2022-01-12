@@ -38,8 +38,8 @@ on:
         default: true
       jdk:
         type: string
-        description: 'OpenJDK 11 to use, ga or ea (only needed when building from source)'
-        default: "ga"
+        description: 'OpenJDK to use. One of 11/ga, 11/ea, 17/ga, 17/ea (/ga and /ea suffices are only relevant when building from source)'
+        default: "11/ga"
       builder-image:
         type: string
         description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
@@ -73,7 +73,7 @@ jobs:
     steps:
     - id: suffix
       run: |
-        export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j '. | to_entries[] | "-\(.value)"' | tr '":<>|*?\\r\n\/' '-')
+        export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j '. | to_entries[] | "-\(.value)"' | tr '":<>|*?\r\n\/' '-')
         echo $SUFFIX
         echo "::set-output name=suffix::$SUFFIX"
     - name: Get Quarkus version and test matrix
@@ -130,11 +130,11 @@ jobs:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
-    - name: Get OpenJDK 11 with static libs
+    - name: Get OpenJDK with static libs
       if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       run: |
-        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
-        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
         mkdir -p ${JAVA_HOME}
         tar xf jdk.tar.gz -C ${JAVA_HOME} --strip-components=1
         tar xf jdk-static-libs.tar.gz -C ${JAVA_HOME} --strip-components=1
@@ -149,7 +149,7 @@ jobs:
           --mandrel-home ${MANDREL_HOME} \
           --archive-suffix tar.gz
         ${MANDREL_HOME}/bin/native-image --version
-        mv mandrel-java11-linux-amd64-*.tar.gz ${{ github.workspace }}/jdk.tgz
+        mv mandrel-java*-linux-amd64-*.tar.gz ${{ github.workspace }}/jdk.tgz
     - name: Persist Mandrel build
       if: ${{ inputs.build-from-source == true && inputs.distribution == 'mandrel' && inputs.builder-image == 'null' }}
       uses: actions/upload-artifact@v2
@@ -182,11 +182,11 @@ jobs:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
-    - name: Get labs OpenJDK 11
+    - name: Get labs OpenJDK
       if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
         mkdir jdk-dl
-        ${MX_PATH}/mx --java-home= fetch-jdk --java-distribution labsjdk-ce-11 --to jdk-dl --alias ${JAVA_HOME}
+        ${MX_PATH}/mx --java-home= fetch-jdk --java-distribution labsjdk-ce-$(echo ${{ inputs.jdk }} | cut -d / -f 1) --to jdk-dl --alias ${JAVA_HOME}
     - name: Build graalvm native-image
       if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
@@ -205,7 +205,7 @@ jobs:
         path: jdk.tgz
 
   get-jdk:
-    name: Get JDK
+    name: Get JDK ${{ inputs.jdk }}
     runs-on: ubuntu-latest
     needs:
       - get-test-matrix
@@ -215,24 +215,24 @@ jobs:
       run: |
         VERSION=${{ inputs.version }}
         curl \
-          -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java11-linux-amd64-${VERSION##mandrel-}.tar.gz \
+          -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##mandrel-}.tar.gz \
           -o jdk.tgz
     - name: Get GraalVM CE ${{ inputs.version }}
       if: ${{ inputs.build-from-source == false && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
         VERSION=${{ inputs.version }}
         curl \
-          -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java11-linux-amd64-${VERSION##vm-}.tar.gz \
+          -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##vm-}.tar.gz \
           -o graalvm.tgz
         mkdir -p ${JAVA_HOME}
         tar xzvf graalvm.tgz -C ${JAVA_HOME} --strip-components=1
         ${JAVA_HOME}/bin/gu install native-image
         ${JAVA_HOME}/bin/native-image --version
         tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
-    - name: Get OpenJDK11-${{ inputs.jdk }}
+    - name: Get OpenJDK
       if: ${{ inputs.builder-image != 'null' }}
       run: |
-        curl -sL https://api.adoptium.net/v3/binary/latest/11/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
+        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
     - name: Persist Mandrel or OpenJDK
       if: ${{ inputs.build-from-source == false || inputs.builder-image != 'null' }}
       uses: actions/upload-artifact@v2
@@ -267,12 +267,12 @@ jobs:
         path: ~/.m2/repository
         key: ${{ runner.os }}-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
-    - name: Download Mandrel or OpenJDK11
+    - name: Download Mandrel or OpenJDK
       uses: actions/download-artifact@v1
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: .
-    - name: Extract Mandrel or OpenJDK11
+    - name: Extract Mandrel or OpenJDK
       shell: bash
       run: |
         mkdir -p ${JAVA_HOME}
@@ -292,12 +292,12 @@ jobs:
         mvn -e -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml  -Dquickly
     - name: Tar Maven Repo
       shell: bash
-      run: tar -czvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~ .m2/repository
+      run: tar -czvf maven-repo.tgz -C ~ .m2/repository
     - name: Persist Maven Repo
       uses: actions/upload-artifact@v2
       with:
-        name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
-        path: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz
+        name: maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        path: maven-repo.tgz
     - name: Delete Local Artifacts From Cache
       shell: bash
       run: rm -r ~/.m2/repository/io/quarkus
@@ -326,19 +326,19 @@ jobs:
         if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v1
         with:
-          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Maven Repo
         if: "!startsWith(matrix.os-name, 'windows')"
         shell: bash
-        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~
-      - name: Download Mandrel or OpenJDK11
+        run: tar -xzvf maven-repo.tgz -C ~
+      - name: Download Mandrel or OpenJDK
         if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v1
         with:
           name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
-      - name: Extract Mandrel or OpenJDK11
+      - name: Extract Mandrel or OpenJDK
         if: "!startsWith(matrix.os-name, 'windows')"
         shell: bash
         run: |
@@ -434,16 +434,16 @@ jobs:
       - name: Download Maven Repo
         uses: actions/download-artifact@v1
         with:
-          name: maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+          name: maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Maven Repo
-        run: tar -xzvf maven-repo-${{ needs.get-test-matrix.outputs.quarkus-version }}-${{ inputs.jdk }}.tgz -C ~
-      - name: Download Mandrel or OpenJDK11
+        run: tar -xzvf maven-repo.tgz -C ~
+      - name: Download Mandrel or OpenJDK
         uses: actions/download-artifact@v1
         with:
           name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
-      - name: Extract Mandrel or OpenJDK11
+      - name: Extract Mandrel or OpenJDK
         run: |
           mkdir -p ${JAVA_HOME}
           tar -xzvf jdk.tgz -C ${JAVA_HOME} --strip-components=1
