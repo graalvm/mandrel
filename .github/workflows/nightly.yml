@@ -53,6 +53,28 @@ jobs:
       quarkus-version: "main"
       version: "graal/master"
       distribution: "graalvm"
+  q-main-mandrel-latest:
+    name: "Q main M 17 latest"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "17/ea"
+  q-main-mandrel-latest-win:
+    name: "Q main M 17 latest windows"
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "17/ea"
+  q-main-graal-latest:
+    name: "Q main G 17 latest"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      distribution: "graalvm"
+      jdk: "17/ea"
   ####
   # Test Quarkus main with 22_0-dev built as Mandrel and GraalVM
   ####
