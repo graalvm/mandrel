@@ -39,6 +39,10 @@ jobs:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "11/ea"
+      issue-number: "348"
+      issue-repo: "graalvm/mandrel"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
   q-main-mandrel-latest-win:
     name: "Q main M latest windows"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
