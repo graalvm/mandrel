@@ -52,7 +52,8 @@ On Fedora/CentOS/RHEL they can be installed with:
 dnf install glibc-devel zlib-devel gcc freetype-devel libstdc++-static
 ```
 
-**Note**: the package might be called `glibc-static` instead of `libstdc++-static`.
+**Note**: The package might be called `glibc-static` or `libstdc++-devel` instead of `libstdc++-static` depending on your system.
+If the system is missing stdc++, `gcc-c++` package is needed too.
 
 On Ubuntu-like systems with:
 ```bash
