@@ -78,30 +78,30 @@ jobs:
   ####
   # Test Quarkus main with 22_0-dev built as Mandrel and GraalVM
   ####
-  q-main-mandrel-22_0-dev:
-    name: "Q main M 22.0-dev"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
-      version: "mandrel/22.0"
-      jdk: "11/ea"
-      mandrel-packaging-version: "22.0"
-  q-main-mandrel-22_0-dev-win:
-    name: "Q main M 22.0-dev windows"
-    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-    with:
-      quarkus-version: "main"
-      version: "mandrel/22.0"
-      jdk: "11/ea"
-      mandrel-packaging-version: "22.0"
-  q-main-graal-22_0-dev:
-    name: "Q main G 22.0-dev"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
-      repo: "oracle/graal"
-      version: "release/graal-vm/22.0"
-      distribution: "graalvm"
+  # q-main-mandrel-22_0-dev:
+  #   name: "Q main M 22.0-dev"
+  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
+  #   with:
+  #     quarkus-version: "main"
+  #     version: "mandrel/22.0"
+  #     jdk: "11/ea"
+  #     mandrel-packaging-version: "22.0"
+  # q-main-mandrel-22_0-dev-win:
+  #   name: "Q main M 22.0-dev windows"
+  #   uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+  #   with:
+  #     quarkus-version: "main"
+  #     version: "mandrel/22.0"
+  #     jdk: "11/ea"
+  #     mandrel-packaging-version: "22.0"
+  # q-main-graal-22_0-dev:
+  #   name: "Q main G 22.0-dev"
+  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
+  #   with:
+  #     quarkus-version: "main"
+  #     repo: "oracle/graal"
+  #     version: "release/graal-vm/22.0"
+  #     distribution: "graalvm"
   ####
   # Test Quarkus with supported Mandrel versions using the Quay.io images
   ####
