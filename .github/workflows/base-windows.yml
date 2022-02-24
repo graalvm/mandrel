@@ -452,9 +452,15 @@ jobs:
         with:
           name: win-test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports.tgz'
+
+  native-tests-report:
+    name: Report results on GitHub
+    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel'  }}
+    needs:
+      - native-tests
+    runs-on: ubuntu-latest
+    steps:
       - name: Setup jbang and report results
-        if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' }}
-        shell: bash
         env:
           BOT_TOKEN: ${{ secrets.ISSUE_BOT_TOKEN }}
         run: |
@@ -464,7 +470,7 @@ jobs:
           echo "Attempting to report results"
           ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
             token="${BOT_TOKEN}" \
-            status="${{ job.status }}" \
+            status="${{ needs.native-tests.result }}" \
             issueRepo="${{ inputs.issue-repo }}" \
             issueNumber="${{ inputs.issue-number }}" \
             thisRepo="${GITHUB_REPOSITORY}" \
