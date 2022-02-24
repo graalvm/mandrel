@@ -460,6 +460,10 @@ jobs:
       - native-tests
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       - name: Setup jbang and report results
         env:
           BOT_TOKEN: ${{ secrets.ISSUE_BOT_TOKEN }}
