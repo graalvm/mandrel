@@ -430,6 +430,11 @@ jobs:
       - native-tests
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: graalvm/mandrel
+          fetch-depth: 1
+          path: workflow-mandrel
       - uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
