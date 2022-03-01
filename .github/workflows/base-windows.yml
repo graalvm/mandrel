@@ -114,7 +114,7 @@ jobs:
 
   build-mandrel:
     name: Mandrel build
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs:
       - get-test-matrix
     steps:
@@ -185,7 +185,7 @@ jobs:
 
   build-graal:
     name: GraalVM CE build
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs:
       - get-test-matrix
     steps:
@@ -240,7 +240,7 @@ jobs:
 
   get-jdk:
     name: Get JDK ${{ inputs.jdk }}
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs:
       - get-test-matrix
     steps:
@@ -350,7 +350,7 @@ jobs:
       - build-graal
       - get-jdk
       - get-test-matrix
-    runs-on: windows-latest
+    runs-on: windows-2019
     # Ignore the following YAML Schema error
     timeout-minutes: ${{matrix.timeout}}
     strategy:
@@ -493,7 +493,7 @@ jobs:
       - get-jdk
       - build-quarkus
       - get-test-matrix
-    runs-on: windows-latest
+    runs-on: windows-2019
     env:
       # leave more space for the actual native compilation and execution
       MAVEN_OPTS: -Xmx1g
