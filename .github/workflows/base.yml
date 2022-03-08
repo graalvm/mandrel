@@ -500,7 +500,9 @@ jobs:
         run: |
           cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json
       - name: Install gdb
-        run: sudo apt install gdb
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y gdb
       - name: Build with Maven
         run: |
           cd ${MANDREL_IT_PATH}
