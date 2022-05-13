@@ -70,7 +70,7 @@ env:
   MANDREL_REPO: ${{ github.workspace }}\mandrel
   MANDREL_HOME: ${{ github.workspace }}\..\mandrelvm
   MX_PATH: ${{ github.workspace }}\mx
-  MX_PYTHON_VERSION: 3
+  MX_PYTHON: python
   QUARKUS_PATH: ${{ github.workspace }}\quarkus
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}\mandrel-packaging
   MAVEN_OPTS: -Xmx2g -XX:MaxMetaspaceSize=1g
@@ -125,6 +125,10 @@ jobs:
         fetch-depth: 1
         ref: ${{ inputs.version }}
         path: ${{ env.MANDREL_REPO }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
     - name: Checkout MX
       if: inputs.build-from-source == true && inputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       run: |
@@ -196,6 +200,10 @@ jobs:
         fetch-depth: 1
         ref: ${{ inputs.version }}
         path: graal
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
     - name: Checkout MX
       if: inputs.build-from-source == true && inputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       run: |
