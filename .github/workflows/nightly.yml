@@ -109,19 +109,13 @@ jobs:
   ####
   # Test Quarkus with supported Mandrel versions using the Quay.io images
   ####
-  # q-2_2-mandrel-21_2-quayio:
-  #   name: "Q 2.2 M 21.2 image"
-  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
-  #   with:
-  #     quarkus-version: "2.2"
-  #     builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.2-java11"
-  q-2_2-mandrel-21_3-quayio:
-    name: "Q 2.2 M 21.3 image"
+  q-2_7-mandrel-21_3-quayio:
+    name: "Q 2.7 M 21.3 image"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
-      quarkus-version: "2.2"
+      quarkus-version: "2.7"
       builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
-  q-main-mandrel-21_2-quayio:
+  q-main-mandrel-21_3-quayio:
     name: "Q main M 21.3 image"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
