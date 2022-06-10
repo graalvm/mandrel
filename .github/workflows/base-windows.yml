@@ -74,6 +74,7 @@ env:
   QUARKUS_PATH: ${{ github.workspace }}\quarkus
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}\mandrel-packaging
   MAVEN_OPTS: -Xmx2g -XX:MaxMetaspaceSize=1g
+  USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 
 jobs:
   get-test-matrix:
