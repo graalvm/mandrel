@@ -73,7 +73,6 @@ env:
   QUARKUS_PATH: ${{ github.workspace }}/quarkus
   MANDREL_IT_PATH: ${{ github.workspace }}/mandrel-integration-tests
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
-  USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
 
 jobs:
   get-test-matrix:
@@ -332,6 +331,7 @@ jobs:
     env:
       # leave more space for the actual native compilation and execution
       MAVEN_OPTS: -Xmx1g
+      USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
     # Ignore the following YAML Schema error
     timeout-minutes: ${{matrix.timeout}}
     strategy:
@@ -475,6 +475,7 @@ jobs:
       MAVEN_OPTS: -Xmx1g
       # Don't perform performance checks since GH runners are not that stable
       FAIL_ON_PERF_REGRESSION: false
+      USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
     timeout-minutes: 40
     strategy:
       fail-fast: false
