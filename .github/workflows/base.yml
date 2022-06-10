@@ -73,6 +73,7 @@ env:
   QUARKUS_PATH: ${{ github.workspace }}/quarkus
   MANDREL_IT_PATH: ${{ github.workspace }}/mandrel-integration-tests
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
+  USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 
 jobs:
   get-test-matrix:
