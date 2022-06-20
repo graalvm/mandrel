@@ -230,8 +230,8 @@ jobs:
         mkdir -p "$Env:temp\jdk-dl"
         & $Env:MX_PATH\mx.cmd --java-home= fetch-jdk --java-distribution labsjdk-ce-$(("${{ inputs.jdk }}" -split "/")[0]) --to "$Env:temp\jdk-dl" --alias $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\java --version
-        & $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" build
-        ${graalvm-home} = @(& $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" graalvm-home)
+        & $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal,svml" build
+        ${graalvm-home} = @(& $Env:MX_PATH\mx.cmd --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal,svml" graalvm-home)
         rm -Recurse -Force $Env:JAVA_HOME
         mv ${graalvm-home} $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\native-image --version

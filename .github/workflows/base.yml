@@ -211,8 +211,8 @@ jobs:
       if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
       run: |
         cd graal/substratevm
-        ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" build
-        mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal" graalvm-home) ${MANDREL_HOME}
+        ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal,svml" build
+        mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal,svml" graalvm-home) ${MANDREL_HOME}
         ${MANDREL_HOME}/bin/native-image --version
     - name: Tar GraalVM
       if: ${{ inputs.build-from-source == true && inputs.distribution == 'graalvm' && inputs.builder-image == 'null' }}
