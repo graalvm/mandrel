@@ -309,7 +309,7 @@ jobs:
     - name: Build quarkus
       run: |
         cd ${QUARKUS_PATH}
-        mvn -e -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml  -Dquickly
+        ./mvnw -e -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml  -Dquickly
     - name: Tar Maven Repo
       shell: bash
       run: tar -czvf maven-repo.tgz -C ~ .m2/repository
