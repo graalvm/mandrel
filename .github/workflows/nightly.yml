@@ -50,6 +50,8 @@ jobs:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "11/ea"
+      issue-number: "398"
+      issue-repo: "graalvm/mandrel"
   q-main-graal-latest:
     name: "Q main G latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
@@ -64,6 +66,8 @@ jobs:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "17/ea"
+      issue-number: "399"
+      issue-repo: "graalvm/mandrel"
   q-main-mandrel-17-latest-win:
     name: "Q main M 17 latest windows"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
@@ -71,6 +75,8 @@ jobs:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "17/ea"
+      issue-number: "400"
+      issue-repo: "graalvm/mandrel"
   q-main-graal-17-latest:
     name: "Q main G 17 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
