@@ -56,8 +56,8 @@ class Report implements Runnable {
 	public void run() {
 		try {
 			final boolean succeed = "success".equalsIgnoreCase(status);
-			if ("cancelled".equalsIgnoreCase(status)) {
-				System.out.println("Job status is `cancelled` - exiting");
+			if ("cancelled".equalsIgnoreCase(status) || "skipped".equalsIgnoreCase(status)) {
+				System.out.println("Job status is `cancelled` or `skipped` - exiting");
 				System.exit(0);
 			}
 

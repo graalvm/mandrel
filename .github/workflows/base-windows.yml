@@ -584,7 +584,7 @@ jobs:
 
   mandrel-integration-tests-report:
     name: Report results on GitHub
-    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' }}
+    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' && needs.mandrel-integration-tests.result != 'skipped' }}
     needs:
       - mandrel-integration-tests
     runs-on: ubuntu-latest
