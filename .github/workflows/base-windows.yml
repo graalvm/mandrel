@@ -371,6 +371,8 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     steps:
+      - name: Support longpaths on Windows
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v2
         with:
           repository: graalvm/mandrel
