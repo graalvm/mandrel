@@ -27,19 +27,3 @@ jobs:
         git fetch upstream master
         git merge --ff-only upstream/master
         git push --quiet origin graal/master
-  mandrel-master:
-    name: Keep master in sync with default
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout graal/master branch
-      uses: actions/checkout@v2
-      with:
-        ref: master
-        fetch-depth: 0
-    - name: Sync branch
-      run: |
-        git config --local user.email "fzakkak@redhat.com"
-        git config --local user.name "Foivos Zakkak through GH action"
-        git fetch origin default
-        git merge --ff-only origin/default
-        git push --quiet origin master
