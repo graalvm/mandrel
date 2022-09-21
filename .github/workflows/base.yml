@@ -305,7 +305,7 @@ jobs:
       run: |
         curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
     - name: Persist Mandrel or OpenJDK
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image != 'null'}}
       uses: actions/upload-artifact@v2
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
