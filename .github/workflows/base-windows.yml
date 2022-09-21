@@ -529,7 +529,7 @@ jobs:
 
   native-tests-report:
     name: Report results on GitHub
-    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' }}
+    if: ${{ always() && inputs.issue-number != 'null' && inputs.issue-number != '' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' }}
     needs:
       - native-tests
     runs-on: ubuntu-latest
