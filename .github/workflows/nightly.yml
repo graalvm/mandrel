@@ -32,44 +32,6 @@ jobs:
   ####
   # Test Quarkus main with latest graal sources built as Mandrel and GraalVM
   ####
-  q-main-mandrel-latest:
-    name: "Q main M latest"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
-      version: "graal/master"
-      jdk: "11/ea"
-      issue-number: "348"
-      issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "75"
-      build-stats-tag: "gha-linux-qmain-mlatest-jdk11ea"
-    secrets:
-      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-latest-win:
-    name: "Q main M latest windows"
-    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-    with:
-      quarkus-version: "main"
-      version: "graal/master"
-      jdk: "11/ea"
-      issue-number: "398"
-      issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "103"
-      build-stats-tag: "gha-win-qmain-mlatest-jdk11ea"
-    secrets:
-      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-graal-latest:
-    name: "Q main G latest"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
-      version: "graal/master"
-      build-type: "graal-source"
-      build-stats-tag: "gha-linux-qmain-glatest-jdk11"
-    secrets:
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-17-latest:
     name: "Q main M 17 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
