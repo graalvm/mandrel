@@ -51,6 +51,7 @@ on:
       mandrel-it-issue-number:
         type: string
         description: 'The issue number to report results to mandrel-integration-tests'
+        default: "null"
       build-stats-tag:
         type: string
         description: 'The tag to use for build stats upload of native tests (e.g. 22.3.0-dev-jdk17-mytest-patch-before)'
