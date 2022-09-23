@@ -219,7 +219,8 @@ jobs:
             Set-Content "Env:\$($matches[1])" $matches[2]
           }
         }
-        & $Env:JAVA_HOME\bin\java -ea $Env:MANDREL_PACKAGING_REPO\build.java `
+        Set-Location -Path $Env:MANDREL_PACKAGING_REPO
+        & $Env:JAVA_HOME\bin\java -ea build.java `
           --mx-home $Env:MX_PATH `
           --mandrel-repo $Env:MANDREL_REPO `
           --mandrel-home $Env:MANDREL_HOME

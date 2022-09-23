@@ -209,7 +209,8 @@ jobs:
     - name: Build Mandrel
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       run: |
-        ${JAVA_HOME}/bin/java -ea ${MANDREL_PACKAGING_REPO}/build.java \
+        cd ${MANDREL_PACKAGING_REPO}
+        ${JAVA_HOME}/bin/java -ea build.java \
           --mx-home ${MX_PATH} \
           --mandrel-repo ${MANDREL_REPO} \
           --mandrel-home ${MANDREL_HOME} \
