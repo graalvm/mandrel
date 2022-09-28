@@ -5,9 +5,12 @@ on:
     branches:
     - default
     paths:
-    - .github/workflows/**
+    - .github/workflows/repo-sync.yml
   schedule:
-  - cron: '45 1 * * *'
+  - cron: '0 0 * * *'
+
+permissions:
+  contents: read|write
 
 jobs:
   graal-master:

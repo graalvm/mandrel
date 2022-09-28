@@ -1,24 +1,24 @@
 name: Mark stale issues and PRs
 
 on:
-  push:
-    branches:
-    - master
-    paths:
-    - .github/workflows/**
   schedule:
-  - cron: '0 3 * * *'
+  - cron: '0 0 * * *'
+
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
   mark-stale-issues-and-prs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v3
+    - uses: actions/stale@v6
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: 'This issue appears to be stale because it has been open 30 days with no activity. This issue will be closed in 7 days unless `Stale` label is removed, a new comment is made, or `not-Stale` label is added.'
         exempt-issue-labels: 'not-Stale'
         stale-pr-message: 'This PR appears to be stale because it has been open 30 days with no activity. This PR will be closed in 7 days unless `Stale` label is removed, a new comment is made, or `not-Stale` label is added.'
         exempt-pr-labels: 'not-Stale'
+        labels-to-remove-when-unstale: 'Stale'
         days-before-stale: 30
         days-before-close: 7
