@@ -168,7 +168,7 @@ jobs:
       - get-test-matrix
       - build-vars
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         repository: ${{ inputs.repo }}
@@ -176,7 +176,7 @@ jobs:
         ref: ${{ inputs.version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -186,13 +186,13 @@ jobs:
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
-    - uses: actions/cache@v2.1.5
+    - uses: actions/cache@v3.1.5
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         path: ~/.mx
@@ -233,7 +233,7 @@ jobs:
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel build
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -245,7 +245,7 @@ jobs:
       - get-test-matrix
       - build-vars
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       with:
         repository: ${{ inputs.repo }}
@@ -253,7 +253,7 @@ jobs:
         ref: ${{ inputs.version }}
         path: graal
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -263,7 +263,7 @@ jobs:
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
-    - uses: actions/cache@v2.1.5
+    - uses: actions/cache@v3.1.5
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       with:
         path: ~/.mx
@@ -293,7 +293,7 @@ jobs:
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist GraalVM CE build
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -343,7 +343,7 @@ jobs:
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel/GraalVM or OpenJDK
       if: fromJson(needs.build-vars.outputs.build-from-source) == false #|| inputs.builder-image != 'null'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -356,18 +356,18 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: graalvm/mandrel
         fetch-depth: 1
         path: workflow-mandrel
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: ${{ inputs.quarkus-repo }}
         fetch-depth: 1
         ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
         path: quarkus
-    - uses: actions/cache@v2.1.5
+    - uses: actions/cache@v3.1.5
       with:
         path: ~/.m2/repository
         key: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -395,7 +395,7 @@ jobs:
       shell: bash
       run: tar -I 'pigz -9' -cf maven-repo.tgz -C ~ .m2/repository
     - name: Persist Maven Repo
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: win-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: maven-repo.tgz
@@ -422,7 +422,7 @@ jobs:
     steps:
       - name: Support longpaths on Windows
         run: git config --global core.longpaths true
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
@@ -437,14 +437,14 @@ jobs:
         if: startsWith(matrix.os-name, 'windows')
         shell: bash
         run: tar -xzf maven-repo.tgz -C ~
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: startsWith(matrix.os-name, 'windows')
         with:
           repository: ${{ inputs.quarkus-repo }}
           fetch-depth: 1
           ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
           path: ${{ env.QUARKUS_PATH }}
-      - uses: actions/cache@v2.1.5
+      - uses: actions/cache@v3.1.5
         if: startsWith(matrix.os-name, 'windows')
         with:
           path: ~/.m2/repository
@@ -512,7 +512,7 @@ jobs:
         shell: bash
         run: find . -type d -name '*-reports' -o -wholename '*/build/reports/tests/functionalTest' | tar czvf test-reports.tgz -T -
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: win-test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -523,7 +523,7 @@ jobs:
         run: find . -name '*runner*.json' | tar czvf build-stats.tgz -T -
       - name: Upload build JSON stats
         if: ${{ always() && inputs.build-stats-tag != 'null' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
@@ -535,12 +535,12 @@ jobs:
       - native-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -571,7 +571,7 @@ jobs:
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
@@ -609,12 +609,12 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: Karm/mandrel-integration-tests
           fetch-depth: 1
@@ -671,7 +671,7 @@ jobs:
         shell: bash
         run: tar czvf test-reports-mandrel-it.tgz ./testsuite/target/archived-logs/
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: win-test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -684,12 +684,12 @@ jobs:
       - mandrel-integration-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'

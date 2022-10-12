@@ -167,7 +167,7 @@ jobs:
       - get-test-matrix
       - build-vars
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
         repository: ${{ inputs.repo }}
@@ -175,7 +175,7 @@ jobs:
         ref: ${{ inputs.version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -184,13 +184,13 @@ jobs:
         VERSION=$(find ${MANDREL_REPO} -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
-    - uses: actions/cache@v2.1.5
+    - uses: actions/cache@v3.1.5
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
         path: ~/.mx
@@ -219,7 +219,7 @@ jobs:
         mv mandrel-java*-linux-amd64-*.tar.gz ${{ github.workspace }}/jdk.tgz
     - name: Persist Mandrel build
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -231,7 +231,7 @@ jobs:
       - get-test-matrix
       - build-vars
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       with:
         repository: ${{ inputs.repo }}
@@ -239,7 +239,7 @@ jobs:
         ref: ${{ inputs.version }}
         path: graal
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -248,7 +248,7 @@ jobs:
         VERSION=$(find graal -name "suite.py" -exec grep mxversion {} + | cut -d '"' -f 4 | sort --unique --reverse | head -n 1)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
-    - uses: actions/cache@v2.1.5
+    - uses: actions/cache@v3.1.5
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       with:
         path: ~/.mx
@@ -271,7 +271,7 @@ jobs:
       run: tar czvf jdk.tgz  -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})
     - name: Persist GraalVM build
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -308,7 +308,7 @@ jobs:
         curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
     - name: Persist Mandrel or OpenJDK
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image != 'null'}}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -324,18 +324,18 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: graalvm/mandrel
         fetch-depth: 1
         path: workflow-mandrel
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: ${{ inputs.quarkus-repo }}
         fetch-depth: 1
         ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
         path: ${{ env.QUARKUS_PATH }}
-    - uses: actions/cache@v2.1.5
+    - uses: actions/cache@v3.1.5
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -367,7 +367,7 @@ jobs:
       shell: bash
       run: tar -czvf maven-repo.tgz -C ~ .m2/repository
     - name: Persist Maven Repo
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: maven-repo.tgz
@@ -391,7 +391,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
@@ -418,7 +418,7 @@ jobs:
         run: |
           mkdir -p ${JAVA_HOME}
           tar -xzvf jdk.tgz -C ${JAVA_HOME} --strip-components=1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: "!startsWith(matrix.os-name, 'windows')"
         with:
           repository: ${{ inputs.quarkus-repo }}
@@ -479,7 +479,7 @@ jobs:
         shell: bash
         run: find . -type d -name '*-reports' -o -wholename '*/build/reports/tests/functionalTest' | tar czvf test-reports.tgz -T -
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -490,7 +490,7 @@ jobs:
         run: find . -name '*runner*.json' | tar czvf build-stats.tgz -T -
       - name: Upload build JSON stats
         if: ${{ always() && inputs.build-stats-tag != 'null' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
@@ -502,12 +502,12 @@ jobs:
       - native-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -538,7 +538,7 @@ jobs:
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
@@ -573,12 +573,12 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: Karm/mandrel-integration-tests
           fetch-depth: 1
@@ -637,7 +637,7 @@ jobs:
         if: failure()
         run: tar czvf test-reports-mandrel-it.tgz ${MANDREL_IT_PATH}/testsuite/target/archived-logs/
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -650,12 +650,12 @@ jobs:
       - mandrel-integration-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'
