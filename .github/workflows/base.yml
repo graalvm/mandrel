@@ -106,7 +106,7 @@ jobs:
           exit 1
         fi
         echo "source_build=$source_build"
-        echo "::set-output name=build-from-source::$source_build"
+        echo "build-from-source=$source_build" >> $GITHUB_OUTPUT
     - name: Set distribution output
       id: distro
       run: |
@@ -122,7 +122,7 @@ jobs:
           exit 1
         fi
         echo "distro=$distro"
-        echo "::set-output name=distribution::$distro"
+        echo "distribution=$distro" >> $GITHUB_OUTPUT
 
   get-test-matrix:
     name: Get test matrix
@@ -136,7 +136,7 @@ jobs:
       run: |
         export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j '. | to_entries[] | "-\(.value)"' | tr '":<>|*?\r\n\/' '-')
         echo $SUFFIX
-        echo "::set-output name=suffix::$SUFFIX"
+        echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
     - name: Get Quarkus version and test matrix
       id: version
       run: |
@@ -154,11 +154,11 @@ jobs:
           export QUARKUS_VERSION=${{ inputs.quarkus-version }}
         fi
         echo ${QUARKUS_VERSION}
-        echo "::set-output name=quarkus-version::${QUARKUS_VERSION}"
+        echo "quarkus-version=${QUARKUS_VERSION}" >> $GITHUB_OUTPUT
         curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
         tests_json=$(tr -d '\n' < native-tests.json)
         echo ${tests_json}
-        echo "::set-output name=tests-matrix::${tests_json}"
+        echo "tests-matrix=${tests_json}" >> $GITHUB_OUTPUT
 
   build-mandrel:
     name: Mandrel build
