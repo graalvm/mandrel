@@ -192,7 +192,7 @@ jobs:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
-    - uses: actions/cache@v3.1.5
+    - uses: actions/cache@v3
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         path: ~/.mx
@@ -263,7 +263,7 @@ jobs:
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
-    - uses: actions/cache@v3.1.5
+    - uses: actions/cache@v3
       if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       with:
         path: ~/.mx
@@ -367,7 +367,7 @@ jobs:
         fetch-depth: 1
         ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
         path: quarkus
-    - uses: actions/cache@v3.1.5
+    - uses: actions/cache@v3
       with:
         path: ~/.m2/repository
         key: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -429,7 +429,7 @@ jobs:
           path: workflow-mandrel
       - name: Download Maven Repo
         if: startsWith(matrix.os-name, 'windows')
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: win-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -444,7 +444,7 @@ jobs:
           fetch-depth: 1
           ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
           path: ${{ env.QUARKUS_PATH }}
-      - uses: actions/cache@v3.1.5
+      - uses: actions/cache@v3
         if: startsWith(matrix.os-name, 'windows')
         with:
           path: ~/.m2/repository
@@ -452,7 +452,7 @@ jobs:
           restore-keys: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
       - name: Download Mandrel or OpenJDK
         if: startsWith(matrix.os-name, 'windows')
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -576,7 +576,7 @@ jobs:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v3
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -619,7 +619,7 @@ jobs:
           repository: Karm/mandrel-integration-tests
           fetch-depth: 1
       - name: Download Maven Repo
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: win-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -627,7 +627,7 @@ jobs:
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
       - name: Download Mandrel or OpenJDK
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
