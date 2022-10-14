@@ -45,111 +45,39 @@ jobs:
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "11/ea"
-  q-main-ea:
-    name: "Q main M 21.3 EA"
+  q-2.13-ea:
+    name: "Q 2.13 M 21.3 EA"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
-      quarkus-version: "main"
+      quarkus-version: "2.13"
       repo: ${{ github.repository }}
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "11/ea"
-  q-main-ea-win:
-    name: "Q main M 21.3 windows EA"
+  q-2.13-ea-win:
+    name: "Q 2.13 M 21.3 windows EA"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
-      quarkus-version: "main"
+      quarkus-version: "2.13"
       repo: ${{ github.repository }}
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "11/ea"
-  q-latest-ea:
-    name: "Q latest M 21.3 EA"
+  q-2.13-17-ea:
+    name: "Q 2.13 M 17 21.3 EA"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
-      quarkus-version: "latest"
-      repo: ${{ github.repository }}
-      version: ${{ github.ref }}
-      mandrel-packaging-version: "21.3"
-      jdk: "11/ea"
-  q-latest-ea-win:
-    name: "Q latest M 21.3 windows EA"
-    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-    with:
-      quarkus-version: "latest"
-      repo: ${{ github.repository }}
-      version: ${{ github.ref }}
-      mandrel-packaging-version: "21.3"
-      jdk: "11/ea"
-  q-main-17-ea:
-    name: "Q main M 17 21.3 EA"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
+      quarkus-version: "2.13"
       repo: ${{ github.repository }}
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "17/ea"
-  q-main-17-ea-win:
-    name: "Q main M 17 21.3 windows EA"
+  q-2.13-17-ea-win:
+    name: "Q 2.13 M 17 21.3 windows EA"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
-      quarkus-version: "main"
+      quarkus-version: "2.13"
       repo: ${{ github.repository }}
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "17/ea"
-  # q-2_2-ga:
-  #   name: "Q 2.2 M 21.3"
-  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
-  #   with:
-  #     quarkus-version: "2.2"
-  #     repo: ${{ github.repository }}
-  #     version: ${{ github.ref }}
-  #     mandrel-packaging-version: "21.3"
-  #     jdk: "11/ga"
-  # q-2_2-ga-win:
-  #   name: "Q 2.2 M 21.3 windows"
-  #   uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-  #   with:
-  #     quarkus-version: "2.2"
-  #     repo: ${{ github.repository }}
-  #     version: ${{ github.ref }}
-  #     mandrel-packaging-version: "21.3"
-  #     jdk: "11/ga"
-  # q-main-ga:
-  #   name: "Q main M 21.3"
-  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
-  #   with:
-  #     quarkus-version: "main"
-  #     repo: ${{ github.repository }}
-  #     version: ${{ github.ref }}
-  #     mandrel-packaging-version: "21.3"
-  #     jdk: "11/ga"
-  # q-main-ga-win:
-  #   name: "Q main M 21.3 windows"
-  #   uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-  #   with:
-  #     quarkus-version: "main"
-  #     repo: ${{ github.repository }}
-  #     version: ${{ github.ref }}
-  #     mandrel-packaging-version: "21.3"
-  #     jdk: "11/ga"
-  # q-latest-ga:
-  #   name: "Q latest M 21.3"
-  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
-  #   with:
-  #     quarkus-version: "latest"
-  #     repo: ${{ github.repository }}
-  #     version: ${{ github.ref }}
-  #     mandrel-packaging-version: "21.3"
-  #     jdk: "11/ga"
-  # q-latest-ga-win:
-  #   name: "Q latest M 21.3 windows"
-  #   uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-  #   with:
-  #     quarkus-version: "latest"
-  #     repo: ${{ github.repository }}
-  #     version: ${{ github.ref }}
-  #     mandrel-packaging-version: "21.3"
-  #     jdk: "11/ga"
