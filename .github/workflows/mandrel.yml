@@ -45,7 +45,7 @@ jobs:
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "11/ea"
-  q-2.13-ea:
+  q-2_13-ea:
     name: "Q 2.13 M 21.3 EA"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
@@ -54,7 +54,7 @@ jobs:
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "11/ea"
-  q-2.13-ea-win:
+  q-2_13-ea-win:
     name: "Q 2.13 M 21.3 windows EA"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
@@ -63,7 +63,7 @@ jobs:
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "11/ea"
-  q-2.13-17-ea:
+  q-2_13-17-ea:
     name: "Q 2.13 M 17 21.3 EA"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
@@ -72,7 +72,7 @@ jobs:
       version: ${{ github.ref }}
       mandrel-packaging-version: "21.3"
       jdk: "17/ea"
-  q-2.13-17-ea-win:
+  q-2_13-17-ea-win:
     name: "Q 2.13 M 17 21.3 windows EA"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
