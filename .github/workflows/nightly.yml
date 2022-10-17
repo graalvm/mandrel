@@ -72,32 +72,32 @@ jobs:
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
-  # Test Quarkus main with 22_0-dev built as Mandrel and GraalVM
+  # Test Quarkus 2.13 with 22_3-dev built as Mandrel and GraalVM
   ####
-  # q-main-mandrel-22_0-dev:
-  #   name: "Q main M 22.0-dev"
-  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
-  #   with:
-  #     quarkus-version: "main"
-  #     version: "mandrel/22.0"
-  #     jdk: "11/ea"
-  #     mandrel-packaging-version: "22.0"
-  # q-main-mandrel-22_0-dev-win:
-  #   name: "Q main M 22.0-dev windows"
-  #   uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-  #   with:
-  #     quarkus-version: "main"
-  #     version: "mandrel/22.0"
-  #     jdk: "11/ea"
-  #     mandrel-packaging-version: "22.0"
-  # q-main-graal-22_0-dev:
-  #   name: "Q main G 22.0-dev"
-  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
-  #   with:
-  #     quarkus-version: "main"
-  #     repo: "oracle/graal"
-  #     version: "release/graal-vm/22.0"
-  #     built-type: "graal-source"
+  q-2_13-mandrel-22_3-dev:
+    name: "Q 2.13 M 22.3-dev"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "2.13"
+      version: "mandrel/22.3"
+      jdk: "17/ea"
+      mandrel-packaging-version: "22.3"
+  q-2_13-mandrel-22_3-dev-win:
+    name: "Q 2.13 M 22.3-dev windows"
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+    with:
+      quarkus-version: "2.13"
+      version: "mandrel/22.3"
+      jdk: "17/ea"
+      mandrel-packaging-version: "22.3"
+  q-2_13-graal-22_3-dev:
+    name: "Q 2.13 G 22.3-dev"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "2.13"
+      repo: "oracle/graal"
+      version: "release/graal-vm/22.3"
+      build-type: "graal-source"
   ####
   # Test Quarkus with supported Mandrel versions using the Quay.io images
   ####
@@ -107,12 +107,12 @@ jobs:
     with:
       quarkus-version: "2.7"
       builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
-  q-main-mandrel-21_3-quayio:
-    name: "Q main M 21.3 image"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
-      builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
+  # q-main-mandrel-21_3-quayio:
+  #   name: "Q main M 21.3 image"
+  #   uses: graalvm/mandrel/.github/workflows/base.yml@default
+  #   with:
+  #     quarkus-version: "main"
+  #     builder-image: "quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
   ####
   # Test Quarkus main with supported Mandrel versions using the release archives
   ####
