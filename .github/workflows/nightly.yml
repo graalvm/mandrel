@@ -98,6 +98,7 @@ jobs:
       repo: "oracle/graal"
       version: "release/graal-vm/22.3"
       build-type: "graal-source"
+      jdk: "17/ea"
   ####
   # Test Quarkus with supported Mandrel versions using the Quay.io images
   ####
