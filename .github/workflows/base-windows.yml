@@ -681,7 +681,7 @@ jobs:
 
   mandrel-integration-tests-report:
     name: Report results on GitHub
-    if: ${{ always() && needs.build-vars.outputs.distribution == 'mandrel' inputs.mandrel-it-issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' && needs.mandrel-integration-tests.result != 'skipped' }}
+    if: ${{ always() && needs.build-vars.outputs.distribution == 'mandrel' && inputs.mandrel-it-issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' && needs.mandrel-integration-tests.result != 'skipped' }}
     needs:
       - build-vars
       - mandrel-integration-tests
