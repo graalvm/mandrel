@@ -36,7 +36,7 @@ Please report security vulnerabilities according to the [Reporting Vulnerabiliti
 ## Getting Started
 
 Mandrel distributions can be downloaded from [the repository's releases](https://github.com/graalvm/mandrel/releases)
-and container images are available at [quay.io](https://quay.io/repository/quarkus/ubi-quarkus-mandrel?tag=latest&tab=tags).
+and container images are available at [quay.io](https://quay.io/repository/quarkus/ubi-quarkus-mandrel-builder-image?tag=latest&tab=tags).
 
 ### Prerequisites
 
