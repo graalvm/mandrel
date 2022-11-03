@@ -142,7 +142,7 @@ jobs:
       run: |
         if [ ${{ inputs.quarkus-version }} == "latest" ]
         then
-          export QUARKUS_VERSION=$(curl https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/latest/ {print $3}')
+          export QUARKUS_VERSION=$(curl -s https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/Final/ {print $3}' | sort -V | tail -n 1)
         elif $(expr match "${{ inputs.quarkus-version }}" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
         then
           export QUARKUS_VERSION=${{ inputs.quarkus-version }}
