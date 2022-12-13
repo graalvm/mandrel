@@ -18,7 +18,7 @@ Mandrel's `native-image` also doesn't include the following features:
 * Support for generating static native images, i.e., the `--static` option.
 * Support for non JVM-based languages and polyglot, i.e., the `--language:<languageId>` option.
 
-Mandrel is also built slightly differently to GraalVM, using the standard OpenJDK project release of jdk11u.
+Mandrel is also built slightly differently to GraalVM, using the standard OpenJDK project release of jdk17u.
 This means it does not profit from a few small enhancements that Oracle have added to the version of OpenJDK used to build their own GraalVM downloads.
 Most of these enhancements are to the JVMCI module that allows the Graal compiler to be run inside OpenJDK.
 The others are small cosmetic changes to behaviour.
@@ -65,3 +65,12 @@ apt install g++ zlib1g-dev libfreetype6-dev
 For building Mandrel from source please see [mandrel-packaging](https://github.com/graalvm/mandrel-packaging)
 and consult [Repository Structure in CONTRIBUTING.md](CONTRIBUTING.md#repository-structure) regarding which branch of Mandrel to use.
 
+# Community
+Empowering Software Development with Works on Arm Initiative
+![Works on Arm logo](img/works_on_arm_900x77.png)
+[Works on Arm](https://www.arm.com/solutions/infrastructure/works-on-arm) is a strategic initiative to enable and accelerate the
+software ecosystem for Arm64.
+
+[GraalVM's](https://www.graalvm.org/) [Mandrel](https://github.com/graalvm/mandrel) distribution that
+powers [Quarkus Native](https://quarkus.io/guides/building-native-image) proudly counts itself among the libraries and
+tools that successfully leveraged the resources from Works on Arm.
