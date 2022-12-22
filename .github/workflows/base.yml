@@ -473,7 +473,7 @@ jobs:
             fi
             unset IFS
           fi
-          ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS
+          ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS
       - name: Prepare failure archive (if maven failed)
         if: failure()
         shell: bash

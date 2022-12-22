@@ -503,7 +503,7 @@ jobs:
           $opts=@()
           -split $Env:NATIVE_TEST_MAVEN_OPTS | foreach { $opts += "`"$_`"" }
           #if ( "${{ inputs.builder-image }}" -eq "null" ) {
-          mvn -f integration-tests -pl "$Env:TEST_MODULES" $opts install
+          mvn -f integration-tests -pl "$Env:TEST_MODULES" -amd $opts install
           #} else {
           #  mvn -pl $do_modules "-Dquarkus.native.container-build=true" "-Dquarkus.native.builder-image=${{ inputs.builder-image }}" $opts package
           #}
