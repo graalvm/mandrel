@@ -71,3 +71,23 @@ jobs:
       build-stats-tag: "gha-linux-qmain-glatest-jdk17ea"
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  q-main-mandrel-20-latest:
+    name: "Q main M 20 latest"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "20/ea"
+      build-stats-tag: "gha-linux-qmain-mlatest-jdk20ea"
+    secrets:
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  q-main-mandrel-20-latest-win:
+    name: "Q main M 20 latest windows"
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "20/ea"
+      build-stats-tag: "gha-win-qmain-mlatest-jdk20ea"
+    secrets:
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}

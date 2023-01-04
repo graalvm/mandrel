@@ -45,12 +45,14 @@ on:
       jdk:
         type: choice
         description: 'OpenJDK to use. One of 11/ga, 11/ea, 17/ga, 17/ea (/ga and /ea suffixes are only relevant when building from source)'
-        default: "11/ga"
+        default: "17/ga"
         options:
           - "11/ga"
           - "11/ea"
           - "17/ga"
           - "17/ea"
+          - "20/ga"
+          - "20/ea"
       builder-image:
         type: string
         description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
