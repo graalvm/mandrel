@@ -381,14 +381,13 @@ jobs:
           cd quarkus
           bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
         fi
+    # Use Java 17 to build Quarkus as it doesn't build with Java 20
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
     - name: Build quarkus
       run: |
-        curl -L https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
-        export JAVA_HOME=$(pwd)/openjdk
-        echo ${JAVA_HOME}
-        mkdir -p ${JAVA_HOME}
-        tar xf jdk.tar.gz -C ${JAVA_HOME} --strip-components=1
-        ${JAVA_HOME}/bin/java -version
         cd quarkus
         ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly
     - name: Tar Maven Repo
