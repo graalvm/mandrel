@@ -369,6 +369,9 @@ jobs:
   native-tests:
     name: Q IT ${{ matrix.category }}
     needs:
+      - build-mandrel
+      - build-graal
+      - get-jdk
       - build-quarkus
       - get-test-matrix
     runs-on: ubuntu-latest
@@ -553,6 +556,8 @@ jobs:
     if: ${{ needs.build-vars.outputs.distribution == 'mandrel' }}
     needs:
       - build-vars
+      - build-mandrel
+      - get-jdk
       - build-quarkus
       - get-test-matrix
     runs-on: ubuntu-latest
