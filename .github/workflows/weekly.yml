@@ -30,14 +30,36 @@ concurrency:
 
 jobs:
   ####
-  # Test Quarkus latest with 22_3 quayio images
+  # Test GraalVM tip with JDK 17
   ####
-  q-latest-mandrel-22_3-quayio:
-    name: "Q latest M 22.3 image"
+  q-main-mandrel-17-latest:
+    name: "Q main M 17 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
-      quarkus-version: "latest"
-      builder-image: "quay.io/quarkus/ubi-quarkus-mandrel-builder-image:22.3-java17"
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "17/ea"
+      issue-number: "399"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "102"
+      build-stats-tag: "gha-linux-qmain-mlatest-jdk17ea"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  q-main-mandrel-17-latest-win:
+    name: "Q main M 17 latest windows"
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "17/ea"
+      issue-number: "400"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "104"
+      build-stats-tag: "gha-win-qmain-mlatest-jdk17ea"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
   # Test Quarkus 2.13 with 22_3 quayio images
   ####
