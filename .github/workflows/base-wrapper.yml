@@ -44,7 +44,7 @@ on:
           - "graal-release"
       jdk:
         type: choice
-        description: 'OpenJDK to use. One of 11/ga, 11/ea, 17/ga, 17/ea (/ga and /ea suffixes are only relevant when building from source)'
+        description: 'OpenJDK to use. One of <feature-version>/ga, <feature-version>/ea, e.g. 17/ga or 17/ea (/ga and /ea suffixes are only relevant when building from source)'
         default: "17/ga"
         options:
           - "11/ga"
@@ -52,7 +52,8 @@ on:
           - "17/ga"
           - "17/ea"
           - "20/ga"
-          - "20/ea"
+          - "21/ga"
+          - "21/ea"
       builder-image:
         type: string
         description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'

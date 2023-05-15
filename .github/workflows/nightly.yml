@@ -32,34 +32,34 @@ jobs:
   ####
   # Test Quarkus main with latest graal sources built as Mandrel and GraalVM
   ####
-  q-main-graal-20-latest:
-    name: "Q main G 20 latest"
+  q-main-graal-21-latest:
+    name: "Q main G 21 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
       build-type: "graal-source"
-      jdk: "20/ea"
-      build-stats-tag: "gha-linux-qmain-glatest-jdk20ea"
+      jdk: "21/ea"
+      build-stats-tag: "gha-linux-qmain-glatest-jdk21ea"
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-20-latest:
-    name: "Q main M 20 latest"
+  q-main-mandrel-21-latest:
+    name: "Q main M 21 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
-      jdk: "20/ea"
-      build-stats-tag: "gha-linux-qmain-mlatest-jdk20ea"
+      jdk: "21/ea"
+      build-stats-tag: "gha-linux-qmain-mlatest-jdk21ea"
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-20-latest-win:
-    name: "Q main M 20 latest windows"
+  q-main-mandrel-21-latest-win:
+    name: "Q main M 21 latest windows"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
-      jdk: "20/ea"
-      build-stats-tag: "gha-win-qmain-mlatest-jdk20ea"
+      jdk: "21/ea"
+      build-stats-tag: "gha-win-qmain-mlatest-jdk21ea"
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
