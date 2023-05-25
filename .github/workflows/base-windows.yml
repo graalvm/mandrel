@@ -74,6 +74,7 @@ env:
   NATIVE_TEST_MAVEN_OPTS: "-Dtest-containers -Dstart-containers -DfailIfNoTests=false -Dquarkus.native.native-image-xmx=5g -Dnative -Dnative.surefire.skip -Dformat.skip -Dno-descriptor-tests -DskipDocs"
   MX_GIT_CACHE: refcache
   JAVA_HOME: ${{ github.workspace }}\openjdk
+  GRAALVM_HOME: ${{ github.workspace }}\graalvm-home
   MANDREL_REPO: ${{ github.workspace }}\mandrel
   MANDREL_HOME: ${{ github.workspace }}\..\mandrelvm
   MX_PATH: ${{ github.workspace }}\mx
@@ -328,21 +329,12 @@ jobs:
         Move-Item -Path "$Env:temp\graalvm-*" -Destination $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\gu install native-image
         & $Env:JAVA_HOME\bin\native-image --version
-    # - name: Get OpenJDK ${{ inputs.jdk }}
-    #   if: inputs.builder-image != 'null'
-    #   run: |
-    #     $wc = New-Object System.Net.WebClient
-    #     $url="https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse"
-    #     $wc.DownloadFile($($url), "jdk.zip")
-    #     Expand-Archive "jdk.zip" -DestinationPath "$Env:temp"
-    #     Move-Item -Path "$Env:temp\jdk-*" -Destination $Env:JAVA_HOME
-    #     & $Env:JAVA_HOME\bin\java -version
     - name: Archive JDK
-      if: fromJson(needs.build-vars.outputs.build-from-source) == false #|| inputs.builder-image != 'null'
+      if: fromJson(needs.build-vars.outputs.build-from-source) == false
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
-    - name: Persist Mandrel/GraalVM or OpenJDK
-      if: fromJson(needs.build-vars.outputs.build-from-source) == false #|| inputs.builder-image != 'null'
+    - name: Persist Mandrel or GraalVM
+      if: fromJson(needs.build-vars.outputs.build-from-source) == false
       uses: actions/upload-artifact@v3
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -449,19 +441,25 @@ jobs:
           path: ~/.m2/repository
           key: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
-      - name: Download Mandrel or OpenJDK
+      # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
+      - uses: actions/setup-java@v3
+        if: startsWith(matrix.os-name, 'windows')
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Download Mandrel or GraalVM
         if: startsWith(matrix.os-name, 'windows')
         uses: actions/download-artifact@v3
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
-      - name: Extract JDK
+      - name: Extract Mandrel or GraalVM
         if: startsWith(matrix.os-name, 'windows')
         shell: bash
         run: |
-          mkdir -p "${JAVA_HOME}"
-          tar -xzvf jdk.tgz -C openjdk --strip-components=1
-          ${JAVA_HOME}/bin/java -version
+          mkdir -p "${GRAALVM_HOME}"
+          tar -xzvf jdk.tgz -C graalvm-home --strip-components=1
+          ${GRAALVM_HOME}/bin/java -version
       # - name: Reclaim disk space
       #   shell: bash
       #   run: ${QUARKUS_PATH}/.github/ci-prerequisites.sh
@@ -626,17 +624,25 @@ jobs:
       - name: Extract Maven Repo
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
-      - name: Download Mandrel or OpenJDK
+      # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
+      - uses: actions/setup-java@v3
+        if: startsWith(matrix.os-name, 'windows')
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Download Mandrel or GraalVM
+        if: startsWith(matrix.os-name, 'windows')
         uses: actions/download-artifact@v3
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
-      - name: Extract JDK
+      - name: Extract Mandrel or GraalVM
+        if: startsWith(matrix.os-name, 'windows')
         shell: bash
         run: |
-          mkdir -p "${JAVA_HOME}"
-          tar -xzvf jdk.tgz -C openjdk --strip-components=1
-          ${JAVA_HOME}/bin/java -version
+          mkdir -p "${GRAALVM_HOME}"
+          tar -xzvf jdk.tgz -C ${GRAALVM_HOME} --strip-components=1
+          ${GRAALVM_HOME}/bin/java -version
       - name: Update Docker Client User Agent
         shell: bash
         run: |
@@ -649,8 +655,7 @@ jobs:
               Set-Content "Env:\$($matches[1])" $matches[2]
             }
           }
-          $Env:GRAALVM_HOME="$Env:JAVA_HOME"
-          $Env:PATH="$Env:JAVA_HOME\bin;$Env:PATH"
+          $Env:PATH="$Env:GRAALVM_HOME\bin;$Env:PATH"
           if (Test-Path "$Env:GRAALVM_HOME\bin\native-image.cmd" -PathType leaf) {
             & "$Env:GRAALVM_HOME\bin\native-image" --version
           } else {

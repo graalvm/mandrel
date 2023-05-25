@@ -73,6 +73,7 @@ env:
   NATIVE_TEST_MAVEN_OPTS: "--fail-at-end -Dtest-containers -Dstart-containers -DfailIfNoTests=false -Dquarkus.native.native-image-xmx=5g -Dnative -Dnative.surefire.skip -Dformat.skip -Dno-descriptor-tests install -DskipDocs"
   MX_GIT_CACHE: refcache
   JAVA_HOME: ${{ github.workspace }}/openjdk
+  GRAALVM_HOME: ${{ github.workspace }}/graalvm-home
   MANDREL_REPO: ${{ github.workspace }}/mandrel
   MANDREL_HOME: ${{ github.workspace }}/../mandrelvm
   MX_PATH: ${{ github.workspace }}/mx
@@ -304,12 +305,8 @@ jobs:
         ${JAVA_HOME}/bin/gu install native-image
         ${JAVA_HOME}/bin/native-image --version
         tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
-    - name: Get OpenJDK
-      if: ${{ inputs.builder-image != 'null' }}
-      run: |
-        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tgz
-    - name: Persist Mandrel or OpenJDK
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image != 'null'}}
+    - name: Persist Mandrel or GraalVM
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false }}
       uses: actions/upload-artifact@v3
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -402,18 +399,24 @@ jobs:
         if: "!startsWith(matrix.os-name, 'windows')"
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
-      - name: Download Mandrel or OpenJDK
+      # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
+      - uses: actions/setup-java@v3
+        if: "!startsWith(matrix.os-name, 'windows')"
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Download Mandrel or GraalVM
         if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v3
         with:
           name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
-      - name: Extract Mandrel or OpenJDK
+      - name: Extract Mandrel or GraalVM
         if: "!startsWith(matrix.os-name, 'windows')"
         shell: bash
         run: |
-          mkdir -p ${JAVA_HOME}
-          tar -xzvf jdk.tgz -C ${JAVA_HOME} --strip-components=1
+          mkdir -p ${GRAALVM_HOME}
+          tar -xzvf jdk.tgz -C ${GRAALVM_HOME} --strip-components=1
       - uses: actions/checkout@v3
         if: "!startsWith(matrix.os-name, 'windows')"
         with:
@@ -446,7 +449,6 @@ jobs:
         shell: bash
         run: |
           cd ${QUARKUS_PATH}
-          export GRAALVM_HOME="${JAVA_HOME}"
           if [[ ${{ inputs.builder-image }} == "null" ]]
           then
             export BUILDER_IMAGE=""
@@ -590,15 +592,24 @@ jobs:
           path: .
       - name: Extract Maven Repo
         run: tar -xzvf maven-repo.tgz -C ~
-      - name: Download Mandrel or OpenJDK
+      # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
+      - uses: actions/setup-java@v3
+        if: "!startsWith(matrix.os-name, 'windows')"
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Download Mandrel or GraalVM
+        if: "!startsWith(matrix.os-name, 'windows')"
         uses: actions/download-artifact@v3
         with:
           name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
-      - name: Extract Mandrel or OpenJDK
+      - name: Extract Mandrel or GraalVM
+        if: "!startsWith(matrix.os-name, 'windows')"
+        shell: bash
         run: |
-          mkdir -p ${JAVA_HOME}
-          tar -xzvf jdk.tgz -C ${JAVA_HOME} --strip-components=1
+          mkdir -p ${GRAALVM_HOME}
+          tar -xzvf jdk.tgz -C ${GRAALVM_HOME} --strip-components=1
       - name: Update Docker Client User Agent
         run: |
           cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json
@@ -609,7 +620,6 @@ jobs:
       - name: Build with Maven
         run: |
           cd ${MANDREL_IT_PATH}
-          export GRAALVM_HOME="${JAVA_HOME}"
           export PATH="${GRAALVM_HOME}/bin:$PATH"
           export QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
           # Don't use SNAPSHOT version for 2.2 and release tags
