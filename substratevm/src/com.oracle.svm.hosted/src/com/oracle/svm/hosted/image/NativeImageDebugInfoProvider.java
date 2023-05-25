@@ -27,6 +27,7 @@ package com.oracle.svm.hosted.image;
 
 import static com.oracle.objectfile.debuginfo.DebugInfoProvider.DebugFrameSizeChange.Type.CONTRACT;
 import static com.oracle.objectfile.debuginfo.DebugInfoProvider.DebugFrameSizeChange.Type.EXTEND;
+import static com.oracle.svm.hosted.c.info.AccessorInfo.AccessorKind.ADDRESS;
 import static com.oracle.svm.hosted.c.info.AccessorInfo.AccessorKind.GETTER;
 import static com.oracle.svm.hosted.c.info.AccessorInfo.AccessorKind.SETTER;
 
@@ -632,6 +633,11 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         }
 
         @Override
+        public boolean isEmbedded()  {
+            return false;
+        }
+
+        @Override
         public int modifiers() {
             return modifiers;
         }
@@ -788,6 +794,11 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
             }
 
             @Override
+            public boolean isEmbedded()  {
+                return false;
+            }
+
+            @Override
             public int modifiers() {
                 ResolvedJavaField targetField = field.wrapped.wrapped;
                 if (targetField instanceof SubstitutionField) {
@@ -868,7 +879,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         @Override
         public Stream<DebugFieldInfo> fieldInfoProvider() {
             // TODO - generate fields for Struct and RawStruct types derived from element info
-            return orderedFieldsStream(elementInfo).map(this::createForeignDebugFieldInfo);
+            return orderedFieldsStream(elementInfo).map(this::createDebugForeignFieldInfo);
         }
 
         @Override
@@ -876,8 +887,8 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
             return elementSize(elementInfo);
         }
 
-        DebugFieldInfo createForeignDebugFieldInfo(StructFieldInfo structFieldInfo) {
-            return new NativeImageForeignDebugFieldInfo(hostedType, structFieldInfo);
+        DebugFieldInfo createDebugForeignFieldInfo(StructFieldInfo structFieldInfo) {
+            return new NativeImageDebugForeignFieldInfo(hostedType, structFieldInfo);
         }
 
         @Override
@@ -968,10 +979,10 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         }
     }
 
-    private class NativeImageForeignDebugFieldInfo extends NativeImageDebugFileInfo implements DebugInfoProvider.DebugFieldInfo {
+    private class NativeImageDebugForeignFieldInfo extends NativeImageDebugFileInfo implements DebugInfoProvider.DebugFieldInfo {
         StructFieldInfo structFieldInfo;
 
-        NativeImageForeignDebugFieldInfo(HostedType hostedType, StructFieldInfo structFieldInfo) {
+        NativeImageDebugForeignFieldInfo(HostedType hostedType, StructFieldInfo structFieldInfo) {
             super(hostedType);
             this.structFieldInfo = structFieldInfo;
         }
@@ -996,6 +1007,12 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
             // we need to ensure the hosted type identified for the field value gets translated to
             // an original in order to be consistent with id types for substitutions
             return getOriginal(getFieldType(structFieldInfo));
+        }
+
+        @Override
+        public boolean isEmbedded() {
+            // this is true when the field has an ADDRESS accessor type
+            return fieldTypeIsEmbedded(structFieldInfo);
         }
 
         @Override
@@ -1275,10 +1292,51 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
                 }
             }
         }
+        for (ElementInfo elt : field.getChildren()) {
+            if (elt instanceof AccessorInfo) {
+                AccessorInfo accessorInfo = (AccessorInfo) elt;
+                if (accessorInfo.getAccessorKind() == ADDRESS) {
+                    return heap.hUniverse.lookup(accessorInfo.getReturnType());
+                }
+            }
+        }
         assert false : "Field %s must have a GETTER, SETTER, ADDRESS or OFFSET accessor".formatted(field);
         // treat it as a word?
         // n.b. we want a hosted type not an analysis type
         return heap.hUniverse.lookup(wordBaseType);
+    }
+
+    private boolean fieldTypeIsEmbedded(StructFieldInfo field) {
+        // we should always some sort of accessor, preferably a GETTER or a SETTER
+        // but possibly an ADDRESS accessor or even just an OFFSET accessor
+        for (ElementInfo elt : field.getChildren()) {
+            if (elt instanceof AccessorInfo) {
+                AccessorInfo accessorInfo = (AccessorInfo) elt;
+                if (accessorInfo.getAccessorKind() == GETTER) {
+                    return false;
+                }
+            }
+        }
+        for (ElementInfo elt : field.getChildren()) {
+            if (elt instanceof AccessorInfo) {
+                AccessorInfo accessorInfo = (AccessorInfo) elt;
+                if (accessorInfo.getAccessorKind() == SETTER) {
+                    return false;
+                }
+            }
+        }
+        for (ElementInfo elt : field.getChildren()) {
+            if (elt instanceof AccessorInfo) {
+                AccessorInfo accessorInfo = (AccessorInfo) elt;
+                if (accessorInfo.getAccessorKind() == ADDRESS) {
+                    return true;
+                }
+            }
+        }
+        assert false : "Field %s must have a GETTER, SETTER, ADDRESS or OFFSET accessor".formatted(field);
+        // treat it as a word?
+        // n.b. we want a hosted type not an analysis type
+        return false;
     }
 
     private int structFieldComparator(StructFieldInfo f1, StructFieldInfo f2) {
@@ -1313,7 +1371,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
 
     Stream<StructFieldInfo> orderedFieldsStream(ElementInfo elementInfo) {
         if (elementInfo instanceof RawStructureInfo || elementInfo instanceof StructInfo) {
-            return elementInfo.getChildren().stream().filter(elt -> isFieldWithGetterOrSetter(elt))
+            return elementInfo.getChildren().stream().filter(elt -> isTypedField(elt))
                             .map(elt -> ((StructFieldInfo) elt))
                             .sorted(this::structFieldComparator);
         } else {
@@ -1321,13 +1379,14 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         }
     }
 
-    boolean isFieldWithGetterOrSetter(ElementInfo elementInfo) {
+    boolean isTypedField(ElementInfo elementInfo) {
         if (elementInfo instanceof StructFieldInfo) {
             for (ElementInfo child : elementInfo.getChildren()) {
                 if (child instanceof AccessorInfo) {
                     switch (((AccessorInfo) child).getAccessorKind()) {
                         case GETTER:
                         case SETTER:
+                        case ADDRESS:
                             return true;
                     }
                 }
@@ -1373,6 +1432,10 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         if (elementInfo instanceof PropertyInfo<?>) {
             stringBuilder.append(" = ");
             formatPropertyInfo((PropertyInfo<?>) elementInfo, stringBuilder);
+        }
+        if (elementInfo instanceof AccessorInfo) {
+            stringBuilder.append(" ");
+            stringBuilder.append(((AccessorInfo) elementInfo).getAccessorKind());
         }
     }
 
