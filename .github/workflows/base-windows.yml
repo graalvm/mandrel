@@ -492,7 +492,6 @@ jobs:
             }
           }
           cd $Env:QUARKUS_PATH
-          $Env:GRAALVM_HOME="$Env:JAVA_HOME"
           Write-Host "$Env:GRAALVM_HOME"
           if (Test-Path "$Env:GRAALVM_HOME/bin/native-image" -PathType leaf) {
             & "$Env:GRAALVM_HOME/bin/native-image" --version
