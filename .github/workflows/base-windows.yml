@@ -448,13 +448,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Download Mandrel or GraalVM
-        if: "!startsWith(matrix.os-name, 'windows') && inputs.builder-image != 'null'"
+        if: "!startsWith(matrix.os-name, 'windows') && inputs.builder-image == 'null'"
         uses: actions/download-artifact@v3
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract Mandrel or GraalVM
-        if: "!startsWith(matrix.os-name, 'windows') && inputs.builder-image != 'null'"
+        if: "!startsWith(matrix.os-name, 'windows') && inputs.builder-image == 'null'"
         shell: bash
         run: |
           mkdir -p "${GRAALVM_HOME}"
