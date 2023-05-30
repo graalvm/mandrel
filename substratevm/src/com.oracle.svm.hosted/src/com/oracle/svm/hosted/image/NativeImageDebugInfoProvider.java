@@ -55,6 +55,7 @@ import com.oracle.svm.hosted.c.info.PointerToInfo;
 import com.oracle.svm.hosted.c.info.PropertyInfo;
 import com.oracle.svm.hosted.c.info.RawStructureInfo;
 import com.oracle.svm.hosted.c.info.SizableInfo;
+import com.oracle.svm.hosted.c.info.SizableInfo.ElementKind;
 import com.oracle.svm.hosted.c.info.StructFieldInfo;
 import com.oracle.svm.hosted.c.info.StructInfo;
 import com.oracle.svm.util.ClassUtil;
@@ -921,7 +922,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         @Override
         public boolean isPointer() {
             if (elementInfo != null && elementInfo instanceof SizableInfo) {
-                return ((SizableInfo) elementInfo).getKind() == SizableInfo.ElementKind.POINTER;
+                return ((SizableInfo) elementInfo).getKind() == ElementKind.POINTER;
             } else {
                 return false;
             }
@@ -930,7 +931,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         @Override
         public boolean isIntegral() {
             if (elementInfo != null && elementInfo instanceof SizableInfo) {
-                return ((SizableInfo) elementInfo).getKind() == SizableInfo.ElementKind.INTEGER;
+                return ((SizableInfo) elementInfo).getKind() == ElementKind.INTEGER;
             } else {
                 return false;
             }
@@ -939,7 +940,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         @Override
         public boolean isFloat() {
             if (elementInfo != null) {
-                return ((SizableInfo) elementInfo).getKind() == SizableInfo.ElementKind.FLOAT;
+                return ((SizableInfo) elementInfo).getKind() == ElementKind.FLOAT;
             } else {
                 return false;
             }
@@ -1250,7 +1251,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         return heap.hUniverse.lookup(wordBaseType);
     }
 
-    private boolean fieldTypeIsEmbedded(StructFieldInfo field) {
+    private static boolean fieldTypeIsEmbedded(StructFieldInfo field) {
         // we should always have some sort of accessor, preferably a GETTER or a SETTER
         // but possibly an ADDRESS
         for (ElementInfo elt : field.getChildren()) {
@@ -1286,7 +1287,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         return offset1 - offset2;
     }
 
-    private int elementSize(ElementInfo elementInfo) {
+    private static int elementSize(ElementInfo elementInfo) {
         if (elementInfo == null || !(elementInfo instanceof SizableInfo)) {
             return 0;
         }
@@ -1306,7 +1307,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         }
     }
 
-    private SizableInfo.ElementKind elementKind(SizableInfo sizableInfo) {
+    private static ElementKind elementKind(SizableInfo sizableInfo) {
         return sizableInfo.getKind();
     }
 
@@ -1320,7 +1321,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
         }
     }
 
-    private boolean isTypedField(ElementInfo elementInfo) {
+    private static boolean isTypedField(ElementInfo elementInfo) {
         if (elementInfo instanceof StructFieldInfo) {
             for (ElementInfo child : elementInfo.getChildren()) {
                 if (child instanceof AccessorInfo) {
