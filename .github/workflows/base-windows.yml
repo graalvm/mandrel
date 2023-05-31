@@ -637,7 +637,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p "${GRAALVM_HOME}"
-          tar -xzvf jdk.tgz -C ${GRAALVM_HOME} --strip-components=1
+          tar -xzvf jdk.tgz -C graalvm-home --strip-components=1
           ${GRAALVM_HOME}/bin/java -version
       - name: Update Docker Client User Agent
         shell: bash
