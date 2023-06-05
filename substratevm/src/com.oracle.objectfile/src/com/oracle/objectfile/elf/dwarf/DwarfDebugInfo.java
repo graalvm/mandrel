@@ -581,6 +581,7 @@ public class DwarfDebugInfo extends DebugInfoBase {
     }
 
     void setTypeIndex(TypeEntry typeEntry, int idx) {
+        assert idx >= 0;
         DwarfTypeProperties typeProperties = lookupTypeProperties(typeEntry);
         assert typeProperties.getTypeInfoIndex() == -1 || typeProperties.getTypeInfoIndex() == idx;
         typeProperties.setTypeInfoIndex(idx);
@@ -597,6 +598,7 @@ public class DwarfDebugInfo extends DebugInfoBase {
     }
 
     void setIndirectTypeIndex(TypeEntry typeEntry, int idx) {
+        assert idx >= 0;
         DwarfTypeProperties typeProperties = lookupTypeProperties(typeEntry);
         assert typeProperties.getIndirectTypeInfoIndex() == -1 || typeProperties.getIndirectTypeInfoIndex() == idx;
         typeProperties.setIndirectTypeInfoIndex(idx);
@@ -613,6 +615,7 @@ public class DwarfDebugInfo extends DebugInfoBase {
     }
 
     void setLayoutIndex(ClassEntry classEntry, int idx) {
+        assert idx >= 0;
         DwarfClassProperties classProperties = lookupClassProperties(classEntry);
         assert classProperties.getTypeEntry() == classEntry;
         assert classProperties.layoutIndex == -1 || classProperties.layoutIndex == idx;
@@ -628,6 +631,7 @@ public class DwarfDebugInfo extends DebugInfoBase {
     }
 
     void setIndirectLayoutIndex(ClassEntry classEntry, int idx) {
+        assert idx >= 0;
         DwarfClassProperties classProperties = lookupClassProperties(classEntry);
         assert classProperties.getTypeEntry() == classEntry;
         assert classProperties.indirectLayoutIndex == -1 || classProperties.indirectLayoutIndex == idx;
