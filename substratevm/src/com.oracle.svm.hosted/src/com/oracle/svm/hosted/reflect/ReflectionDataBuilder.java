@@ -154,6 +154,10 @@ public class ReflectionDataBuilder extends ConditionalConfigurationRegistry impl
 
     private void registerMethods(boolean queriedOnly, Executable[] methods) {
         for (Executable method : methods) {
+            if (method == null) {
+                throw new NullPointerException("Cannot register null value as method for reflection. " +
+                        "Please ensure that all values you register are not null.");
+            }
             ExecutableAccessibility oldValue;
             ExecutableAccessibility newValue;
             do {
@@ -178,6 +182,10 @@ public class ReflectionDataBuilder extends ConditionalConfigurationRegistry impl
     private void registerFields(Field[] fields) {
         // Unsafe and write accesses are always enabled for fields because accessors use Unsafe.
         for (Field field : fields) {
+            if (field == null) {
+                throw new NullPointerException("Cannot register null value as field for reflection. " +
+                        "Please ensure that all values you register are not null.");
+            }
             if (reflectionFields.add(field)) {
                 modifiedClasses.add(field.getDeclaringClass());
             }
