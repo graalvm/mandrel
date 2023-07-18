@@ -55,6 +55,7 @@ jobs:
       mandrel-it-issue-number: "168"
       build-stats-tag: "gha-linux-qmain-mlatest-jdk21ea"
     secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-21-latest-win:
     name: "Q main M 21 latest windows"
@@ -68,4 +69,5 @@ jobs:
       jdk: "21/ea"
       build-stats-tag: "gha-win-qmain-mlatest-jdk21ea"
     secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
