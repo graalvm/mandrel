@@ -976,12 +976,12 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
                 // annotation
                 CPointerTo cPointerTo = hostedType.getAnnotation(CPointerTo.class);
                 if (cPointerTo != null) {
-                    HostedType pointerTo = heap.hMetaAccess.lookupJavaType(cPointerTo.value());
+                    HostedType pointerTo = heap.getMetaAccess().lookupJavaType(cPointerTo.value());
                     return getOriginal(pointerTo);
                 }
                 RawPointerTo rawPointerTo = hostedType.getAnnotation(RawPointerTo.class);
                 if (rawPointerTo != null) {
-                    HostedType pointerTo = heap.hMetaAccess.lookupJavaType(rawPointerTo.value());
+                    HostedType pointerTo = heap.getMetaAccess().lookupJavaType(rawPointerTo.value());
                     return getOriginal(pointerTo);
                 }
             }
@@ -1233,7 +1233,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
             if (elt instanceof AccessorInfo) {
                 AccessorInfo accessorInfo = (AccessorInfo) elt;
                 if (accessorInfo.getAccessorKind() == GETTER) {
-                    return heap.hUniverse.lookup(accessorInfo.getReturnType());
+                    return heap.getUniverse().lookup(accessorInfo.getReturnType());
                 }
             }
         }
@@ -1241,7 +1241,7 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
             if (elt instanceof AccessorInfo) {
                 AccessorInfo accessorInfo = (AccessorInfo) elt;
                 if (accessorInfo.getAccessorKind() == SETTER) {
-                    return heap.hUniverse.lookup(accessorInfo.getParameterType(0));
+                    return heap.getUniverse().lookup(accessorInfo.getParameterType(0));
                 }
             }
         }
@@ -1249,14 +1249,14 @@ class NativeImageDebugInfoProvider implements DebugInfoProvider {
             if (elt instanceof AccessorInfo) {
                 AccessorInfo accessorInfo = (AccessorInfo) elt;
                 if (accessorInfo.getAccessorKind() == ADDRESS) {
-                    return heap.hUniverse.lookup(accessorInfo.getReturnType());
+                    return heap.getUniverse().lookup(accessorInfo.getReturnType());
                 }
             }
         }
         assert false : "Field %s must have a GETTER, SETTER, ADDRESS or OFFSET accessor".formatted(field);
         // treat it as a word?
         // n.b. we want a hosted type not an analysis type
-        return heap.hUniverse.lookup(wordBaseType);
+        return heap.getUniverse().lookup(wordBaseType);
     }
 
     private static boolean fieldTypeIsEmbedded(StructFieldInfo field) {
