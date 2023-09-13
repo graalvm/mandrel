@@ -524,6 +524,11 @@ jobs:
           else
             export BUILDER_IMAGE="-Dquarkus.native.container-build=true -Dquarkus.native.builder-image=${{ inputs.builder-image }}"
           fi
+          # Patch Gradle config to look for GraalVM dependencies in maven local repository
+          for i in `grep -rl includeGroupByRegex .`
+          do
+            sed -i "s/\(^ *includeGroupByRegex\)\( 'io.quarkus.*'\)/\1\2\n\1 'org.graalvm.*'/g" $i
+          done
           # Backwards compatibility with Quarkus < 2.x native-tests.json
           if ! echo $TEST_MODULES | grep ',' > /dev/null
           then
