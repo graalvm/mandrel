@@ -360,6 +360,7 @@ jobs:
       - get-test-matrix
       - build-mandrel
       - build-graal
+      - build-vars
     strategy:
       fail-fast: false
     steps:
@@ -393,21 +394,25 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
     - name: Download GraalVM Maven Repo
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
       uses: actions/download-artifact@v3
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: .
     - name: Download GraalVM Maven Version
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
       uses: actions/download-artifact@v3
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: .
     - name: Extract GraalVM Maven Repo and GraalVM Maven Version
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
       shell: bash
       run: |
         tar -xzvf graalvm-maven-artefacts.tgz -C ~
         tar -xzvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME})
-    - name: Build quarkus
+    - name: Build quarkus with local graalvm version
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
       run: |
         rm -f maven_graalvm_before_build.txt maven_graalvm_after_build.txt
         find ~/.m2/repository/org/graalvm | sort > maven_graalvm_before_build.txt
@@ -418,6 +423,12 @@ jobs:
         cd -
         find ~/.m2/repository/org/graalvm | sort > maven_graalvm_after_build.txt
         diff -u maven_graalvm_before_build.txt maven_graalvm_after_build.txt
+    - name: Build quarkus with default graalvm version
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image != 'null'}}
+      run: |
+        cd ${QUARKUS_PATH}
+        ./mvnw -e -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -Dquickly
+        cd -
     - name: Tar Maven Repo
       shell: bash
       run: |
@@ -427,11 +438,15 @@ jobs:
       with:
         name: maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: maven-repo.tgz
-    - name: Delete Local Artifacts From Cache
+    - name: Delete Local Quarkus Artifacts From Cache
+      shell: bash
+      run: |
+        rm -r ~/.m2/repository/io/quarkus
+    - name: Delete Local GraalVM Artifacts From Cache
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
       shell: bash
       run: |
         rm -rf ~/.m2/repository/org/graalvm
-        rm -r ~/.m2/repository/io/quarkus
 
   native-tests:
     name: Q IT ${{ matrix.category }}
