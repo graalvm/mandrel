@@ -30,7 +30,7 @@ on:
         default: "graalvm/mandrel-packaging"
       build-type:
         type: string
-        description: 'Build distribution (Mandrel/GraalVM) from source or grab a release'
+        description: 'Build distribution (Mandrel/GraalVM) from source or grab a release, and control of maven should deploy locally'
         default: "mandrel-source"
       jdk:
         type: string
@@ -85,11 +85,12 @@ env:
 
 jobs:
   build-vars:
-    name: Set distribution and build-from-source variables based on build-type
+    name: Set distribution, build-from-source, and maven-deploy-local variables based on build-type
     runs-on: ubuntu-latest
     outputs:
       build-from-source: ${{ steps.source-build.outputs.build-from-source }}
       distribution: ${{ steps.distro.outputs.distribution }}
+      maven-deploy-local: ${{ steps.maven-deploy-local.outputs.maven-deploy-local }}
     steps:
     - name: Set build-from-source output
       id: source-build
@@ -124,6 +125,18 @@ jobs:
         fi
         echo "distro=$distro"
         echo "distribution=$distro" >> $GITHUB_OUTPUT
+    - name: Set maven-deploy-local output
+      id: maven-deploy-local
+      run: |
+        bfs_token=$(echo ${{ inputs.build-type }} | cut -d'-' -f3)
+        if [ "${bfs_token}" == "nolocalmvn" ]
+        then
+          maven_deploy_local=""
+        else
+          maven_deploy_local="--maven-deploy-local"
+        fi
+        echo "maven_deploy_local=$maven_deploy_local"
+        echo "maven-deploy-local=$maven_deploy_local" >> $GITHUB_OUTPUT
 
   get-test-matrix:
     name: Get test matrix
@@ -210,20 +223,27 @@ jobs:
     - name: Build Mandrel
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       run: |
-        rm -rf ~/.m2/repository/org/graalvm
+        MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
+        if [ "$MVN_LOCAL" != "" ]
+        then
+          rm -rf ~/.m2/repository/org/graalvm
+        fi
         cd ${MANDREL_PACKAGING_REPO}
         ${JAVA_HOME}/bin/java -ea build.java \
           --mx-home ${MX_PATH} \
           --mandrel-repo ${MANDREL_REPO} \
           --mandrel-home ${MANDREL_HOME} \
           --archive-suffix tar.gz \
-          --maven-deploy-local
+          "${{needs.build-vars.outputs.maven-deploy-local}}"
         ${MANDREL_HOME}/bin/native-image --version
         mv mandrel-java*-linux-amd64-*.tar.gz ${{ github.workspace }}/jdk.tgz
-        rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
-        mv graalvm-maven-artefacts.tgz ${{ github.workspace }}
-        rm -rf graalvm-version.tgz && tar -czvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})/.maven-version
-        mv graalvm-version.tgz ${{ github.workspace }}
+        if [ "$MVN_LOCAL" != "" ]
+        then
+          rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
+          mv graalvm-maven-artefacts.tgz ${{ github.workspace }}
+          rm -rf graalvm-version.tgz && tar -czvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})/.maven-version
+          mv graalvm-version.tgz ${{ github.workspace }}
+        fi
     - name: Persist Mandrel build
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       uses: actions/upload-artifact@v3
@@ -231,13 +251,13 @@ jobs:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
     - name: Persist local maven repository
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/upload-artifact@v3
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
     - name: Persist GraalVM maven version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/upload-artifact@v3
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -283,21 +303,28 @@ jobs:
     - name: Build graalvm native-image
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       run: |
-        rm -rf ~/.m2/repository/org/graalvm
+        MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
+        if [ "$MVN_LOCAL" != "" ]
+        then
+          rm -rf ~/.m2/repository/org/graalvm
+        fi
         cd graal/substratevm
         ${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal,svml" build
         mv $(${MX_PATH}/mx --native=native-image,lib:jvmcicompiler,lib:native-image-agent,lib:native-image-diagnostics-agent --components="Native Image,LibGraal,svml" graalvm-home) ${MANDREL_HOME}
         ${MANDREL_HOME}/bin/native-image --version
-        cd ../
-        # Deploy maven artefacts to local repository
-        ${MX_PATH}/mx --primary-suite-path sdk maven-deploy --suppress-javadoc 2>&1 | tee maven_deploy.log
-        rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
-        mv graalvm-maven-artefacts.tgz ${{ github.workspace }}
-        MAVEN_VERS=$(for token in $(head -n1 maven_deploy.log); do if echo $token | grep -q 'SNAPSHOT'; then echo $token; fi; done)
-        echo "GraalVM maven version is: ${MAVEN_VERS}"
-        echo ${MAVEN_VERS} > ${MANDREL_HOME}/.maven-version
-        rm -rf graalvm-version.tgz && tar -czvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})/.maven-version
-        mv graalvm-version.tgz ${{ github.workspace }}
+        if [ "$MVN_LOCAL" != "" ]
+        then
+          cd ../
+          # Deploy maven artefacts to local repository
+          ${MX_PATH}/mx --primary-suite-path sdk maven-deploy --suppress-javadoc 2>&1 | tee maven_deploy.log
+          rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
+          mv graalvm-maven-artefacts.tgz ${{ github.workspace }}
+          MAVEN_VERS=$(for token in $(head -n1 maven_deploy.log); do if echo $token | grep -q 'SNAPSHOT'; then echo $token; fi; done)
+          echo "GraalVM maven version is: ${MAVEN_VERS}"
+          echo ${MAVEN_VERS} > ${MANDREL_HOME}/.maven-version
+          rm -rf graalvm-version.tgz && tar -czvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})/.maven-version
+          mv graalvm-version.tgz ${{ github.workspace }}
+        fi
     - name: Tar GraalVM
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       run: tar czvf jdk.tgz  -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})
@@ -308,13 +335,13 @@ jobs:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
     - name: Persist local maven repository
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/upload-artifact@v3
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
     - name: Persist GraalVM maven version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/upload-artifact@v3
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -394,25 +421,25 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
     - name: Download GraalVM Maven Repo
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/download-artifact@v3
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: .
     - name: Download GraalVM Maven Version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/download-artifact@v3
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: .
     - name: Extract GraalVM Maven Repo and GraalVM Maven Version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       shell: bash
       run: |
         tar -xzvf graalvm-maven-artefacts.tgz -C ~
         tar -xzvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME})
     - name: Build quarkus with local graalvm version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       run: |
         rm -f maven_graalvm_before_build.txt maven_graalvm_after_build.txt
         find ~/.m2/repository/org/graalvm | sort > maven_graalvm_before_build.txt
@@ -424,7 +451,7 @@ jobs:
         find ~/.m2/repository/org/graalvm | sort > maven_graalvm_after_build.txt
         diff -u maven_graalvm_before_build.txt maven_graalvm_after_build.txt
     - name: Build quarkus with default graalvm version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image != 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false || inputs.builder-image != 'null' ||  needs.build-vars.outputs.maven-deploy-local == ''}}
       run: |
         cd ${QUARKUS_PATH}
         ./mvnw -e -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -Dquickly
@@ -443,7 +470,7 @@ jobs:
       run: |
         rm -r ~/.m2/repository/io/quarkus
     - name: Delete Local GraalVM Artifacts From Cache
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null'}}
+      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       shell: bash
       run: |
         rm -rf ~/.m2/repository/org/graalvm

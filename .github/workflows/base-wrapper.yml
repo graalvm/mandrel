@@ -35,11 +35,13 @@ on:
         default: "graalvm/mandrel-packaging"
       build-type:
         type: choice
-        description: 'Build distribution (graal/mandrel) from source or use released binaries'
+        description: 'Build distribution (graal/mandrel) from source or use released binaries, and control of maven should deploy locally'
         default: "mandrel-source"
         options:
           - "mandrel-source"
           - "graal-source"
+          - "mandrel-source-nolocalmvn"
+          - "graal-source-nolocalmvn"
           - "mandrel-release"
           - "graal-release"
       jdk:
