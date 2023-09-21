@@ -47,23 +47,3 @@ jobs:
       version: ${{ github.ref }}
       mandrel-packaging-version: "23.0"
       jdk: "17/ea"
-  q-main-ea-20:
-    name: "Q main M 23.0 EA Java 20"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      build-type: "mandrel-source-nolocalmvn"
-      quarkus-version: "main"
-      repo: ${{ github.repository }}
-      version: ${{ github.ref }}
-      mandrel-packaging-version: "23.0"
-      jdk: "20/ea"
-  q-main-ea-win-20:
-    name: "Q main M 23.0 windows EA Java 20"
-    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-    with:
-      build-type: "mandrel-source-nolocalmvn"
-      quarkus-version: "main"
-      repo: ${{ github.repository }}
-      version: ${{ github.ref }}
-      mandrel-packaging-version: "23.0"
-      jdk: "20/ea"
