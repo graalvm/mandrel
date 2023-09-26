@@ -43,6 +43,7 @@ import com.oracle.svm.core.jdk.JDK19OrLater;
 import com.oracle.svm.core.jdk.JDK20OrEarlier;
 import com.oracle.svm.core.jdk.JDK20OrLater;
 import com.oracle.svm.core.jdk.JDK21OrLater;
+import com.oracle.svm.core.jdk.JDK21u3OrEarlier;
 import com.oracle.svm.core.jdk.LoomJDK;
 import com.oracle.svm.core.jfr.HasJfrSupport;
 import com.oracle.svm.core.jfr.SubstrateJVM;
@@ -62,8 +63,12 @@ public final class Target_java_lang_VirtualThread {
     @Alias static int PINNED;
     @Alias static int YIELDING;
     @Alias static int TERMINATED;
-    @Alias static int RUNNABLE_SUSPENDED;
-    @Alias static int PARKED_SUSPENDED;
+    @Alias //
+    @TargetElement(onlyWith = JDK21u3OrEarlier.class) //
+    static int RUNNABLE_SUSPENDED;
+    @Alias //
+    @TargetElement(onlyWith = JDK21u3OrEarlier.class) //
+    static int PARKED_SUSPENDED;
     @Alias static Target_jdk_internal_vm_ContinuationScope VTHREAD_SCOPE;
     // Checkstyle: resume
 
@@ -164,7 +169,7 @@ public final class Target_java_lang_VirtualThread {
             } else {
                 return Thread.State.RUNNABLE;
             }
-        } else if (state == RUNNABLE || state == RUNNABLE_SUSPENDED) {
+        } else if (state == RUNNABLE || (JDK21u3OrEarlier.jdk21u3OrEarlier && state == RUNNABLE_SUSPENDED)) {
             return Thread.State.RUNNABLE;
         } else if (state == RUNNING) {
             Object token = VirtualThreadHelper.acquireInterruptLockMaybeSwitch(this);
@@ -179,7 +184,7 @@ public final class Target_java_lang_VirtualThread {
             return Thread.State.RUNNABLE;
         } else if (state == PARKING || state == YIELDING) {
             return Thread.State.RUNNABLE;
-        } else if (state == PARKED || state == PARKED_SUSPENDED || state == PINNED) {
+        } else if (state == PARKED || (JDK21u3OrEarlier.jdk21u3OrEarlier && state == PARKED_SUSPENDED) || state == PINNED) {
             int parkedThreadStatus = MonitorSupport.singleton().getParkedThreadStatus(asThread(this), false);
             switch (parkedThreadStatus) {
                 case ThreadStatus.BLOCKED_ON_MONITOR_ENTER:
