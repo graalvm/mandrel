@@ -30,6 +30,37 @@ concurrency:
 
 jobs:
   ####
+  # Test Mandrel with JDK 22
+  ####
+  q-main-mandrel-jdk-22:
+    name: "Q main M latest JDK 22"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "22/ea"
+      issue-number: "580"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "208"
+      build-stats-tag: "gha-linux-qmain-mlatest-jdk22ea"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  q-main-mandrel-jdk-22-win:
+    name: "Q main M latest JDK 22 windows"
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+    with:
+      quarkus-version: "main"
+      version: "graal/master"
+      jdk: "22/ea"
+      issue-number: "579"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "207"
+      build-stats-tag: "gha-win-qmain-mlatest-jdk22ea"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  ####
   # Test Mandrel 23.1 with JDK 21
   ####
   q-main-mandrel-23_1:
