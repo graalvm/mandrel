@@ -717,7 +717,7 @@ jobs:
       # leave more space for the actual native compilation and execution
       MAVEN_OPTS: -Xmx1g
       # Don't perform performance checks since GH runners are not that stable
-      FAIL_ON_PERF_REGRESSION: false
+      FAIL_ON_PERF_REGRESSION: non_time_sensitive
       # USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
     timeout-minutes: 80
     strategy:
