@@ -44,6 +44,7 @@ import com.oracle.svm.core.jdk.JDK20OrEarlier;
 import com.oracle.svm.core.jdk.JDK20OrLater;
 import com.oracle.svm.core.jdk.JDK21OrLater;
 import com.oracle.svm.core.jdk.JDK21u3OrEarlier;
+import com.oracle.svm.core.jdk.JDK21u4OrLater;
 import com.oracle.svm.core.jdk.LoomJDK;
 import com.oracle.svm.core.jfr.HasJfrSupport;
 import com.oracle.svm.core.jfr.SubstrateJVM;
@@ -63,12 +64,10 @@ public final class Target_java_lang_VirtualThread {
     @Alias static int PINNED;
     @Alias static int YIELDING;
     @Alias static int TERMINATED;
-    @Alias //
-    @TargetElement(onlyWith = JDK21u3OrEarlier.class) //
-    static int RUNNABLE_SUSPENDED;
-    @Alias //
-    @TargetElement(onlyWith = JDK21u3OrEarlier.class) //
-    static int PARKED_SUSPENDED;
+    @Alias static int SUSPENDED;
+    @TargetElement(onlyWith = JDK21u4OrLater.class) @Alias static int TIMED_PARKING;
+    @TargetElement(onlyWith = JDK21u4OrLater.class) @Alias static int TIMED_PARKED;
+    @TargetElement(onlyWith = JDK21u4OrLater.class) @Alias static int TIMED_PINNED;
     @Alias static Target_jdk_internal_vm_ContinuationScope VTHREAD_SCOPE;
     // Checkstyle: resume
 
@@ -160,7 +159,7 @@ public final class Target_java_lang_VirtualThread {
 
     @Substitute
     Thread.State threadState() {
-        int state = state();
+        int state = state() & ~SUSPENDED;
         if (state == NEW) {
             return Thread.State.NEW;
         } else if (state == STARTED) {
@@ -169,7 +168,7 @@ public final class Target_java_lang_VirtualThread {
             } else {
                 return Thread.State.RUNNABLE;
             }
-        } else if (state == RUNNABLE || (JDK21u3OrEarlier.jdk21u3OrEarlier && state == RUNNABLE_SUSPENDED)) {
+        } else if (state == RUNNABLE) {
             return Thread.State.RUNNABLE;
         } else if (state == RUNNING) {
             Object token = VirtualThreadHelper.acquireInterruptLockMaybeSwitch(this);
@@ -184,7 +183,7 @@ public final class Target_java_lang_VirtualThread {
             return Thread.State.RUNNABLE;
         } else if (state == PARKING || state == YIELDING) {
             return Thread.State.RUNNABLE;
-        } else if (state == PARKED || (JDK21u3OrEarlier.jdk21u3OrEarlier && state == PARKED_SUSPENDED) || state == PINNED) {
+        } else if (state == PARKED || state == PINNED) {
             int parkedThreadStatus = MonitorSupport.singleton().getParkedThreadStatus(asThread(this), false);
             switch (parkedThreadStatus) {
                 case ThreadStatus.BLOCKED_ON_MONITOR_ENTER:
@@ -197,6 +196,12 @@ public final class Target_java_lang_VirtualThread {
             }
         } else if (state == TERMINATED) {
             return Thread.State.TERMINATED;
+        } else if (JDK21u4OrLater.jdk21u4OrLater) {
+            if (state == TIMED_PARKING) {
+                return Thread.State.RUNNABLE;
+            } else if (state == TIMED_PARKED || state == TIMED_PINNED) {
+                return Thread.State.TIMED_WAITING;
+            }
         }
         throw new InternalError();
     }
