@@ -61,10 +61,10 @@ jobs:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
-  # Test Mandrel 23.1 with JDK 21
+  # Test Q main and Mandrel 23.1 JDK 21
   ####
   q-main-mandrel-23_1:
-    name: "Q main M 23.1"
+    name: "Q main M 23.1 JDK 21"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
@@ -74,6 +74,7 @@ jobs:
       issue-repo: "graalvm/mandrel"
       mandrel-it-issue-number: "198"
       build-stats-tag: "gha-linux-qmain-m23_1-jdk21ea"
+      mandrel-packaging-version: "23.1"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
@@ -88,30 +89,39 @@ jobs:
       issue-repo: "graalvm/mandrel"
       mandrel-it-issue-number: "199"
       build-stats-tag: "gha-win-qmain-m23_1-jdk21ea"
+      mandrel-packaging-version: "23.1"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
-  # Test Quarkus 3.2 with 23_0 quayio images
+  # Test Q main and Mandrel 23.0 JDK 17
   ####
-  q-3_2-mandrel-23_0-quayio:
-    name: "Q 3.2 M 23.0 image"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "3.2.0.Final"
-      builder-image: "quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17"
-  ####
-  # Test Quarkus 2.13 with 22_3 quayio images
-  ####
-  q-2_13-mandrel-22_3-quayio:
-    name: "Q 2.13 M 22.3 image"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "2.13.8.Final"
-      builder-image: "quay.io/quarkus/ubi-quarkus-mandrel-builder-image:22.3-java17"
-  q-main-mandrel-22_3-quayio:
-    name: "Q main M 22.3 image"
+  q-main-mandrel-23_0:
+    name: "Q main M 23.0 JDK 17"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
-      builder-image: "quay.io/quarkus/ubi-quarkus-mandrel-builder-image:22.3-java17"
+      version: "mandrel/23.0"
+      jdk: "17/ea"
+      mandrel-packaging-version: "23.0"
+  ####
+  # Test Quarkus 3.2 with Mandrel 23.0 JDK 17
+  ####
+  q-3_2-mandrel-23_0:
+    name: "Q 3.2 M 23.0 JDK 17"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "3.2"
+      version: "mandrel/23.0"
+      jdk: "17/ea"
+      mandrel-packaging-version: "23.0"
+  ####
+  # Test Quarkus 2.13 with Mandrel 22.3 JDK 17 ####
+  q-2_13-mandrel-22_3:
+    name: "Q 2.13 M 22.3 image"
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    with:
+      quarkus-version: "2.13"
+      version: "mandrel/22.3"
+      jdk: "17/ea"
+      mandrel-packaging-version: "22.3"
