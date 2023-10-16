@@ -58,6 +58,7 @@ on:
           - "21/ea"
           - "22/ga"
           - "22/ea"
+          - "latest/labsjdk"
       builder-image:
         type: string
         description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
