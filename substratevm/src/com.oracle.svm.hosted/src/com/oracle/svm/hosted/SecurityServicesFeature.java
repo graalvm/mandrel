@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.ref.Reference;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -84,6 +85,7 @@ import javax.xml.crypto.dsig.TransformService;
 import javax.xml.crypto.dsig.XMLSignatureFactory;
 import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
 
+import com.oracle.svm.core.jdk.JceSecurityHasInnerClassWeakIdentityWrapper;
 import org.graalvm.compiler.options.Option;
 import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.graalvm.nativeimage.ImageSingletons;
@@ -848,7 +850,33 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
             };
         }
         /*
-         * For JDK 17 and later, the verification cache is an IdentityWrapper -> Verification result
+         * For JDK 17.0.10 and later, the verification cache is a WeakIdentityWrapper ->
+         * Verification result ConcurrentHashMap. The WeakIdentityWrapper contains the actual
+         * provider in the 'obj' field.
+         */
+        if (new JceSecurityHasInnerClassWeakIdentityWrapper().getAsBoolean()) {
+            Method getReferent = ReflectionUtil.lookupMethod(Reference.class, "get");
+            Predicate<Object> listRemovalPredicate = wrapper -> {
+                try {
+                    return shouldRemoveProvider((Provider) getReferent.invoke(wrapper));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw VMError.shouldNotReachHere(e);
+                }
+            };
+
+            return obj -> {
+                Map<Object, Object> original = (Map<Object, Object>) obj;
+                Map<Object, Object> verificationResults = new ConcurrentHashMap<>(original);
+
+                verificationResults.keySet().removeIf(listRemovalPredicate);
+
+                return verificationResults;
+            };
+
+        }
+
+        /*
+         * For JDK 17 up to 17.0.10, the verification cache is an IdentityWrapper -> Verification result
          * ConcurrentHashMap. The IdentityWrapper contains the actual provider in the 'obj' field.
          */
         Class<?> identityWrapper = loader.findClassOrFail("javax.crypto.JceSecurity$IdentityWrapper");
