@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ package com.oracle.svm.core.jdk;
 
 import static com.oracle.svm.core.snippets.KnownIntrinsics.readCallerStackPointer;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -43,6 +44,7 @@ import java.security.Provider;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
@@ -317,9 +319,25 @@ final class Target_javax_crypto_ProviderVerifier {
     }
 }
 
+final class QueueFieldPresent implements BooleanSupplier {
+    @Override
+    public boolean getAsBoolean() {
+        try {
+            Class<?> jceSecurity = Class.forName("javax.crypto.JceSecurity");
+            jceSecurity.getDeclaredField("queue");
+            return true;
+        } catch (ClassNotFoundException | NoSuchFieldException e) {
+            return false;
+        }
+    }
+}
+
 @TargetClass(className = "javax.crypto.JceSecurity")
 @SuppressWarnings({"unused"})
 final class Target_javax_crypto_JceSecurity {
+
+    @Alias @TargetElement(onlyWith = QueueFieldPresent.class)//
+    public static ReferenceQueue<Object> queue;
 
     /*
      * Lazily recompute the RANDOM field at runtime. We cannot push the entire static initialization
@@ -393,8 +411,7 @@ final class Target_javax_crypto_JceSecurity {
     }
 }
 
-@TargetClass(className = "javax.crypto.JceSecurity", innerClass = "IdentityWrapper", onlyWith = JDK17OrLater.class)
-@SuppressWarnings({"unused"})
+@TargetClass(className = "javax.crypto.JceSecurity", innerClass = "IdentityWrapper", onlyWith = JceSecurityHasInnerClassIdentityWrapper.class)
 final class Target_javax_crypto_JceSecurity_IdentityWrapper {
     @Alias //
     Provider obj;
@@ -402,6 +419,14 @@ final class Target_javax_crypto_JceSecurity_IdentityWrapper {
     @Alias //
     Target_javax_crypto_JceSecurity_IdentityWrapper(Provider obj) {
         this.obj = obj;
+    }
+}
+
+@TargetClass(className = "javax.crypto.JceSecurity", innerClass = "WeakIdentityWrapper", onlyWith = JceSecurityHasInnerClassWeakIdentityWrapper.class)
+final class Target_javax_crypto_JceSecurity_WeakIdentityWrapper {
+    @Alias //
+    Target_javax_crypto_JceSecurity_WeakIdentityWrapper(Provider obj, ReferenceQueue<Object> queue) {
+        // Do nothing this is just an alias
     }
 }
 
@@ -436,7 +461,12 @@ final class JceSecurityUtil {
         if (JavaVersionUtil.JAVA_SPEC <= 11) {
             return p;
         }
+
         /* Starting with JDK 17 the verification results map key is an identity wrapper object. */
+        if (new JceSecurityHasInnerClassWeakIdentityWrapper().getAsBoolean()) {
+            return new Target_javax_crypto_JceSecurity_WeakIdentityWrapper(p, Target_javax_crypto_JceSecurity.queue);
+        }
+
         return new Target_javax_crypto_JceSecurity_IdentityWrapper(p);
     }
 
