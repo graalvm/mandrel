@@ -263,6 +263,38 @@ jobs:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-version.tgz
 
+  build-mandrel-report:
+    name: Report Mandrel build failures on GitHub
+    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' && contains(needs.*.result, 'failure') }}
+    needs:
+      - build-mandrel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: graalvm/mandrel
+          fetch-depth: 1
+          path: workflow-mandrel
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Setup jbang and report results
+        env:
+          BOT_TOKEN: ${{ secrets.ISSUE_BOT_TOKEN }}
+        run: |
+          echo "Installing JBang"
+          wget https://github.com/jbangdev/jbang/releases/download/v0.87.0/jbang.zip
+          unzip jbang.zip
+          echo "Attempting to report results"
+          ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
+            token="${BOT_TOKEN}" \
+            status="${{ needs.build-mandrel.result }}" \
+            issueRepo="${{ inputs.issue-repo }}" \
+            issueNumber="${{ inputs.issue-number }}" \
+            thisRepo="${GITHUB_REPOSITORY}" \
+            runId="${GITHUB_RUN_ID}"
+
   build-graal:
     name: GraalVM CE build
     runs-on: ubuntu-latest
