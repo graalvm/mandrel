@@ -127,6 +127,7 @@ jobs:
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "3.2"
+      build-type: "mandrel-source-nolocalmvn"
       version: "mandrel/23.0"
       jdk: "17/ea"
       mandrel-packaging-version: "23.0"
@@ -137,6 +138,7 @@ jobs:
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "2.13"
+      build-type: "mandrel-source-nolocalmvn"
       version: "mandrel/22.3"
       jdk: "17/ea"
       mandrel-packaging-version: "22.3"
