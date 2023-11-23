@@ -66,7 +66,7 @@ jobs:
   ####
   q-main-graal-21-latest:
     name: "Q main G 21 latest"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2023-10-04-enable-perf-regression
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
@@ -80,7 +80,7 @@ jobs:
   ####
   q-main-mandrel-23_1:
     name: "Q main M 23.1 JDK 21"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2023-10-04-enable-perf-regression
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "mandrel/23.1"
@@ -95,7 +95,7 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-23_1-win:
     name: "Q main M 23.1 windows"
-    uses: zakkak/mandrel/.github/workflows/base-windows.yml@2023-10-04-enable-perf-regression
+    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
       quarkus-version: "main"
       version: "mandrel/23.1"
@@ -113,7 +113,7 @@ jobs:
   ####
   q-main-mandrel-23_0:
     name: "Q main M 23.0 JDK 17"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2023-10-04-enable-perf-regression
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "mandrel/23.0"
@@ -124,7 +124,7 @@ jobs:
   ####
   q-3_2-mandrel-23_0:
     name: "Q 3.2 M 23.0 JDK 17"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2023-10-04-enable-perf-regression
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "3.2"
       build-type: "mandrel-source-nolocalmvn"
@@ -135,7 +135,7 @@ jobs:
   # Test Quarkus 2.13 with Mandrel 22.3 JDK 17 ####
   q-2_13-mandrel-22_3:
     name: "Q 2.13 M 22.3 image"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2023-10-04-enable-perf-regression
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       # Use a tag for 2.13 due to https://github.com/graalvm/mandrel/issues/501
       quarkus-version: "2.13.8.Final"
