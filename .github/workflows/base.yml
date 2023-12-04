@@ -448,11 +448,11 @@ jobs:
           cd quarkus
           bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
         fi
-    # Use Java 11 to build Quarkus as that's the lowest supported JDK version currently
+    # Use Java 17 to build Quarkus as that's the lowest supported JDK version currently
     - uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
-        java-version: '11'
+        java-version: '17'
     - name: Download GraalVM Maven Repo
       if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
       uses: actions/download-artifact@v3

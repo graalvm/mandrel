@@ -405,7 +405,7 @@ jobs:
           cd quarkus
           bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
         fi
-    # Use Java 17 to build Quarkus as it doesn't build with Java 20
+    # Use Java 17 to build Quarkus as that's the lowest supported JDK version currently
     - uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
