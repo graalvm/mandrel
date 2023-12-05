@@ -265,7 +265,6 @@ jobs:
           echo "Attempting to report results"
           ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
             token="${BOT_TOKEN}" \
-            status="${{ needs.build-mandrel.result }}" \
             issueRepo="${{ inputs.issue-repo }}" \
             issueNumber="${{ inputs.issue-number }}" \
             thisRepo="${GITHUB_REPOSITORY}" \
