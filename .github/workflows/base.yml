@@ -675,7 +675,7 @@ jobs:
 
   native-tests-stats-upload:
     name: Upload build stats to collector
-    if: ${{ always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request' }}
+    if: ${{ always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request' && needs.native-tests.result != 'skipped' && needs.native-tests.result != 'cancelled' }}
     needs:
       - native-tests
       - get-test-matrix
