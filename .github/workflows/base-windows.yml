@@ -239,37 +239,6 @@ jobs:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
 
-  build-mandrel-report:
-    name: Report Mandrel build failures on GitHub
-    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' && contains(needs.*.result, 'failure') }}
-    needs:
-      - build-mandrel
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: graalvm/mandrel
-          fetch-depth: 1
-          path: workflow-mandrel
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-      - name: Setup jbang and report results
-        env:
-          BOT_TOKEN: ${{ secrets.ISSUE_BOT_TOKEN }}
-        run: |
-          echo "Installing JBang"
-          wget https://github.com/jbangdev/jbang/releases/download/v0.87.0/jbang.zip
-          unzip jbang.zip
-          echo "Attempting to report results"
-          ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
-            token="${BOT_TOKEN}" \
-            issueRepo="${{ inputs.issue-repo }}" \
-            issueNumber="${{ inputs.issue-number }}" \
-            thisRepo="${GITHUB_REPOSITORY}" \
-            runId="${GITHUB_RUN_ID}"
-
   build-graal:
     name: GraalVM CE build
     runs-on: windows-2022
@@ -555,38 +524,6 @@ jobs:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
 
-  native-tests-report:
-    name: Report results on GitHub
-    if: ${{ always() && inputs.issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' }}
-    needs:
-      - native-tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: graalvm/mandrel
-          fetch-depth: 1
-          path: workflow-mandrel
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-      - name: Setup jbang and report results
-        env:
-          BOT_TOKEN: ${{ secrets.ISSUE_BOT_TOKEN }}
-        run: |
-          echo "Installing JBang"
-          wget https://github.com/jbangdev/jbang/releases/download/v0.87.0/jbang.zip
-          unzip jbang.zip
-          echo "Attempting to report results"
-          ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
-            token="${BOT_TOKEN}" \
-            status="${{ needs.native-tests.result }}" \
-            issueRepo="${{ inputs.issue-repo }}" \
-            issueNumber="${{ inputs.issue-number }}" \
-            thisRepo="${GITHUB_REPOSITORY}" \
-            runId="${GITHUB_RUN_ID}"
-
   native-tests-stats-upload:
     name: Upload build stats to collector
     if: ${{ always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request' }}
@@ -708,36 +645,3 @@ jobs:
         with:
           name: win-test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports-mandrel-it.tgz'
-
-  mandrel-integration-tests-report:
-    name: Report results on GitHub
-    if: ${{ always() && needs.build-vars.outputs.distribution == 'mandrel' && inputs.mandrel-it-issue-number != 'null' && github.repository == 'graalvm/mandrel' && github.event_name != 'pull_request' && needs.mandrel-integration-tests.result != 'skipped' }}
-    needs:
-      - build-vars
-      - mandrel-integration-tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: graalvm/mandrel
-          fetch-depth: 1
-          path: workflow-mandrel
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-      - name: Setup jbang and report results
-        env:
-          BOT_TOKEN: ${{ secrets.ISSUE_BOT_TOKEN }}
-        run: |
-          echo "Installing JBang"
-          wget https://github.com/jbangdev/jbang/releases/download/v0.87.0/jbang.zip
-          unzip jbang.zip
-          echo "Attempting to report results"
-          ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
-            token="${BOT_TOKEN}" \
-            status="${{ needs.mandrel-integration-tests.result }}" \
-            issueRepo="Karm/mandrel-integration-tests" \
-            issueNumber="${{ inputs.mandrel-it-issue-number }}" \
-            thisRepo="${GITHUB_REPOSITORY}" \
-            runId="${GITHUB_RUN_ID}"

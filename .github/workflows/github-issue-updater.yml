@@ -1,0 +1,45 @@
+name: GitHub Issue Updater
+
+on:
+  workflow_run:
+    workflows: ["Nightly CI", "Weekly CI"]
+    types:
+      - completed
+    branches:
+      - default
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: graalvm/mandrel
+          fetch-depth: 1
+          ref: ${{ github.event.workflow_run.head_branch }}
+          path: workflow-mandrel
+      - name: Get Triggering Workflow Run ID
+        shell: bash
+        run: |
+            echo "Triggering Workflow Run ID: ${{ github.event.workflow_run.id }}"
+      - name: Get Triggering Workflow Run context
+        shell: bash
+        run: |
+            echo "Triggering Workflow Run Context: ${{ toJson(github.event.workflow_run) }}"
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Setup jbang and report results
+        env:
+            BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+        run: |
+            echo "Installing JBang"
+            wget https://github.com/jbangdev/jbang/releases/download/v0.87.0/jbang.zip
+            unzip jbang.zip
+            echo "Attempting to report results"
+            ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \
+            token="${BOT_TOKEN}" \
+            thisRepo="${{ github.event.workflow_run.repository.full_name }}" \
+            runId="${{ github.event.workflow_run.id }}"            
+            
