@@ -22,10 +22,6 @@ jobs:
         shell: bash
         run: |
             echo "Triggering Workflow Run ID: ${{ github.event.workflow_run.id }}"
-      - name: Get Triggering Workflow Run context
-        shell: bash
-        run: |
-            echo "Triggering Workflow Run Context: ${{ toJson(github.event.workflow_run) }}"
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
