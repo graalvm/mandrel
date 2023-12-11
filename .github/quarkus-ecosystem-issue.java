@@ -145,7 +145,13 @@ class Report implements Runnable {
 						}
 					}
 				} else if (job.getName().contains("Q Mandrel IT")) {
-					String fullContent = getJobsLogs(job, "mandrel-it-issue-number", "FAILURE [", "Z Error:");
+					String fullContent = getJobsLogs(job, "mandrel-it-issue-number",
+							"FAILURE [",
+							"Z Error:",
+							"  Time elapsed: ",
+							"Z [ERROR]   ",
+							"Z [ERROR] Failures",
+							"Z [ERROR] Tests run:");
 					if (!fullContent.isEmpty()) {
 						// Get the issue number for mandrel-integration-tests issues
 						Matcher mandrelIssueNumberMatcher = Pattern.compile(" mandrel-it-issue-number: (\\d+)").matcher(fullContent);
