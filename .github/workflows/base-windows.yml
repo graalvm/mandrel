@@ -468,8 +468,10 @@ jobs:
         if: startsWith(matrix.os-name, 'windows')
         shell: bash
         run: |
-          cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
-          mv ~/.docker/config.json.new ~/.docker/config.json
+          if [ -f ~/.docker/config.json ]; then
+            cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
+            mv ~/.docker/config.json.new ~/.docker/config.json
+          fi
       - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
         if: startsWith(matrix.os-name, 'windows')
         # See https://github.com/Karm/mandrel-integration-tests/pull/64
@@ -611,8 +613,10 @@ jobs:
       - name: Update Docker Client User Agent
         shell: bash
         run: |
-          cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
-          mv ~/.docker/config.json.new ~/.docker/config.json
+          if [ -f ~/.docker/config.json ]; then
+            cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
+            mv ~/.docker/config.json.new ~/.docker/config.json
+          fi
       - name: Build with Maven
         run: |
           cmd.exe /c "call `"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars64.txt"
