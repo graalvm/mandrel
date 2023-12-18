@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -201,18 +202,21 @@ public class JNIAccessFeature implements Feature {
         @Override
         public void register(ConfigurationCondition condition, boolean unsafeAllocated, Class<?> clazz) {
             assert !unsafeAllocated : "unsafeAllocated can be only set via Unsafe.allocateInstance, not via JNI.";
+            Objects.requireNonNull(clazz, () -> nullErrorMessage("class"));
             abortIfSealed();
             registerConditionalConfiguration(condition, () -> newClasses.add(clazz));
         }
 
         @Override
         public void register(ConfigurationCondition condition, boolean queriedOnly, Executable... methods) {
+            requireNonNull(methods, "methods");
             abortIfSealed();
             registerConditionalConfiguration(condition, () -> newMethods.addAll(Arrays.asList(methods)));
         }
 
         @Override
         public void register(ConfigurationCondition condition, boolean finalIsWritable, Field... fields) {
+            requireNonNull(fields, "field");
             abortIfSealed();
             registerConditionalConfiguration(condition, () -> registerFields(finalIsWritable, fields));
         }
@@ -611,5 +615,15 @@ public class JNIAccessFeature implements Feature {
              */
             return false;
         }
+    }
+
+    private static void requireNonNull(Object[] values, String kind) {
+        for (Object value : values) {
+            Objects.requireNonNull(value, () -> nullErrorMessage(kind));
+        }
+    }
+
+    private static String nullErrorMessage(String kind) {
+        return "Cannot register null value as " + kind + " for JNI access. Please ensure that all values you register are not null.";
     }
 }
