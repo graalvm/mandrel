@@ -2,7 +2,7 @@ name: GitHub Issue Updater
 
 on:
   workflow_run:
-    workflows: ["Nightly CI", "Weekly CI"]
+    workflows: ["Nightly CI", "Weekly CI", "Repo Sync"]
     types:
       - completed
     branches:

@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -41,17 +43,19 @@ import java.io.InputStreamReader;
 		description = "Takes care of updating an issue depending on the status of the build")
 class Report implements Runnable {
 
-	@Option(names = "token", description = "Github token to use when calling the Github API")
+	@Option(names = "token", description = "Github token to use when calling the Github API", required = true)
 	private String token;
 
-	@Option(names = "thisRepo", description = "The repository for which we are reporting the CI status")
+	@Option(names = "thisRepo", description = "The repository for which we are reporting the CI status", required = true)
 	private String thisRepo;
 
-	@Option(names = "runId", description = "The ID of the Github Action run for  which we are reporting the CI status")
+	@Option(names = "runId", description = "The ID of the Github Action run for  which we are reporting the CI status", required = true)
 	private String runId;
 
 	@Option(names = "--dry-run", description = "Whether to actually update the issue or not")
 	private boolean dryRun;
+
+	private final HashMap<GHIssue, String> issues = new HashMap<>();
 
 	@Override
 	public void run() {
@@ -68,7 +72,6 @@ class Report implements Runnable {
 				System.exit(0);
 			}
 
-			final HashMap<GHIssue, String> issues = new HashMap<>();
 			final HashMap<GHIssue, List<GHWorkflowJob>> failedMandrelJobs = new HashMap<>();
 
 			// Get the github issue number and repository from the logs
@@ -102,36 +105,7 @@ class Report implements Runnable {
 			listJobs.forEach(job -> {
 				// Each configuration starts with the Set distribution job
 				if (job.getName().contains("Set distribution")) {
-					String fullContent = getJobsLogs(job, "issue-number", "issue-repo");
-					if (!fullContent.isEmpty()) {
-						// Get the issue number and repository for mandrel issues
-						Matcher issueNumberMatcher = Pattern.compile(" issue-number: (\\d+)").matcher(fullContent);
-						Matcher issueRepoMatcher = Pattern.compile(" issue-repo: (.*)").matcher(fullContent);
-						if (issueNumberMatcher.find() && issueRepoMatcher.find()) {
-							int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
-							String issueRepo = issueRepoMatcher.group(1);
-
-							System.out.println(String.format("Found issue https://github.com/%s/issues/%s in logs for job %s", issueRepo, issueNumber, job.getName()));
-							try {
-								GHRepository issueRepository = github.getRepository(issueRepo);
-								GHIssue issue = issueRepository.getIssue(issueNumber);
-								if (issue == null) {
-									System.out.println(String.format("Unable to find the issue %s in project %s", issueNumber, issueRepo));
-									System.exit(-1);
-								} else {
-									System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
-									System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
-									Object oldIssue = issues.put(issue, job.getName().split(" / ")[0]);
-									if (oldIssue != null) {
-										System.out.println("WARNING: The issue has already been seen, please check the workflow configuration");
-									};
-								}
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-					}
+					processLogs(github, job, this::processITJobs, "issue-number", "issue-repo");
 				} else if (job.getConclusion().equals(Conclusion.FAILURE) && (job.getName().contains("Q IT") || job.getName().contains("Mandrel build"))) {
 					for (GHIssue issue: issues.keySet()) {
 						if (job.getName().startsWith(issues.get(issue))) {
@@ -206,6 +180,8 @@ class Report implements Runnable {
 							
 						}
 					}
+				} else if (job.getName().startsWith("Keep graal/master in sync")) {
+					processLogs(github, job, this::processSyncJobs, "issue-number", "issue-repo");
 				}
 			});
 
@@ -249,6 +225,90 @@ class Report implements Runnable {
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
+		}
+	}
+
+	
+	private void processLogs(GitHub github, GHWorkflowJob job, BiConsumer<GHIssue, GHWorkflowJob> process, String... filters) {
+		String fullContent = getJobsLogs(job, filters);
+		if (fullContent.isEmpty()) {
+			return;
+		}
+		// Get the issue number and repository for mandrel issues
+		Matcher issueNumberMatcher = Pattern.compile(" issue-number: (\\d+)").matcher(fullContent);
+		Matcher issueRepoMatcher = Pattern.compile(" issue-repo: (.*)").matcher(fullContent);
+		if (issueNumberMatcher.find() && issueRepoMatcher.find()) {
+			int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
+			String issueRepo = issueRepoMatcher.group(1);
+
+			System.out.println(String.format("Found issue https://github.com/%s/issues/%s in logs for job %s", issueRepo, issueNumber, job.getName()));
+			try {
+				GHRepository issueRepository = github.getRepository(issueRepo);
+				GHIssue issue = issueRepository.getIssue(issueNumber);
+				process.accept(issue, job);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void processITJobs(GHIssue issue, GHWorkflowJob job) {
+		if (issue == null) {
+			System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
+			System.exit(-1);
+		} else {
+			System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
+			System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
+			Object oldIssue = issues.put(issue, job.getName().split(" / ")[0]);
+			if (oldIssue != null) {
+				System.out.println("WARNING: The issue has already been seen, please check the workflow configuration");
+			};
+		}
+	}
+
+	private void processSyncJobs(GHIssue issue, GHWorkflowJob job) {
+		try {
+			if (issue == null) {
+				System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
+				System.exit(-1);
+			} else {
+				System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
+				System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
+				if (job.getConclusion().equals(Conclusion.SUCCESS)) {
+					if (isOpen(issue)) {
+						String comment = String.format("Synchronization fixed:\n* Link to latest CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId);
+						if (!dryRun) {
+							// close issue with a comment
+							issue.comment(comment);
+							issue.close();
+						}
+						System.out.println(String.format("Comment added on issue %s\n%s\n, the issue has also been closed", issue.getHtmlUrl().toString(), comment));
+					} else {
+						System.out.println("Nothing to do - the synchronization passed and the issue is already closed");
+					}
+				} else if (job.getConclusion().equals(Conclusion.FAILURE)) {
+					StringBuilder sb = new StringBuilder();
+					if (isOpen(issue)) {
+						sb.append("The synchronization is still failing!\n\n");
+					} else {
+						sb.append("Unfortunately, the synchronization failed!\n\n");
+						if (!dryRun) {
+							issue.reopen();
+						}
+						System.out.println("The issue has been re-opened");
+					}
+					sb.append(String.format("Link to failing CI run: %s", job.getHtmlUrl()));
+					String comment = sb.toString();
+					if (!dryRun) {
+						issue.comment(comment);
+					}
+					System.out.println(String.format("\nComment added on issue %s\n\n%s\n", issue.getHtmlUrl().toString(), comment));
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
