@@ -32,42 +32,42 @@ jobs:
   ####
   # Test Quarkus main with latest graal sources built as Mandrel and GraalVM
   ####
-  q-main-graal-22-latest:
-    name: "Q main G 22 latest"
+  q-main-graal-23-latest:
+    name: "Q main G 23 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
       build-type: "graal-source"
       jdk: "latest/ea"
-      build-stats-tag: "gha-linux-graal-qmain-glatest-jdk22ea"
+      build-stats-tag: "gha-linux-graal-qmain-glatest-jdk23ea"
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-22-latest:
-    name: "Q main M 22 latest"
+  q-main-mandrel-23-latest:
+    name: "Q main M 23 latest"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
-      jdk: "22/ea"
-      issue-number: "580"
+      jdk: "23/ea"
+      issue-number: "652"
       issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "208"
-      build-stats-tag: "gha-linux-mandrel-qmain-mlatest-jdk22ea"
+      mandrel-it-issue-number: "244"
+      build-stats-tag: "gha-linux-mandrel-qmain-mlatest-jdk23ea"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-22-latest-win:
-    name: "Q main M 22 latest windows"
+  q-main-mandrel-23-latest-win:
+    name: "Q main M 23 latest windows"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
       quarkus-version: "main"
       version: "graal/master"
-      issue-number: "579"
+      issue-number: "653"
       issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "207"
-      jdk: "22/ea"
-      build-stats-tag: "gha-win-mandrel-qmain-mlatest-jdk22ea"
+      mandrel-it-issue-number: "243"
+      jdk: "23/ea"
+      build-stats-tag: "gha-win-mandrel-qmain-mlatest-jdk23ea"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
