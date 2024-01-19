@@ -71,7 +71,7 @@ env:
   DB_PASSWORD: hibernate_orm_test
   DB_NAME: hibernate_orm_test
   COMMON_MAVEN_ARGS: "-e -B --settings .github/mvn-settings.xml --fail-at-end"
-  NATIVE_TEST_MAVEN_OPTS: "-Dtest-containers -Dstart-containers -DfailIfNoTests=false -Dquarkus.native.native-image-xmx=5g -Dnative -Dnative.surefire.skip -Dformat.skip -Dno-descriptor-tests -DskipDocs"
+  NATIVE_TEST_MAVEN_OPTS: "-Dtest-containers -Dstart-containers -DfailIfNoTests=false -Dquarkus.native.native-image-xmx=13g -Dnative -Dnative.surefire.skip -Dformat.skip -Dno-descriptor-tests -DskipDocs"
   MX_GIT_CACHE: refcache
   JAVA_HOME: ${{ github.workspace }}\openjdk
   GRAALVM_HOME: ${{ github.workspace }}\graalvm-home

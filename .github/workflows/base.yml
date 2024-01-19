@@ -70,7 +70,7 @@ env:
   DB_USER: hibernate_orm_test
   DB_PASSWORD: hibernate_orm_test
   DB_NAME: hibernate_orm_test
-  NATIVE_TEST_MAVEN_OPTS: "--fail-at-end -Dtest-containers -Dstart-containers -DfailIfNoTests=false -Dquarkus.native.native-image-xmx=5g -Dnative -Dnative.surefire.skip -Dformat.skip -Dno-descriptor-tests install -DskipDocs"
+  NATIVE_TEST_MAVEN_OPTS: "--fail-at-end -Dtest-containers -Dstart-containers -DfailIfNoTests=false -Dquarkus.native.native-image-xmx=13g -Dnative -Dnative.surefire.skip -Dformat.skip -Dno-descriptor-tests install -DskipDocs"
   MX_GIT_CACHE: refcache
   JAVA_HOME: ${{ github.workspace }}/openjdk
   GRAALVM_HOME: ${{ github.workspace }}/graalvm-home
@@ -590,7 +590,12 @@ jobs:
             fi
             unset IFS
           fi
-          ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS
+          if [[ $TEST_MODULES == "main" ]]
+          then
+            # Build main module with constraint memory to ensure we can build apps on smaller machines too
+            export NEW_MAX_HEAP_SIZE=-Dquarkus.native.native-image-xmx=5g
+          fi
+          ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS $NEW_MAX_HEAP_SIZE
       - name: Prepare failure archive (if maven failed)
         if: failure()
         shell: bash
@@ -724,11 +729,11 @@ jobs:
           if [[ ${{ inputs.builder-image }} == "null" ]]
           then
             ${GRAALVM_HOME}/bin/native-image --version
-            mvn clean verify -Dquarkus.native.native-image-xmx=5g \
+            mvn clean verify -Dquarkus.native.native-image-xmx=13g \
               -Dquarkus.version=$QUARKUS_VERSION \
               -Ptestsuite
           else
-            mvn clean verify -Dquarkus.native.native-image-xmx=5g \
+            mvn clean verify -Dquarkus.native.native-image-xmx=13g \
               -Dquarkus.version=$QUARKUS_VERSION \
               -Dquarkus.native.builder-image=${{ inputs.builder-image }} \
               -Ptestsuite-builder-image
