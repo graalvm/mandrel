@@ -81,7 +81,7 @@ env:
   QUARKUS_PATH: ${{ github.workspace }}/quarkus
   MANDREL_IT_PATH: ${{ github.workspace }}/mandrel-integration-tests
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
-  COLLECTOR_URL: https://stage-collector.foci.life/api/v1/image-stats
+  COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
 
 jobs:
   build-vars:

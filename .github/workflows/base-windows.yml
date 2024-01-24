@@ -82,7 +82,7 @@ env:
   QUARKUS_PATH: ${{ github.workspace }}\quarkus
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}\mandrel-packaging
   MAVEN_OPTS: -Xmx2g -XX:MaxMetaspaceSize=1g
-  COLLECTOR_URL: https://stage-collector.foci.life/api/v1/image-stats
+  COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
 
 jobs:
   build-vars:
