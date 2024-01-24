@@ -138,8 +138,7 @@ jobs:
     name: "Q 2.13 M 22.3 image"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
-      # Use a tag for 2.13 due to https://github.com/graalvm/mandrel/issues/501
-      quarkus-version: "2.13.8.Final"
+      quarkus-version: "2.13"
       build-type: "mandrel-source-nolocalmvn"
       version: "mandrel/22.3"
       jdk: "17/ea"

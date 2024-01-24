@@ -636,6 +636,8 @@ jobs:
           # Don't use SNAPSHOT version for 2.2 and release tags
           if ("${{ inputs.quarkus-version }}" -eq "2.2") {
             $QUARKUS_VERSION="2.2.999"
+          } elseif (${{ inputs.quarkus-version }} -match "^[0-9]+\.[0-9]+$") {
+            $QUARKUS_VERSION="${{ inputs.quarkus-version }}.999-SNAPSHOT"
           } elseif (! ($QUARKUS_VERSION -match "^.*\.(Final|CR|Alpha|Beta)[0-9]?$")) {
             $QUARKUS_VERSION="999-SNAPSHOT"
           }
