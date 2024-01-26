@@ -113,7 +113,7 @@ jobs:
   ####
   q-main-mandrel-23_0:
     name: "Q main M 23.0 JDK 17"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2024-01-24-fix-quarkus-snapshots
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       build-type: "mandrel-source-nolocalmvn"
@@ -125,7 +125,7 @@ jobs:
   ####
   q-3_2-mandrel-23_0:
     name: "Q 3.2 M 23.0 JDK 17"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2024-01-24-fix-quarkus-snapshots
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "3.2"
       build-type: "mandrel-source-nolocalmvn"
@@ -136,7 +136,7 @@ jobs:
   # Test Quarkus 2.13 with Mandrel 22.3 JDK 17 ####
   q-2_13-mandrel-22_3:
     name: "Q 2.13 M 22.3 image"
-    uses: zakkak/mandrel/.github/workflows/base.yml@2024-01-24-fix-quarkus-snapshots
+    uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "2.13"
       build-type: "mandrel-source-nolocalmvn"
