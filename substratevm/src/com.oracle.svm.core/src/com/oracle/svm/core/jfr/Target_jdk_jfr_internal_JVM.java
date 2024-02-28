@@ -41,6 +41,8 @@ import com.oracle.svm.core.annotate.TargetElement;
 import com.oracle.svm.core.jdk.JDK11OrEarlier;
 import com.oracle.svm.core.jdk.JDK17OrEarlier;
 import com.oracle.svm.core.jdk.JDK17OrLater;
+import com.oracle.svm.core.jdk.JDK17_0_10OrEarlier;
+import com.oracle.svm.core.jdk.JDK17_0_11OrLater;
 import com.oracle.svm.core.jdk.JDK19OrLater;
 import com.oracle.svm.core.jfr.traceid.JfrTraceId;
 import com.oracle.svm.core.util.VMError;
@@ -208,14 +210,14 @@ public final class Target_jdk_jfr_internal_JVM {
 
     /** See {@code JVM#setMethodSamplingInterval}. */
     @Substitute
-    @TargetElement(onlyWith = JDK17OrEarlier.class)
+    @TargetElement(onlyWith = JDK17_0_10OrEarlier.class)
     public void setMethodSamplingInterval(long type, long intervalMillis) {
         SubstrateJVM.get().setMethodSamplingInterval(type, intervalMillis);
     }
 
     /** See {@code JVM#setMethodSamplingPeriod}. */
     @Substitute
-    @TargetElement(onlyWith = JDK19OrLater.class)
+    @TargetElement(onlyWith = JDK17_0_11OrLater.class)
     public void setMethodSamplingPeriod(long type, long intervalMillis) {
         SubstrateJVM.get().setMethodSamplingInterval(type, intervalMillis);
     }
