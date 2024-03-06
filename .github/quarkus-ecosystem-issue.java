@@ -330,8 +330,8 @@ class Report implements Runnable {
 		return fullContent;
 	}
 
-    private static InputStreamFunction<String> getLogArchiveInputStreamFunction(String... filters) {
-        return (is) -> {
+	private static InputStreamFunction<String> getLogArchiveInputStreamFunction(String... filters) {
+		return (is) -> {
 			StringBuilder stringBuilder = new StringBuilder();
 			try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is))) {
 				String line;
@@ -351,8 +351,8 @@ class Report implements Runnable {
 				}
 			}
 			return stringBuilder.toString();
-        };
-    }
+		};
+	}
 
 	private static boolean isOpen(GHIssue issue) {
 		return (issue.getState() == GHIssueState.OPEN);
