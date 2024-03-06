@@ -174,10 +174,8 @@ class Report implements Runnable {
 									}
 								}
 							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								throw new UncheckedIOException(e);
 							}
-							
 						}
 					}
 				} else if (job.getName().startsWith("Keep graal/master in sync")) {
@@ -247,8 +245,7 @@ class Report implements Runnable {
 				GHIssue issue = issueRepository.getIssue(issueNumber);
 				process.accept(issue, job);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new UncheckedIOException(e);
 			}
 		}
 	}
@@ -307,8 +304,7 @@ class Report implements Runnable {
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new UncheckedIOException(e);
 		}
 	}
 
@@ -329,7 +325,7 @@ class Report implements Runnable {
 			fullContent = job.downloadLogs(getLogArchiveInputStreamFunction(filters));
 		} catch (IOException e) {
 			System.out.println(String.format("Unable to get logs for job %s", job.getName()));
-			e.printStackTrace();
+			throw new UncheckedIOException(e);
 		}
 		return fullContent;
 	}
