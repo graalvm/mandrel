@@ -135,7 +135,7 @@ jobs:
   ####
   # Test Quarkus 2.13 with Mandrel 22.3 JDK 17 ####
   q-2_13-mandrel-22_3:
-    name: "Q 2.13 M 22.3 image"
+    name: "Q 2.13 M 22.3 JDK 17"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "2.13"
