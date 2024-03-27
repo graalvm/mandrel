@@ -106,7 +106,7 @@ class Report implements Runnable {
 				// Each configuration starts with the Set distribution job
 				if (job.getName().contains("Set distribution")) {
 					processLogs(github, job, this::processITJobs, "issue-number", "issue-repo");
-				} else if (job.getConclusion().equals(Conclusion.FAILURE) && (job.getName().contains("Q IT") || job.getName().contains("Mandrel build"))) {
+				} else if (job.getConclusion().equals(Conclusion.FAILURE) && (job.getName().contains("Q IT") || job.getName().contains("Mandrel build") || job.getName().contains("Quarkus build"))) {
 					for (GHIssue issue: issues.keySet()) {
 						if (job.getName().startsWith(issues.get(issue))) {
 							List<GHWorkflowJob> failedJobsList = failedMandrelJobs.get(issue);
