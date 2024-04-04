@@ -565,7 +565,7 @@ jobs:
           cd ${QUARKUS_PATH}
           if [[ ${{ inputs.builder-image }} == "null" ]]
           then
-            export BUILDER_IMAGE=""
+            export BUILDER_IMAGE="-Dquarkus.native.container-build=false"
             ${GRAALVM_HOME}/bin/native-image --version
           else
             export BUILDER_IMAGE="-Dquarkus.native.container-build=true -Dquarkus.native.builder-image=${{ inputs.builder-image }}"
