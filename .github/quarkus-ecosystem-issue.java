@@ -310,7 +310,9 @@ class Report implements Runnable {
 
 	private void processFailedJob(StringBuilder sb, GHWorkflowJob job) {
 		sb.append(String.format("* [%s](%s)\n", job.getName(), job.getHtmlUrl()));
-		GHWorkflowJob.Step step = job.getSteps().stream().filter(s -> s.getConclusion().equals(Conclusion.FAILURE)).findFirst().get();
+		GHWorkflowJob.Step step = job.getSteps().stream()
+				.filter(s -> !(s.getConclusion().equals(Conclusion.SUCCESS) || s.getConclusion().equals(Conclusion.SKIPPED)))
+				.findFirst().get();
 		sb.append(String.format("  * Step: %s\n", step.getName()));
 		String fullContent = getJobsLogs(job, "FAILURE [", "Z Error:");
 		if (!fullContent.isEmpty()) {
