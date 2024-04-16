@@ -517,11 +517,11 @@ jobs:
           name: win-test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports.tgz'
       - name: Collect build JSON stats
-        if: ${{ always() && inputs.build-stats-tag != 'null' }}
+        if: ${{ startsWith(matrix.os-name, 'windows') && inputs.build-stats-tag != 'null' }}
         shell: bash
         run: find . -name '*runner*.json' | tar czvf build-stats.tgz -T -
       - name: Upload build JSON stats
-        if: ${{ always() && inputs.build-stats-tag != 'null' }}
+        if: ${{ startsWith(matrix.os-name, 'windows') && inputs.build-stats-tag != 'null' }}
         uses: actions/upload-artifact@v4
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -539,15 +539,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        if: startsWith(matrix.os-name, 'windows')
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
       - uses: actions/download-artifact@v4
+        if: startsWith(matrix.os-name, 'windows')
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
       - name: Extract and import build stats
+        if: startsWith(matrix.os-name, 'windows')
         env:
           UPLOAD_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
         shell: bash
