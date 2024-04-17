@@ -81,7 +81,6 @@ env:
   MX_PYTHON: python
   QUARKUS_PATH: ${{ github.workspace }}\quarkus
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}\mandrel-packaging
-  MAVEN_OPTS: -Xmx2g -XX:MaxMetaspaceSize=1g
   COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
 
 jobs:
@@ -403,7 +402,9 @@ jobs:
       - get-jdk
       - get-test-matrix
     runs-on: windows-2022
-    # env:
+    env:
+      # leave more space for the actual native compilation and execution
+      MAVEN_OPTS: -Xmx1g
     #   USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
     # Ignore the following YAML Schema error
     timeout-minutes: ${{matrix.timeout}}
