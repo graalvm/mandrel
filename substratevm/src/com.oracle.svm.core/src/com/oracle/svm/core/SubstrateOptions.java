@@ -108,6 +108,10 @@ public class SubstrateOptions {
         if (!Platform.includedIn(Platform.LINUX.class)) {
             throw UserError.invalidOptionValue(key, key.getValue(), "Building static executable images is currently only supported on Linux. Remove the '--static' option or build on a Linux machine");
         }
+        if (!LibCBase.targetLibCIs(MuslLibC.class)) {
+            throw UserError.invalidOptionValue(key, key.getValue(),
+                            "Building static executable images is only supported with musl libc. Remove the '--static' option or add the '--libc=musl' option.");
+        }
     });
 
     @APIOption(name = "libc")//
@@ -744,8 +748,12 @@ public class SubstrateOptions {
     public static final HostedOptionKey<Integer> GenerateDebugInfo = new HostedOptionKey<>(0, SubstrateOptions::validateGenerateDebugInfo) {
         @Override
         protected void onValueUpdate(EconomicMap<OptionKey<?>, Object> values, Integer oldValue, Integer newValue) {
-            if (OS.WINDOWS.isCurrent()) {
-                /* Keep symbols on Windows. The symbol table is part of the pdb-file. */
+            if (!OS.DARWIN.isCurrent()) {
+                /*
+                 * Keep the symbol table, as it may be used by debugging or profiling tools (e.g.,
+                 * perf). On Windows, the symbol table is included in the pdb-file, while on Linux,
+                 * it is part of the .debug file.
+                 */
                 DeleteLocalSymbols.update(values, newValue == 0);
             }
         }
