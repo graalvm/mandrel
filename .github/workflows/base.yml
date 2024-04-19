@@ -181,9 +181,9 @@ jobs:
     needs:
       - get-test-matrix
       - build-vars
+    if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'
     steps:
     - uses: actions/checkout@v4
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
         repository: ${{ inputs.repo }}
         fetch-depth: 1
@@ -194,25 +194,21 @@ jobs:
       with:
         python-version: '3.8'
     - name: Checkout MX
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       run: |
         VERSION=$(jq -r .mx_version ${MANDREL_REPO}/common.json)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
     - uses: actions/checkout@v4
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
     - uses: actions/cache@v4
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK with static libs
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       run: |
         curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
         curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
@@ -222,7 +218,6 @@ jobs:
         echo ${JAVA_HOME}
         ${JAVA_HOME}/bin/java --version
     - name: Build Mandrel
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       run: |
         MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
         if [ "$MVN_LOCAL" != "" ]
@@ -246,19 +241,18 @@ jobs:
           mv graalvm-version.tgz ${{ github.workspace }}
         fi
     - name: Persist Mandrel build
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
       uses: actions/upload-artifact@v4
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
     - name: Persist local maven repository
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
+      if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@v4
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
     - name: Persist GraalVM maven version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
+      if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@v4
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -280,9 +274,9 @@ jobs:
     needs:
       - get-test-matrix
       - build-vars
+    if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'
     steps:
     - uses: actions/checkout@v4
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       with:
         repository: ${{ inputs.repo }}
         fetch-depth: 1
@@ -293,26 +287,22 @@ jobs:
       with:
         python-version: '3.8'
     - name: Checkout MX
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       run: |
         VERSION=$(jq -r .mx_version graal/common.json)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
     - uses: actions/cache@v4
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Get labs OpenJDK
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       run: |
         cd graal
         mkdir jdk-dl
         ${MX_PATH}/mx --java-home= fetch-jdk --java-distribution labsjdk-ce-$(echo ${{ inputs.jdk }} | cut -d / -f 1) --to `pwd`/jdk-dl --alias ${JAVA_HOME}
         ${JAVA_HOME}/bin/java --version
     - name: Build graalvm native-image
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       run: |
         MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
         if [ "$MVN_LOCAL" != "" ]
@@ -338,22 +328,20 @@ jobs:
           mv graalvm-version.tgz ${{ github.workspace }}
         fi
     - name: Tar GraalVM
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       run: tar czvf jdk.tgz  -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})
     - name: Persist GraalVM build
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
       uses: actions/upload-artifact@v4
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
     - name: Persist local maven repository
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
+      if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@v4
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
     - name: Persist GraalVM maven version
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null' && needs.build-vars.outputs.maven-deploy-local != ''}}
+      if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@v4
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -375,16 +363,17 @@ jobs:
     needs:
       - get-test-matrix
       - build-vars
+    if: fromJson(needs.build-vars.outputs.build-from-source) == false && inputs.builder-image == 'null'
     steps:
     - name: Get Mandrel ${{ inputs.version }}
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false && needs.build-vars.outputs.distribution == 'mandrel' && inputs.builder-image == 'null'}}
+      if: needs.build-vars.outputs.distribution == 'mandrel'
       run: |
         VERSION=${{ inputs.version }}
         curl \
           -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##mandrel-}.tar.gz \
           -o jdk.tgz
     - name: Get GraalVM CE ${{ inputs.version }}
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false && needs.build-vars.outputs.distribution == 'graalvm' && inputs.builder-image == 'null'}}
+      if: needs.build-vars.outputs.distribution == 'graalvm'
       run: |
         VERSION=${{ inputs.version }}
         curl \
@@ -396,7 +385,6 @@ jobs:
         ${JAVA_HOME}/bin/native-image --version
         tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel or GraalVM
-      if: ${{ fromJson(needs.build-vars.outputs.build-from-source) == false }}
       uses: actions/upload-artifact@v4
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -410,6 +398,7 @@ jobs:
       - build-mandrel
       - build-graal
       - build-vars
+    if: always() && (needs.build-graal.result == 'success' || needs.build-mandrel.result == 'success' || fromJson(needs.build-vars.outputs.build-from-source) == false) || inputs.builder-image != 'null'
     strategy:
       fail-fast: false
     steps:
@@ -505,6 +494,7 @@ jobs:
       - get-jdk
       - build-quarkus
       - get-test-matrix
+    if: always() && needs.build-quarkus.result == 'success'
     runs-on: ubuntu-latest
     env:
       # leave more space for the actual native compilation and execution
@@ -633,7 +623,7 @@ jobs:
 
   native-tests-stats-upload:
     name: Upload build stats to collector
-    if: ${{ always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request' && needs.native-tests.result != 'skipped' && needs.native-tests.result != 'cancelled' }}
+    if: always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request' && needs.native-tests.result != 'skipped' && needs.native-tests.result != 'cancelled'
     needs:
       - native-tests
       - get-test-matrix
@@ -663,7 +653,7 @@ jobs:
 
   mandrel-integration-tests:
     name: Q Mandrel IT
-    if: ${{ needs.build-vars.outputs.distribution == 'mandrel' }}
+    if: always() && needs.build-quarkus.result == 'success'
     needs:
       - build-vars
       - build-mandrel

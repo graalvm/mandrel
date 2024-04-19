@@ -168,9 +168,9 @@ jobs:
     needs:
       - get-test-matrix
       - build-vars
+    if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel'
     steps:
     - uses: actions/checkout@v4
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         repository: ${{ inputs.repo }}
         fetch-depth: 1
@@ -181,26 +181,22 @@ jobs:
       with:
         python-version: '3.8'
     - name: Checkout MX
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       run: |
         VERSION=$(jq -r .mx_version ${MANDREL_REPO}/common.json)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
     - uses: actions/checkout@v4
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
     - uses: actions/cache@v4
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK with static libs
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       run: |
         $wc = New-Object System.Net.WebClient
         $wc.DownloadFile("https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/windows/x64/jdk/hotspot/normal/eclipse", "$Env:temp\jdk.zip")
@@ -212,7 +208,6 @@ jobs:
         Remove-Item -Recurse "$Env:temp\jdk-*"
         & $Env:JAVA_HOME\bin\java -version
     - name: Build Mandrel
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       run: |
         cmd.exe /c "call `"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars64.txt"
         Get-Content "$Env:temp\vcvars64.txt" | Foreach-Object {
@@ -231,11 +226,9 @@ jobs:
         Remove-Item -Recurse $Env:JAVA_HOME
         Move-Item -Path $Env:MANDREL_HOME -Destination $Env:JAVA_HOME
     - name: Archive JDK
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel build
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
       uses: actions/upload-artifact@v4
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -257,9 +250,9 @@ jobs:
     needs:
       - get-test-matrix
       - build-vars
+    if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm'
     steps:
     - uses: actions/checkout@v4
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       with:
         repository: ${{ inputs.repo }}
         fetch-depth: 1
@@ -270,20 +263,17 @@ jobs:
       with:
         python-version: '3.8'
     - name: Checkout MX
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       run: |
         VERSION=$(jq -r .mx_version graal/common.json)
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
     - uses: actions/cache@v4
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Build graalvm native-image
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       run: |
         cmd.exe /c "call `"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars64.txt"
         Get-Content "$Env:temp\vcvars64.txt" | Foreach-Object {
@@ -301,11 +291,9 @@ jobs:
         mv ${graalvm-home} $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\native-image --version
     - name: Archive JDK
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist GraalVM CE build
-      if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
       uses: actions/upload-artifact@v4
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -327,9 +315,10 @@ jobs:
     needs:
       - get-test-matrix
       - build-vars
+    if: fromJson(needs.build-vars.outputs.build-from-source) == false
     steps:
     - name: Get Mandrel ${{ inputs.version }}
-      if: fromJson(needs.build-vars.outputs.build-from-source) == false && needs.build-vars.outputs.distribution == 'mandrel' #&& inputs.builder-image == 'null'
+      if: needs.build-vars.outputs.distribution == 'mandrel'
       run: |
         $VERSION="${{ inputs.version }}"
         $VERSION_SHORT=@($VERSION -replace 'mandrel-')
@@ -340,7 +329,7 @@ jobs:
         Move-Item -Path "$Env:temp\mandrel-*" -Destination $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\native-image --version
     - name: Get GraalVM CE ${{ inputs.version }}
-      if: fromJson(needs.build-vars.outputs.build-from-source) == false && needs.build-vars.outputs.distribution == 'graalvm' #&& inputs.builder-image == 'null'
+      if: needs.build-vars.outputs.distribution == 'graalvm'
       run: |
         $VERSION="${{ inputs.version }}"
         $VERSION_SHORT=@($VERSION -replace 'vm-')
@@ -352,11 +341,9 @@ jobs:
         & $Env:JAVA_HOME\bin\gu install native-image
         & $Env:JAVA_HOME\bin\native-image --version
     - name: Archive JDK
-      if: fromJson(needs.build-vars.outputs.build-from-source) == false
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel or GraalVM
-      if: fromJson(needs.build-vars.outputs.build-from-source) == false
       uses: actions/upload-artifact@v4
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -424,6 +411,7 @@ jobs:
       - build-graal
       - get-jdk
       - get-test-matrix
+    if: always() && needs.build-quarkus.result == 'success'
     runs-on: windows-2022
     env:
       # leave more space for the actual native compilation and execution
@@ -436,8 +424,10 @@ jobs:
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     steps:
       - name: Support longpaths on Windows
+        if: startsWith(matrix.os-name, 'windows')
         run: git config --global core.longpaths true
       - uses: actions/checkout@v4
+        if: startsWith(matrix.os-name, 'windows')
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
@@ -543,7 +533,7 @@ jobs:
 
   native-tests-stats-upload:
     name: Upload build stats to collector
-    if: ${{ always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request' }}
+    if: always() && inputs.build-stats-tag != 'null' && github.event_name != 'pull_request'
     needs:
       - native-tests
       - get-test-matrix
@@ -576,7 +566,7 @@ jobs:
 
   mandrel-integration-tests:
     name: Q Mandrel IT
-    if: ${{ needs.build-vars.outputs.distribution == 'mandrel' }}
+    if: always() && needs.build-quarkus.result == 'success'
     needs:
       - build-vars
       - build-mandrel
