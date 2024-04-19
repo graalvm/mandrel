@@ -34,7 +34,7 @@ jobs:
   ####
   q-main-graal-23-latest:
     name: "Q main G 23 latest"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
       version: "graal/master"
@@ -45,7 +45,7 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-23-latest:
     name: "Q main M 23 latest"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
       version: "graal/master"
@@ -59,7 +59,7 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-23-latest-win:
     name: "Q main M 23 latest windows"
-    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
+    uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
       version: "graal/master"

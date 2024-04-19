@@ -72,7 +72,7 @@ on:
 
 jobs:
   delegate:
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
+    uses: ./.github/workflows/base.yml
     with:
       quarkus-version: ${{ github.event.inputs.quarkus-version }}
       quarkus-repo: ${{ github.event.inputs.quarkus-repo }}
