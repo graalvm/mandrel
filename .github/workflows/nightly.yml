@@ -71,36 +71,3 @@ jobs:
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  ####
-  # Test Q main and Mandrel 24.0 JDK 22
-  ####
-  q-main-mandrel-24_0:
-    name: "Q main M 24.0 JDK 22"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "main"
-      version: "mandrel/24.0"
-      jdk: "22/ea"
-      issue-number: "644"
-      issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "240"
-      build-stats-tag: "gha-linux-qmain-m24_0-jdk22ea"
-      mandrel-packaging-version: "24.0"
-    secrets:
-      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-24_0-win:
-    name: "Q main M 24.0 windows"
-    uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
-    with:
-      quarkus-version: "main"
-      version: "mandrel/24.0"
-      jdk: "22/ea"
-      issue-number: "645"
-      issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "241"
-      build-stats-tag: "gha-win-qmain-m24_0-jdk22ea"
-      mandrel-packaging-version: "24.0"
-    secrets:
-      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
