@@ -82,7 +82,6 @@ env:
   QUARKUS_PATH: ${{ github.workspace }}/quarkus
   MANDREL_IT_PATH: ${{ github.workspace }}/mandrel-integration-tests
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}/mandrel-packaging
-  COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
 
 jobs:
   build-vars:
@@ -628,28 +627,12 @@ jobs:
       - native-tests
       - get-test-matrix
     strategy:
-      fail-fast: false
       matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: graalvm/mandrel
-          fetch-depth: 1
-          path: workflow-mandrel
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
-          path: .
-      - name: Extract and import build stats
-        env:
-          UPLOAD_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-        shell: bash
-        run: |
-          tar -xf build-stats.tgz
-          export BUILD_STATS_TAG="$(echo ${{ inputs.build-stats-tag }})"
-          echo "Tag for stat upload is going to be: '${BUILD_STATS_TAG}'"
-          DIR=quarkus/ TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash workflow-mandrel/.github/import_stats.sh
+    uses: ./.github/workflows/native-tests-stats-upload.yml
+    with:
+      artifacts-suffix: ${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+      build-stats-tag: ${{ inputs.build-stats-tag }}
+      category: ${{ matrix.category }}
 
   mandrel-integration-tests:
     name: Q Mandrel IT
