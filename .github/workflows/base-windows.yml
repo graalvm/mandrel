@@ -224,7 +224,9 @@ jobs:
           --mx-home $Env:MX_PATH `
           --mandrel-repo $Env:MANDREL_REPO `
           --mandrel-home $Env:MANDREL_HOME
+        if(!$?) { Exit $LASTEXITCODE }
         & $Env:MANDREL_HOME\bin\native-image --version
+        if(!$?) { Exit $LASTEXITCODE }
         Remove-Item -Recurse $Env:JAVA_HOME
         Move-Item -Path $Env:MANDREL_HOME -Destination $Env:JAVA_HOME
     - name: Archive JDK
