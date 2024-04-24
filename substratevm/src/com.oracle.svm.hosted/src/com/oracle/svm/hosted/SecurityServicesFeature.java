@@ -675,7 +675,15 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
     private static Function<String, Class<?>> getConstructorParameterClassAccessor(ImageClassLoader loader) {
         Map<String, /* EngineDescription */ Object> knownEngines = ReflectionUtil.readStaticField(Provider.class, "knownEngines");
         Class<?> clazz = loader.findClassOrFail("java.security.Provider$EngineDescription");
-        Field consParamClassNameField = ReflectionUtil.lookupField(clazz, "constructorParameterClassName");
+        Field consParamClassField;
+
+        try {
+            consParamClassField = ReflectionUtil.lookupField(clazz, "constructorParameterClassName");
+        } catch (ReflectionUtil.ReflectionUtilError e) {
+            consParamClassField = ReflectionUtil.lookupField(clazz, "constructorParameterClass");
+        }
+
+        final Field consParamClassFieldFinal = consParamClassField;
 
         /*
          * The returned lambda captures the value of the Provider.knownEngines map retrieved above
@@ -700,9 +708,12 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
                 if (engineDescription == null) {
                     return null;
                 }
-                String constrParamClassName = (String) consParamClassNameField.get(engineDescription);
-                if (constrParamClassName != null) {
-                    return loader.findClass(constrParamClassName).get();
+                if (consParamClassFieldFinal.getName().equals("constructorParameterClass")) {
+                    return (Class<?>) consParamClassFieldFinal.get(engineDescription);
+                }
+                String constructorParameterClassName = (String) consParamClassFieldFinal.get(engineDescription);
+                if (constructorParameterClassName != null) {
+                    return loader.findClass(constructorParameterClassName).get();
                 }
             } catch (IllegalAccessException e) {
                 VMError.shouldNotReachHere(e);
