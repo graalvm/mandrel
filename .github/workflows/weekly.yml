@@ -175,14 +175,3 @@ jobs:
       version: "mandrel/23.0"
       jdk: "17/ea"
       mandrel-packaging-version: "23.0"
-  ####
-  # Test Quarkus 2.13 with Mandrel 22.3 JDK 17 ####
-  q-2_13-mandrel-22_3:
-    name: "Q 2.13 M 22.3 JDK 17"
-    uses: graalvm/mandrel/.github/workflows/base.yml@default
-    with:
-      quarkus-version: "2.13"
-      build-type: "mandrel-source-nolocalmvn"
-      version: "mandrel/22.3"
-      jdk: "17/ea"
-      mandrel-packaging-version: "22.3"
