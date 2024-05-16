@@ -79,6 +79,7 @@ env:
   MANDREL_HOME: ${{ github.workspace }}\..\mandrelvm
   MX_PATH: ${{ github.workspace }}\mx
   MX_PYTHON: python
+  PYTHONIOENCODING: utf-8
   QUARKUS_PATH: ${{ github.workspace }}\quarkus
   MANDREL_PACKAGING_REPO: ${{ github.workspace }}\mandrel-packaging
   COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
