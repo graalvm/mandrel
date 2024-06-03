@@ -25,7 +25,7 @@ jobs:
     - name: Echo issue repo and number
       run: |
         echo "issue-repo: graalvm/mandrel"
-        echo "issue-number: 649"
+        echo "issue-number: 741"
     - name: Sync branch
       run: |
         git config --local user.email "fzakkak@redhat.com"

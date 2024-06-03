@@ -50,7 +50,7 @@ jobs:
       quarkus-version: "main"
       version: "graal/master"
       jdk: "23/ea"
-      issue-number: "652"
+      issue-number: "742"
       issue-repo: "graalvm/mandrel"
       mandrel-it-issue-number: "244"
       build-stats-tag: "gha-linux-mandrel-qmain-mlatest-jdk23ea"
@@ -63,7 +63,7 @@ jobs:
     with:
       quarkus-version: "main"
       version: "graal/master"
-      issue-number: "653"
+      issue-number: "743"
       issue-repo: "graalvm/mandrel"
       mandrel-it-issue-number: "243"
       jdk: "23/ea"
