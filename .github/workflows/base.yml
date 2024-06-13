@@ -149,7 +149,7 @@ jobs:
     steps:
     - id: suffix
       run: |
-        export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j '. | to_entries[] | "-\(.value)"' | tr '":<>|*?\r\n\/' '-')
+        export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j 'del(."build-stats-tag", ."mandrel-it-issue-number", ."issue-repo", ."issue-number") | to_entries[] | "-\(.value)"' | tr '":<>|*?\r\n\/' '-')
         echo $SUFFIX
         echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
     - name: Get Quarkus version and test matrix
