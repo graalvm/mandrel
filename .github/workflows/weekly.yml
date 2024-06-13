@@ -85,6 +85,8 @@ jobs:
       quarkus-version: "main"
       build-stats-tag: "gha-linux-qmain-m24_0-builder-image"
       builder-image: "quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-22"
+    secrets:
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
   # Test Q main and Mandrel 24.0 JDK 22
   ####
