@@ -555,6 +555,8 @@ jobs:
       artifacts-suffix: ${{ needs.get-test-matrix.outputs.artifacts-suffix }}
       build-stats-tag: ${{ inputs.build-stats-tag }}
       category: ${{ matrix.category }}
+    secrets:
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
 
   mandrel-integration-tests:
     name: Q Mandrel IT
