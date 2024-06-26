@@ -1,0 +1,135 @@
+name: Build Quarkus
+
+on:
+  workflow_call:
+    inputs:
+      artifacts-suffix:
+        type: string
+        description: 'The maven repo artifact suffix to use'
+        default: "null"
+      build-from-source:
+        type: boolean
+        description: 'Build from source or use a release'
+        default: true
+      builder-image:
+        type: string
+        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+        default: "null"
+      maven-deploy-local:
+        type: string
+        description: 'Build flag controlling whether to deploy maven artifacts locally'
+        default: ""
+      target-os:
+        type: string
+        description: 'The operating system we are building for (linux or windows)'
+        default: "linux"
+      quarkus-repo:
+        type: string
+        description: 'The Quarkus repository to be used'
+        default: 'quarkusio/quarkus'
+      quarkus-version:
+        type: string
+        description: 'Quarkus version to test (branch, tag, commit, or "latest")'
+        # "latest" is replaced by the latest release available in maven
+        default: "main"
+      # Builder image can't be tested on Windows due to https://github.com/actions/virtual-environments/issues/1143
+      # builder-image:
+      #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+      #   default: "null"
+
+env:
+  QUARKUS_PATH: quarkus
+  COMMON_MAVEN_ARGS: "-e -B --settings .github/mvn-settings.xml --fail-at-end"
+  MANDREL_HOME: ${{ github.workspace }}/mandrelvm
+
+jobs:
+  build-quarkus:
+    name: Quarkus build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: graalvm/mandrel
+        fetch-depth: 1
+        path: workflow-mandrel
+    - uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.quarkus-repo }}
+        fetch-depth: 1
+        ref: ${{ inputs.quarkus-version }}
+        path: ${{ env.QUARKUS_PATH }}
+    - uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ inputs.target-os }}-${{ inputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ inputs.target-os }}-${{ inputs.quarkus-version }}-maven-
+    - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
+      # See https://github.com/Karm/mandrel-integration-tests/pull/64
+      run: |
+        if [ "${{ inputs.quarkus-version }}" == "2.2" ]
+        then
+            cd quarkus
+            bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
+        fi
+    # Use Java 17 to build Quarkus as that's the lowest supported JDK version currently
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Download GraalVM Maven Repo
+      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      uses: actions/download-artifact@v4
+      with:
+        name: org-graalvm-artefacts-${{ inputs.artifacts-suffix }}
+        path: .
+    - name: Download GraalVM Maven Version
+      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      uses: actions/download-artifact@v4
+      with:
+        name: mandrel-maven-version-${{ inputs.artifacts-suffix }}
+        path: .
+    - name: Extract GraalVM Maven Repo and GraalVM Maven Version
+      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      run: |
+        tar -xzvf graalvm-maven-artefacts.tgz -C ~
+        tar -xzvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME})
+    - name: Build quarkus with local graalvm version
+      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      run: |
+        rm -f maven_graalvm_before_build.txt maven_graalvm_after_build.txt
+        find ~/.m2/repository/org/graalvm | sort > maven_graalvm_before_build.txt
+        GRAAL_MVN_ARTIFACTS_VERS=$(cat ${MANDREL_HOME}/.maven-version)
+        echo "Building quarkus with locally installed GraalVM maven artefacts in version: ${GRAAL_MVN_ARTIFACTS_VERS}"
+        cd ${QUARKUS_PATH}
+        ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly -Dgraal-sdk.version="${GRAAL_MVN_ARTIFACTS_VERS}"
+        cd -
+        find ~/.m2/repository/org/graalvm | sort > maven_graalvm_after_build.txt
+        diff -u maven_graalvm_before_build.txt maven_graalvm_after_build.txt
+    - name: Build quarkus with default graalvm version
+      if: ${{ inputs.build-from-source == false || inputs.builder-image != 'null' ||  inputs.maven-deploy-local == ''}}
+      run: |
+        cd ${QUARKUS_PATH}
+        ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly
+        cd -
+    - name: Tar Maven Repo
+      if: inputs.target-os != 'windows'
+      run: |
+        tar -czvf maven-repo.tgz -C ~ .m2/repository
+    - name: Tar Maven Repo (windows)
+      if: inputs.target-os == 'windows'
+      run: |
+        tar -I 'pigz -9' -cf maven-repo.tgz -C ~ .m2/repository
+    - name: Persist Maven Repo
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.target-os }}-maven-repo-${{ inputs.artifacts-suffix }}
+        path: maven-repo.tgz
+    - name: Delete Local Quarkus Artifacts From Cache
+      run: |
+        rm -r ~/.m2/repository/io/quarkus
+    - name: Delete Local GraalVM Artifacts From Cache
+      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      run: |
+        rm -rf ~/.m2/repository/org/graalvm
