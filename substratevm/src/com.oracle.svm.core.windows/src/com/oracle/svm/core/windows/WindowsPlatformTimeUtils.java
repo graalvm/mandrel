@@ -37,23 +37,23 @@ import com.oracle.svm.core.windows.headers.WinBase.FILETIME;
 @AutomaticallyRegisteredImageSingleton(PlatformTimeUtils.class)
 public final class WindowsPlatformTimeUtils extends PlatformTimeUtils {
 
-    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-24+3/src/hotspot/os/windows/os_windows.cpp#L1123") //
+    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-23+9/src/hotspot/os/windows/os_windows.cpp#L1012") //
     private static final long OFFSET = 116444736000000000L;
 
-    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-24+3/src/hotspot/os/windows/os_windows.cpp#L1153-L1155")
+    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-23+9/src/hotspot/os/windows/os_windows.cpp#L1042-L1044")
     private static long offset() {
         return OFFSET;
     }
 
     /* Returns time ticks in (10th of micro seconds) */
-    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-24+3/src/hotspot/os/windows/os_windows.cpp#L1158-L1161")
+    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-23+9/src/hotspot/os/windows/os_windows.cpp#L1047-L1050")
     private static long windowsToTimeTicks(FILETIME wt) {
         long a = WordFactory.unsigned(wt.dwHighDateTime()).shiftLeft(32).or(WordFactory.unsigned(wt.dwLowDateTime())).rawValue();
         return (a - offset());
     }
 
     @Override
-    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-24+3/src/hotspot/os/windows/os_windows.cpp#L1198-L1205")
+    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-23+9/src/hotspot/os/windows/os_windows.cpp#L1087-L1094")
     protected SecondsNanos javaTimeSystemUTC() {
         FILETIME wt = StackValue.get(FILETIME.class);
         GetSystemTimeAsFileTime(wt);

@@ -49,7 +49,7 @@ public abstract class PlatformTimeUtils {
     public record SecondsNanos(long seconds, long nanos) {
     }
 
-    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-24+5/src/hotspot/share/jfr/recorder/repository/jfrChunk.cpp#L38-L52")
+    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-23+9/src/hotspot/share/jfr/recorder/repository/jfrChunk.cpp#L38-L54")
     public long nanosNow() {
         // Use same clock source as Instant.now() to ensure
         // that Recording::getStopTime() returns an Instant that

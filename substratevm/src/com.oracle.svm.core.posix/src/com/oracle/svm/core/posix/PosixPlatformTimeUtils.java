@@ -35,7 +35,7 @@ import com.oracle.svm.core.util.PlatformTimeUtils;
 public final class PosixPlatformTimeUtils extends PlatformTimeUtils {
 
     @Override
-    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-24+3/src/hotspot/os/posix/os_posix.cpp#L1409-L1415")
+    @BasedOnJDKFile("https://github.com/openjdk/jdk/blob/jdk-23+9/src/hotspot/os/posix/os_posix.cpp#L1387-L1393")
     protected SecondsNanos javaTimeSystemUTC() {
         Time.timespec ts = StackValue.get(Time.timespec.class);
         int status = PosixUtils.clock_gettime(Time.CLOCK_REALTIME(), ts);
