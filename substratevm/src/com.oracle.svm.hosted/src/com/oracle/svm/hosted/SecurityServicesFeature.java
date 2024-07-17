@@ -80,7 +80,6 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.Configuration;
 
-import jdk.graal.compiler.options.Option;
 import org.graalvm.nativeimage.ImageSingletons;
 import org.graalvm.nativeimage.hosted.RuntimeJNIAccess;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
@@ -107,6 +106,8 @@ import com.oracle.svm.hosted.c.NativeLibraries;
 import com.oracle.svm.util.ModuleSupport;
 import com.oracle.svm.util.ReflectionUtil;
 
+import jdk.graal.compiler.options.Option;
+import jdk.graal.compiler.serviceprovider.JavaVersionUtil;
 import sun.security.jca.ProviderList;
 import sun.security.provider.NativePRNG;
 import sun.security.x509.OIDMap;
@@ -659,15 +660,7 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
     private static Function<String, Class<?>> getConstructorParameterClassAccessor(ImageClassLoader loader) {
         Map<String, /* EngineDescription */ Object> knownEngines = ReflectionUtil.readStaticField(Provider.class, "knownEngines");
         Class<?> clazz = loader.findClassOrFail("java.security.Provider$EngineDescription");
-        Field consParamClassField;
-
-        try {
-            consParamClassField = ReflectionUtil.lookupField(clazz, "constructorParameterClassName");
-        } catch (ReflectionUtil.ReflectionUtilError e) {
-            consParamClassField = ReflectionUtil.lookupField(clazz, "constructorParameterClass");
-        }
-
-        final Field consParamClassFieldFinal = consParamClassField;
+        Field consParamClassField = ReflectionUtil.lookupField(clazz, JavaVersionUtil.JAVA_SPEC >= 22 ? "constructorParameterClass" : "constructorParameterClassName");
 
         /*
          * The returned lambda captures the value of the Provider.knownEngines map retrieved above
@@ -692,10 +685,13 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
                 if (engineDescription == null) {
                     return null;
                 }
-                if (consParamClassFieldFinal.getName().equals("constructorParameterClassName")) {
-                    return loader.findClass((String) consParamClassFieldFinal.get(engineDescription)).get();
+                if (JavaVersionUtil.JAVA_SPEC >= 22) {
+                    return (Class<?>) consParamClassField.get(engineDescription);
                 }
-                return (Class<?>) consParamClassFieldFinal.get(engineDescription);
+                String constrParamClassName = (String) consParamClassField.get(engineDescription);
+                if (constrParamClassName != null) {
+                    return loader.findClass(constrParamClassName).get();
+                }
             } catch (IllegalAccessException e) {
                 VMError.shouldNotReachHere(e);
             }
