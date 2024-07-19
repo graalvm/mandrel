@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,34 +22,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.core.genscavenge;
+package jdk.graal.compiler.phases.common;
 
-import java.lang.management.MemoryUsage;
+import java.util.Optional;
 
-import org.graalvm.nativeimage.Platform;
-import org.graalvm.nativeimage.Platforms;
-
-import com.oracle.svm.core.heap.AbstractMemoryMXBean;
+import jdk.graal.compiler.nodes.GraphState;
+import jdk.graal.compiler.nodes.StructuredGraph;
+import jdk.graal.compiler.nodes.extended.OpaqueValueNode;
+import jdk.graal.compiler.nodes.spi.CoreProviders;
+import jdk.graal.compiler.phases.BasePhase;
 
 /**
- * A MemoryMXBean for this heap.
+ * Removes all {@link jdk.graal.compiler.nodes.extended.OpaqueValueNode}s from the graph.
  */
-public final class HeapImplMemoryMXBean extends AbstractMemoryMXBean {
-    @Platforms(Platform.HOSTED_ONLY.class)
-    public HeapImplMemoryMXBean() {
+public class RemoveOpaqueValuePhase extends BasePhase<CoreProviders> {
+    @Override
+    public Optional<NotApplicable> notApplicableTo(GraphState graphState) {
+        return ALWAYS_APPLICABLE;
+    }
+
+    public boolean shouldApply(StructuredGraph graph) {
+        return graph.hasNode(OpaqueValueNode.TYPE);
     }
 
     @Override
-    public MemoryUsage getHeapMemoryUsage() {
-        long used = HeapImpl.getAccounting().getUsedBytes().rawValue();
-        long committed = Math.max(used, HeapImpl.getAccounting().getCommittedBytes().rawValue());
-
-        /* The serial GC may exceed the maximum heap size temporarily. */
-        long max = GCImpl.getPolicy().getMaximumHeapSize().rawValue();
-        if (max != -1L) {
-            max = Math.max(committed, max);
+    protected void run(StructuredGraph graph, CoreProviders context) {
+        for (OpaqueValueNode opaque : graph.getNodes(OpaqueValueNode.TYPE)) {
+            opaque.replaceAtUsagesAndDelete(opaque.getValue());
         }
-
-        return new MemoryUsage(UNDEFINED_MEMORY_USAGE, used, committed, max);
     }
 }
