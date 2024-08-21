@@ -11,10 +11,6 @@ on:
         type: string
         description: 'The tag to use for build stats upload of native tests (e.g. 22.3.0-dev-jdk17-mytest-patch-before)'
         default: "null"
-      category:
-        type: string
-        description: 'The native integration test category to upload stats for'
-        default: "null"
     secrets:
       UPLOAD_COLLECTOR_TOKEN:
         description: 'A token used to report build statistics to a collector'
@@ -32,7 +28,7 @@ jobs:
           path: workflow-mandrel
       - uses: actions/download-artifact@v4
         with:
-          name: build-stats-${{inputs.category}}-${{ inputs.artifacts-suffix }}
+          pattern: build-stats-*-${{ inputs.artifacts-suffix }}
           path: .
       - name: Extract and import build stats
         env:
@@ -41,6 +37,12 @@ jobs:
           COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
         shell: bash
         run: |
-          tar -xf build-stats.tgz
+          ls ./build-stats-*/
           echo "Tag for stat upload is going to be: '${BUILD_STATS_TAG}'"
-          DIR=quarkus/ TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash workflow-mandrel/.github/import_stats.sh
+          for directory in ./build-stats-*/; do
+            echo "Processing $directory"
+            cd "$directory"
+            tar -xvf build-stats.tgz
+            DIR=./quarkus TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash workflow-mandrel/.github/import_stats.sh
+            cd -
+          done

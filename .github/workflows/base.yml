@@ -548,13 +548,10 @@ jobs:
     needs:
       - native-tests
       - get-test-matrix
-    strategy:
-      matrix: ${{ fromJson(needs.get-test-matrix.outputs.tests-matrix) }}
     uses: ./.github/workflows/native-tests-stats-upload.yml
     with:
       artifacts-suffix: ${{ needs.get-test-matrix.outputs.artifacts-suffix }}
       build-stats-tag: ${{ inputs.build-stats-tag }}
-      category: ${{ matrix.category }}
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
 
