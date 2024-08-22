@@ -43,6 +43,6 @@ jobs:
             echo "Processing $directory"
             cd "$directory"
             tar -xvf build-stats.tgz
-            DIR=./quarkus TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash workflow-mandrel/.github/import_stats.sh
+            DIR=./quarkus TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash ../workflow-mandrel/.github/import_stats.sh
             cd -
           done
