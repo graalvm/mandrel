@@ -187,18 +187,6 @@ jobs:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
-  # Test Q main and Mandrel 23.0 JDK 17
-  ####
-  q-main-mandrel-23_0:
-    name: "Q main M 23.0 JDK 17"
-    uses: ./.github/workflows/base.yml
-    with:
-      quarkus-version: "main"
-      build-type: "mandrel-source-nolocalmvn"
-      version: "mandrel/23.0"
-      jdk: "17/ea"
-      mandrel-packaging-version: "23.0"
-  ####
   # Test Quarkus 3.2 with Mandrel 23.0 JDK 17
   ####
   q-3_2-mandrel-23_0:
