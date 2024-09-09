@@ -58,6 +58,8 @@ on:
           - "22/ea"
           - "23/ga"
           - "23/ea"
+          - "24/ga"
+          - "24/ea"
           - "latest/labsjdk"
       builder-image:
         type: string
