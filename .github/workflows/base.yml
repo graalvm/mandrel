@@ -319,8 +319,8 @@ jobs:
           ${MX_PATH}/mx --primary-suite-path sdk maven-deploy --suppress-javadoc 2>&1 | tee maven_deploy.log
           rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
           mv graalvm-maven-artefacts.tgz ${{ github.workspace }}
-          # Get version from first line of the log, which should look like "Installing sdk distributions for version 23.1.0.0"
-          MAVEN_VERS=$(awk 'NR==1 {print $6}' maven_deploy.log)
+          # Derive Maven version from 'mx graalvm-version' output
+          MAVEN_VERS=$(${MX_PATH}/mx --primary-suite-path substratevm graalvm-version 2>/dev/null | sed 's|-dev|-SNAPSHOT|g')
           echo "GraalVM maven version is: ${MAVEN_VERS}"
           echo ${MAVEN_VERS} > ${MANDREL_HOME}/.maven-version
           rm -rf graalvm-version.tgz && tar -czvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})/.maven-version
