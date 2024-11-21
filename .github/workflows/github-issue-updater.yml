@@ -25,13 +25,13 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '21'
       - name: Setup jbang and report results
         env:
             BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
         run: |
             echo "Installing JBang"
-            wget https://github.com/jbangdev/jbang/releases/download/v0.87.0/jbang.zip
+            wget https://github.com/jbangdev/jbang/releases/download/v0.121.0/jbang.zip
             unzip jbang.zip
             echo "Attempting to report results"
             ./jbang/bin/jbang ./workflow-mandrel/.github/quarkus-ecosystem-issue.java \

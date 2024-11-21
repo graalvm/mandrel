@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Red Hat, Inc.
+ * Copyright 2020,2024 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 //usr/bin/env jbang "$0" "$@" ; exit $?
 
-//DEPS org.kohsuke:github-api:1.321
-//DEPS info.picocli:picocli:4.2.0
+//JAVA 21
+//DEPS org.kohsuke:github-api:1.326
+//DEPS info.picocli:picocli:4.7.6
 
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHWorkflowRun.Conclusion;
@@ -32,7 +33,6 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
