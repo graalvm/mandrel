@@ -43,6 +43,16 @@ import java.io.InputStreamReader;
 		description = "Takes care of updating an issue depending on the status of the build")
 class Report implements Runnable {
 
+	// Github uses " / " to separate a parent job title from a child job title,
+	// e.g.: "Q main M 24 latest windows / Mandrel build" shows that the job
+	// "Mandrel build" is a child of the job "Q main M 24 latest windows".
+	// Similarly, there is a job "Q main M 24 latest / Mandrel build" for runs
+	// on linux. We use this delimiter to get the parent job title and report
+	// failures to the issue corresponding to that job.
+	// The use of (?<=...) is a positive lookbehind, which means that the delimiter
+	// will be included in the match.
+	private static final String JOB_TITLE_DELIMITER = "(?<=( / ))";
+
 	@Option(names = "token", description = "Github token to use when calling the Github API", required = true)
 	private String token;
 
@@ -257,7 +267,7 @@ class Report implements Runnable {
 		} else {
 			System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
 			System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
-			Object oldIssue = issues.put(issue, job.getName().split(" / ")[0]);
+			Object oldIssue = issues.put(issue, job.getName().split(JOB_TITLE_DELIMITER)[0]);
 			if (oldIssue != null) {
 				System.out.println("WARNING: The issue has already been seen, please check the workflow configuration");
 			};
