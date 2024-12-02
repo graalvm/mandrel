@@ -30,33 +30,6 @@ concurrency:
 
 jobs:
   ####
-  # Test Q main and GraalVM CE JDK 21 since Mandrel 21 builds are
-  # currently not possible (#598)
-  ####
-  q-main-graal-21-latest:
-    name: "Q main G 21 latest"
-    uses: ./.github/workflows/base.yml
-    with:
-      quarkus-version: "main"
-      version: "graal/master"
-      build-type: "graal-source"
-      jdk: "21/ea"
-      build-stats-tag: "gha-linux-graal-qmain-glatest-jdk21ea"
-    secrets:
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  ####
-  # Test Q main and Mandrel 24.0 JDK 22 builder image
-  ####
-  q-main-mandrel-24_0:
-    name: "Q main M 24 JDK 22"
-    uses: ./.github/workflows/base.yml
-    with:
-      quarkus-version: "main"
-      build-stats-tag: "gha-linux-qmain-m24_0-builder-image"
-      builder-image: "quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-22"
-    secrets:
-      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  ####
   # Test Q main and Mandrel 24.1 JDK 23
   ####
   q-main-mandrel-24_1-ea:
@@ -122,15 +95,3 @@ jobs:
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  ####
-  # Test Quarkus 3.2 with Mandrel 23.0 JDK 17
-  ####
-  q-3_2-mandrel-23_0:
-    name: "Q 3.2 M 23.0 JDK 17"
-    uses: ./.github/workflows/base.yml
-    with:
-      quarkus-version: "3.2"
-      build-type: "mandrel-source-nolocalmvn"
-      version: "mandrel/23.0"
-      jdk: "17/ea"
-      mandrel-packaging-version: "23.0"
