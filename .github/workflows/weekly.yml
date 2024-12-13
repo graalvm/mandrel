@@ -30,6 +30,39 @@ concurrency:
 
 jobs:
   ####
+  # Test Q main and Mandrel 24.2 JDK 24
+  ####
+  q-main-mandrel-24_2-ea:
+    name: "Q main M 24.2 JDK 24 EA"
+    uses: ./.github/workflows/base.yml
+    with:
+      quarkus-version: "main"
+      version: "mandrel/24.2"
+      jdk: "24/ea"
+      issue-number: "814"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "302"
+      build-stats-tag: "gha-linux-qmain-m24_2-jdk24ea"
+      mandrel-packaging-version: "24.2"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  q-main-mandrel-24_2-ea-win:
+    name: "Q main M 24.2 JDK 23 EA windows"
+    uses: ./.github/workflows/base-windows.yml
+    with:
+      quarkus-version: "main"
+      version: "mandrel/24.2"
+      jdk: "24/ea"
+      issue-number: "815"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "303"
+      build-stats-tag: "gha-win-qmain-m24_2-jdk24ea"
+      mandrel-packaging-version: "24.2"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  ####
   # Test Q main and Mandrel 24.1 JDK 23
   ####
   q-main-mandrel-24_1-ea:
