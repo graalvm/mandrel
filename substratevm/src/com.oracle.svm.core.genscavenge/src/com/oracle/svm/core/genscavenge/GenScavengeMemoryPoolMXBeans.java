@@ -102,7 +102,7 @@ public class GenScavengeMemoryPoolMXBeans {
 
         @Override
         UnsignedWord getMaximumValue() {
-            return GCImpl.getPolicy().getMaximumEdenSize();
+            return UNDEFINED;
         }
 
         @Override
@@ -150,7 +150,7 @@ public class GenScavengeMemoryPoolMXBeans {
 
         @Override
         UnsignedWord getMaximumValue() {
-            return GCImpl.getPolicy().getMaximumSurvivorSize();
+            return UNDEFINED;
         }
 
         @Override
@@ -193,7 +193,7 @@ public class GenScavengeMemoryPoolMXBeans {
 
         @Override
         UnsignedWord getMaximumValue() {
-            return GCImpl.getPolicy().getMaximumOldSize();
+            return UNDEFINED;
         }
 
         @Override
@@ -236,7 +236,7 @@ public class GenScavengeMemoryPoolMXBeans {
 
         @Override
         UnsignedWord getMaximumValue() {
-            return GCImpl.getPolicy().getMaximumHeapSize();
+            return UNDEFINED;
         }
 
         @Override
