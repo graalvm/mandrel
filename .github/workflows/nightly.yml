@@ -12,7 +12,8 @@ on:
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
   schedule:
-    - cron: '15 0 * * *'
+    # Don't run on weekends as merges are infrequent
+    - cron: '15 0 * * 2-6'
   workflow_dispatch:
 
 # The following aims to reduce CI CPU cycles by:
