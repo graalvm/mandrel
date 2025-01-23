@@ -2,7 +2,7 @@ suite = {
     "name": "vm",
     "version" : "24.1.2.0",
     "mxversion": "7.27.0",
-    "release" : False,
+    "release" : True,
     "groupId" : "org.graalvm",
 
     "url" : "http://www.graalvm.org/",
