@@ -31,6 +31,24 @@ concurrency:
 
 jobs:
   ####
+  # Test Quarkus main with latest Mandrel on AArch64
+  ####
+  q-main-mandrel-25-latest:
+    name: "Q main M 25 latest on AArch64"
+    uses: ./.github/workflows/base.yml
+    with:
+      quarkus-version: "main"
+      mandrel-version: "graal/master"
+      jdk: "25/ea"
+      issue-number: "830"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "318"
+      build-stats-tag: "gha-linux-aarch64-mandrel-qmain-mlatest-jdk25ea"
+      gh-runner: "ubuntu-24.04-arm"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  ####
   # Test Q main and Mandrel 24.2 JDK 24
   ####
   q-main-mandrel-24_2-ea:
@@ -38,7 +56,7 @@ jobs:
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/24.2"
+      mandrel-version: "mandrel/24.2"
       jdk: "24/ea"
       issue-number: "814"
       issue-repo: "graalvm/mandrel"
@@ -53,7 +71,7 @@ jobs:
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/24.2"
+      mandrel-version: "mandrel/24.2"
       jdk: "24/ea"
       issue-number: "815"
       issue-repo: "graalvm/mandrel"
@@ -71,7 +89,7 @@ jobs:
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/23.1"
+      mandrel-version: "mandrel/23.1"
       jdk: "21/ea"
       issue-number: "739"
       issue-repo: "graalvm/mandrel"
@@ -86,7 +104,7 @@ jobs:
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/23.1"
+      mandrel-version: "mandrel/23.1"
       jdk: "21/ea"
       issue-number: "740"
       issue-repo: "graalvm/mandrel"

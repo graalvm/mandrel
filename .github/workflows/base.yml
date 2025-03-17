@@ -12,14 +12,14 @@ on:
         type: string
         description: 'The Quarkus repository to be used'
         default: 'quarkusio/quarkus'
-      repo:
-        type: string
-        description: 'The Mandrel/Graal repository to be used'
-        default: 'graalvm/mandrel'
-      version:
+      mandrel-version:
         type: string
         description: 'Mandrel version to test (branch, tag, or commit)'
         default: "graal/master"
+      mandrel-repo:
+        type: string
+        description: 'The Mandrel/Graal repository to be used'
+        default: 'graalvm/mandrel'
       mandrel-packaging-version:
         type: string
         description: 'Mandrel packaging version to test (branch, tag, or commit)'
@@ -56,6 +56,10 @@ on:
         type: string
         description: 'The tag to use for build stats upload of native tests (e.g. 22.3.0-dev-jdk17-mytest-patch-before)'
         default: "null"
+      gh-runner:
+        type: string
+        description: 'The github runner we are building on'
+        default: 'ubuntu-latest'
     secrets:
       ISSUE_BOT_TOKEN:
         description: 'A token used to report results in GH issues'
@@ -86,11 +90,12 @@ env:
 jobs:
   build-vars:
     name: Set distribution, build-from-source, and maven-deploy-local variables based on build-type
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.gh-runner }}
     outputs:
       build-from-source: ${{ steps.source-build.outputs.build-from-source }}
       distribution: ${{ steps.distro.outputs.distribution }}
       maven-deploy-local: ${{ steps.maven-deploy-local.outputs.maven-deploy-local }}
+      architecture: ${{ steps.arch.outputs.architecture }}
     steps:
     - name: Set build-from-source output
       id: source-build
@@ -137,6 +142,16 @@ jobs:
         fi
         echo "maven_deploy_local=$maven_deploy_local"
         echo "maven-deploy-local=$maven_deploy_local" >> $GITHUB_OUTPUT
+    - name: Set architecture output
+      id: arch
+      run: |
+        if [ "${{ runner.arch }}" == "X64" ]
+        then
+          ARCH="amd64"
+        else
+          ARCH="aarch64"
+        fi
+        echo "architecture=$ARCH" >> $GITHUB_OUTPUT
 
   get-test-matrix:
     name: Get test matrix
@@ -176,7 +191,7 @@ jobs:
 
   build-mandrel:
     name: Mandrel build
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.gh-runner }}
     needs:
       - get-test-matrix
       - build-vars
@@ -184,9 +199,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.repo }}
+        repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
-        ref: ${{ inputs.version }}
+        ref: ${{ inputs.mandrel-version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -209,8 +224,15 @@ jobs:
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK with static libs
       run: |
-        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/jdk/hotspot/normal/eclipse -o jdk.tar.gz
-        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/x64/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
+        if [ "${{ runner.arch }}" == "X64" ]
+        then
+          ARCH="x64"
+        else
+          ARCH="aarch64"
+        fi
+        echo "architecture=$ARCH" >> $GITHUB_OUTPUT
+        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/${ARCH}/jdk/hotspot/normal/eclipse -o jdk.tar.gz
+        curl -sL https://api.adoptium.net/v3/binary/latest/${{ inputs.jdk }}/linux/${ARCH}/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
         mkdir -p ${JAVA_HOME}
         tar xf jdk.tar.gz -C ${JAVA_HOME} --strip-components=1
         tar xf jdk-static-libs.tar.gz -C ${JAVA_HOME} --strip-components=1
@@ -231,7 +253,7 @@ jobs:
           --archive-suffix tar.gz \
           "${{needs.build-vars.outputs.maven-deploy-local}}"
         ${MANDREL_HOME}/bin/native-image --version
-        mv mandrel-java*-linux-amd64-*.tar.gz ${{ github.workspace }}/jdk.tgz
+        mv mandrel-java*-linux-${{ needs.build-vars.outputs.architecture }}*.tar.gz ${{ github.workspace }}/jdk.tgz
         if [ "$MVN_LOCAL" != "" ]
         then
           rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
@@ -269,7 +291,7 @@ jobs:
 
   build-graal:
     name: GraalVM CE build
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.gh-runner }}
     needs:
       - get-test-matrix
       - build-vars
@@ -277,9 +299,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.repo }}
+        repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
-        ref: ${{ inputs.version }}
+        ref: ${{ inputs.mandrel-version }}
         path: graal
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -358,25 +380,25 @@ jobs:
 
   get-jdk:
     name: Get JDK ${{ inputs.jdk }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.gh-runner }}
     needs:
       - get-test-matrix
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == false && inputs.builder-image == 'null'
     steps:
-    - name: Get Mandrel ${{ inputs.version }}
+    - name: Get Mandrel ${{ inputs.mandrel-version }}
       if: needs.build-vars.outputs.distribution == 'mandrel'
       run: |
-        VERSION=${{ inputs.version }}
+        VERSION=${{ inputs.mandrel-version }}
         curl \
-          -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##mandrel-}.tar.gz \
+          -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-${{ needs.build-vars.outputs.architecture }}-${VERSION##mandrel-}.tar.gz \
           -o jdk.tgz
-    - name: Get GraalVM CE ${{ inputs.version }}
+    - name: Get GraalVM CE ${{ inputs.mandrel-version }}
       if: needs.build-vars.outputs.distribution == 'graalvm'
       run: |
-        VERSION=${{ inputs.version }}
+        VERSION=${{ inputs.mandrel-version }}
         curl \
-          -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##vm-}.tar.gz \
+          -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-${{ needs.build-vars.outputs.architecture }}-${VERSION##vm-}.tar.gz \
           -o graalvm.tgz
         mkdir -p ${JAVA_HOME}
         tar xzvf graalvm.tgz -C ${JAVA_HOME} --strip-components=1
@@ -416,7 +438,7 @@ jobs:
       - build-quarkus
       - get-test-matrix
     if: always() && needs.build-quarkus.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.gh-runner }}
     env:
       # leave more space for the actual native compilation and execution
       MAVEN_OPTS: -Xmx1g
@@ -564,7 +586,7 @@ jobs:
       - get-jdk
       - build-quarkus
       - get-test-matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.gh-runner }}
     env:
       # leave more space for the actual native compilation and execution
       MAVEN_OPTS: -Xmx1g

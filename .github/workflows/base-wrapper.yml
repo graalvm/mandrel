@@ -1,7 +1,7 @@
 # Enable base.yml to be executed as a dispatch workflow with:
 #
 # gh workflow run base-wrapper.yml \
-#  -f quarkus-repo=gsmet/quarkus -f quarkus-version=2.2.4-backports-1 \
+#  -f quarkus-version=gsmet/quarkus:2.2.4-backports-1 \
 #  -f builder-image="quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
 name: Mandrel-Quarkus tests wrapper
 
@@ -10,29 +10,17 @@ on:
     inputs:
       quarkus-version:
         type: string
-        description: 'Quarkus version to test (branch, tag, commit, or "latest")'
+        description: 'Quarkus version to test `<repo>:<version>` (branch, tag, commit, or "latest")'
         # "latest" is replaced by the latest release available in maven
-        default: "main"
-      quarkus-repo:
+        default: "quarkusio/quarkus:main"
+      graalvm-version:
         type: string
-        description: 'The Quarkus repository to be used'
-        default: 'quarkusio/quarkus'
-      repo:
-        type: string
-        description: 'The Mandrel/Graal repository to be used'
-        default: 'graalvm/mandrel'
-      version:
-        type: string
-        description: 'Mandrel version to test (branch, tag, or commit)'
-        default: "graal/master"
+        description: 'Mandrel version to test `<repo>:<version>` (branch, tag, or commit)'
+        default: "graalvm/mandrel:graal/master"
       mandrel-packaging-version:
         type: string
-        description: 'Mandrel packaging version to test (branch, tag, or commit)'
-        default: "master"
-      mandrel-packaging-repo:
-        type: string
-        description: 'Mandrel packaging repository to be used'
-        default: "graalvm/mandrel-packaging"
+        description: 'Mandrel packaging version to test `<repo>:<version>` (branch, tag, or commit)'
+        default: "graalvm/mandrel-packaging:master"
       build-type:
         type: choice
         description: 'Build distribution (graal/mandrel) from source or use released binaries, and control of maven should deploy locally'
@@ -47,7 +35,7 @@ on:
       jdk:
         type: choice
         description: 'OpenJDK to use. One of <feature-version>/ga, <feature-version>/ea, e.g. 17/ga or 17/ea (/ga and /ea suffixes are only relevant when building from source)'
-        default: "17/ga"
+        default: "25/ea"
         options:
           - "11/ga"
           - "11/ea"
@@ -73,20 +61,54 @@ on:
         type: string
         description: 'The tag to use for build stats uploads of native tests (e.g. 22.3.0-dev-jdk17-prepatch-x)'
         default: "null"
+      gh-runner:
+        type: choice
+        description: 'The github runner we are building for'
+        default: "ubuntu-latest"
+        options:
+          - "ubuntu-latest"
+          - "ubuntu-24.04"
+          - "ubuntu-24.04-arm"
 
 jobs:
+  process-inputs:
+    name: Process inputs
+    runs-on: ubuntu-latest
+    outputs:
+      quarkus-version: ${{ steps.process.outputs.quarkus-version }}
+      quarkus-repo: ${{ steps.process.outputs.quarkus-repo }}
+      mandrel-version: ${{ steps.process.outputs.mandrel-version }}
+      mandrel-repo: ${{ steps.process.outputs.mandrel-repo }}
+      mandrel-packaging-version: ${{ steps.process.outputs.mandrel-packaging-version }}
+      mandrel-packaging-repo: ${{ steps.process.outputs.mandrel-packaging-repo }}
+      build-type: ${{ steps.process.outputs.build-type }}
+      jdk: ${{ steps.process.outputs.jdk }}
+      builder-image: ${{ steps.process.outputs.builder-image }}
+      build-stats-tag: ${{ steps.process.outputs.build-stats-tag }}
+    steps:
+      - id: process
+        run: |
+          echo "quarkus-repo=$(echo ${{ github.event.inputs.quarkus-version }} | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
+          echo "quarkus-version=$(echo ${{ github.event.inputs.quarkus-version }} | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
+          echo "mandrel-repo=$(echo ${{ github.event.inputs.graalvm-version }} | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
+          echo "mandrel-version=$(echo ${{ github.event.inputs.graalvm-version }} | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
+          echo "mandrel-packaging-repo=$(echo ${{ github.event.inputs.mandrel-packaging-version }} | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
+          echo "mandrel-packaging-version=$(echo ${{ github.event.inputs.mandrel-packaging-version }} | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
   delegate:
+    needs: process-inputs
     uses: ./.github/workflows/base.yml
     with:
-      quarkus-version: ${{ github.event.inputs.quarkus-version }}
-      quarkus-repo: ${{ github.event.inputs.quarkus-repo }}
-      repo: ${{ github.event.inputs.repo }}
-      version: ${{ github.event.inputs.version }}
-      mandrel-packaging-version: ${{ github.event.inputs.mandrel-packaging-version }}
-      mandrel-packaging-repo: ${{ github.event.inputs.mandrel-packaging-repo }}
+      quarkus-version: ${{ needs.process-inputs.outputs.quarkus-version }}
+      quarkus-repo: ${{ needs.process-inputs.outputs.quarkus-repo }}
+      mandrel-version: ${{ needs.process-inputs.outputs.mandrel-version }}
+      mandrel-repo: ${{ needs.process-inputs.outputs.mandrel-repo }}
+      mandrel-packaging-version: ${{ needs.process-inputs.outputs.mandrel-packaging-version }}
+      mandrel-packaging-repo: ${{ needs.process-inputs.outputs.mandrel-packaging-repo }}
       build-type: ${{ github.event.inputs.build-type }}
       jdk: ${{ github.event.inputs.jdk }}
       builder-image: ${{ github.event.inputs.builder-image }}
       build-stats-tag: ${{ github.event.inputs.build-stats-tag }}
+      gh-runner: ${{ github.event.inputs.os }}
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}

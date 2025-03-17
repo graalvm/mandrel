@@ -12,11 +12,11 @@ on:
         type: string
         description: 'The Quarkus repository to be used'
         default: 'quarkusio/quarkus'
-      version:
+      mandrel-version:
         type: string
         description: 'Mandrel version to test (branch, tag, or commit)'
         default: "graal/master"
-      repo:
+      mandrel-repo:
         type: string
         description: 'The Mandrel/Graal repository to be used'
         default: 'graalvm/mandrel'
@@ -171,9 +171,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.repo }}
+        repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
-        ref: ${{ inputs.version }}
+        ref: ${{ inputs.mandrel-version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -253,9 +253,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.repo }}
+        repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
-        ref: ${{ inputs.version }}
+        ref: ${{ inputs.mandrel-version }}
         path: graal
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -316,10 +316,10 @@ jobs:
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == false
     steps:
-    - name: Get Mandrel ${{ inputs.version }}
+    - name: Get Mandrel ${{ inputs.mandrel-version }}
       if: needs.build-vars.outputs.distribution == 'mandrel'
       run: |
-        $VERSION="${{ inputs.version }}"
+        $VERSION="${{ inputs.mandrel-version }}"
         $VERSION_SHORT=@($VERSION -replace 'mandrel-')
         $wc = New-Object System.Net.WebClient
         $url="$Env:GITHUB_SERVER_URL/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(("${{ inputs.jdk }}" -split "/")[0])-windows-amd64-${VERSION_SHORT}.zip"
@@ -327,10 +327,10 @@ jobs:
         Expand-Archive "mandrel.zip" -DestinationPath "$Env:temp"
         Move-Item -Path "$Env:temp\mandrel-*" -Destination $Env:JAVA_HOME
         & $Env:JAVA_HOME\bin\native-image --version
-    - name: Get GraalVM CE ${{ inputs.version }}
+    - name: Get GraalVM CE ${{ inputs.mandrel-version }}
       if: needs.build-vars.outputs.distribution == 'graalvm'
       run: |
-        $VERSION="${{ inputs.version }}"
+        $VERSION="${{ inputs.mandrel-version }}"
         $VERSION_SHORT=@($VERSION -replace 'vm-')
         $wc = New-Object System.Net.WebClient
         $url="$Env:GITHUB_SERVER_URL/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(("${{ inputs.jdk }}" -split "/")[0])-windows-amd64-${VERSION_SHORT}.zip"
