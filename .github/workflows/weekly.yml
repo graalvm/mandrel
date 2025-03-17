@@ -38,7 +38,7 @@ jobs:
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/25.0"
+      mandrel-version: "mandrel/25.0"
       jdk: "25/ea"
       issue-number: "853"
       issue-repo: "graalvm/mandrel"
@@ -53,13 +53,49 @@ jobs:
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/25.0"
+      mandrel-version: "mandrel/25.0"
       issue-number: "854"
       issue-repo: "graalvm/mandrel"
       mandrel-it-issue-number: "345"
       jdk: "25/ea"
       build-stats-tag: "gha-win-mandrel-qmain-m25_0-jdk25ea"
       mandrel-packaging-version: "25.0"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  ####
+  # Test Quarkus main with Mandrel for JDK 25 on AArch64
+  ####
+  q-main-mandrel-25-latest:
+    name: "Q main M 25 latest on AArch64"
+    uses: ./.github/workflows/base.yml
+    with:
+      quarkus-version: "main"
+      mandrel-version: "graal/master"
+      jdk: "25/ea"
+      issue-number: "830"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "318"
+      build-stats-tag: "gha-linux-aarch64-mandrel-qmain-mlatest-jdk25ea"
+      gh-runner: "ubuntu-24.04-arm"
+    secrets:
+      ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  ####
+  # Test Quarkus main with Mandrel latest on AArch64
+  ####
+  q-main-mandrel-26-latest:
+    name: "Q main M 26 latest on AArch64"
+    uses: ./.github/workflows/base.yml
+    with:
+      quarkus-version: "main"
+      mandrel-version: "graal/master"
+      jdk: "26/ea"
+      issue-number: "872"
+      issue-repo: "graalvm/mandrel"
+      mandrel-it-issue-number: "359"
+      build-stats-tag: "gha-linux-aarch64-mandrel-qmain-mlatest-jdk26ea"
+      gh-runner: "ubuntu-24.04-arm"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
@@ -71,7 +107,7 @@ jobs:
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/24.2"
+      mandrel-version: "mandrel/24.2"
       jdk: "24/ea"
       issue-number: "814"
       issue-repo: "graalvm/mandrel"
@@ -86,7 +122,7 @@ jobs:
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/24.2"
+      mandrel-version: "mandrel/24.2"
       jdk: "24/ea"
       issue-number: "815"
       issue-repo: "graalvm/mandrel"
@@ -104,7 +140,7 @@ jobs:
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/23.1"
+      mandrel-version: "mandrel/23.1"
       jdk: "21/ea"
       issue-number: "739"
       issue-repo: "graalvm/mandrel"
@@ -119,7 +155,7 @@ jobs:
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
-      version: "mandrel/23.1"
+      mandrel-version: "mandrel/23.1"
       jdk: "21/ea"
       issue-number: "740"
       issue-repo: "graalvm/mandrel"
