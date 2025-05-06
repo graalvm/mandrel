@@ -91,6 +91,10 @@ jobs:
       build-from-source: ${{ steps.source-build.outputs.build-from-source }}
       distribution: ${{ steps.distro.outputs.distribution }}
     steps:
+    - name: Log inputs
+      run: |
+        echo "Inputs:"
+        echo '${{ toJson(inputs) }}' | jq . | tr -d '"' | sed 's/,$//g'
     - name: Set build-from-source output
       id: source-build
       run: |

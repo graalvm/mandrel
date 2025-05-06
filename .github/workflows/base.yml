@@ -92,6 +92,10 @@ jobs:
       distribution: ${{ steps.distro.outputs.distribution }}
       maven-deploy-local: ${{ steps.maven-deploy-local.outputs.maven-deploy-local }}
     steps:
+    - name: Log inputs
+      run: |
+        echo "Inputs:"
+        echo '${{ toJson(inputs) }}' | jq . | tr -d '"' | sed 's/,$//g'
     - name: Set build-from-source output
       id: source-build
       run: |
