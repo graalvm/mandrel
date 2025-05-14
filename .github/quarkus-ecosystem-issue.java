@@ -128,7 +128,7 @@ class Report implements Runnable {
 							failedJobsList.add(job);
 						}
 					}
-				} else if (job.getName().contains("Q Mandrel IT")) {
+				} else if (job.getName().contains("Q Mandrel IT") && !job.getConclusion().equals(Conclusion.SKIPPED)) {
 					String fullContent = getJobsLogs(job, "mandrel-it-issue-number",
 							"FAILURE [",
 							"Z Error:",
@@ -336,7 +336,7 @@ class Report implements Runnable {
 			System.out.println(String.format("\nGetting logs for job %s", job.getName()));
 			fullContent = job.downloadLogs(getLogArchiveInputStreamFunction(filters));
 		} catch (IOException e) {
-			System.out.println(String.format("Unable to get logs for job %s", job.getName()));
+			System.out.println(String.format("Unable to get logs for job %s (%s)", job.getName(), job.getHtmlUrl()));
 			throw new UncheckedIOException(e);
 		}
 		return fullContent;
