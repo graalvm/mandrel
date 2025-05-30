@@ -96,6 +96,12 @@ jobs:
       run: |
         echo "Inputs:"
         echo '${{ toJson(inputs) }}' | jq . | tr -d '"' | sed 's/,$//g'
+    - name: Dump inputs to GITHUB_STEP_SUMMARY in markdown table format
+      run: |
+        echo "## Inputs" >> $GITHUB_STEP_SUMMARY
+        echo "| Input | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+        echo '${{ toJson(inputs) }}' | jq -r 'to_entries[] | "| \(.key) | `\(.value)` |"' >> $GITHUB_STEP_SUMMARY
     - name: Set build-from-source output
       id: source-build
       run: |
@@ -155,6 +161,7 @@ jobs:
         export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j 'del(."build-stats-tag", ."mandrel-it-issue-number", ."issue-repo", ."issue-number") | to_entries[] | "-\(.value)"' | tr '":<>|*?\r\n\/' '-')
         echo $SUFFIX
         echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
+        echo "**artifacts-suffix:** ${SUFFIX}" >> $GITHUB_STEP_SUMMARY
     - name: Get Quarkus version and test matrix
       id: version
       run: |
@@ -177,6 +184,14 @@ jobs:
         tests_json=$(jq -c '.include |= map(select(.["os-name"] | startswith("ubuntu")))' native-tests.json)
         echo ${tests_json}
         echo "tests-matrix=${tests_json}" >> $GITHUB_OUTPUT
+        echo "**Quarkus version:** [$QUARKUS_VERSION](${GITHUB_SERVER_URL}/quarkusio/quarkus/commits/$QUARKUS_VERSION)" >> $GITHUB_STEP_SUMMARY
+        echo "<details>" >> $GITHUB_STEP_SUMMARY
+        echo "<summary>Test matrix:</summary>" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo '```json' >> $GITHUB_STEP_SUMMARY
+        jq '.include |= map(select(.["os-name"] | startswith("ubuntu")))' native-tests.json | tee -a $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "</details>" >> $GITHUB_STEP_SUMMARY
 
   build-mandrel:
     name: Mandrel build
@@ -199,6 +214,7 @@ jobs:
     - name: Checkout MX
       run: |
         VERSION=$(jq -r .mx_version ${MANDREL_REPO}/common.json)
+        echo "**MX version:** [$VERSION](${GITHUB_SERVER_URL}/graalvm/mx/tree/$VERSION)" >> $GITHUB_STEP_SUMMARY
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
     - uses: actions/checkout@v4
@@ -220,8 +236,11 @@ jobs:
         tar xf jdk-static-libs.tar.gz -C ${JAVA_HOME} --strip-components=1
         echo ${JAVA_HOME}
         ${JAVA_HOME}/bin/java --version
+        echo "**Java version:** $(grep JAVA_RUNTIME_VERSION ${JAVA_HOME}/release | cut -d '=' -f 2)" >> $GITHUB_STEP_SUMMARY
     - name: Build Mandrel
       run: |
+        MANDREL_COMMIT=$(cd ${MANDREL_REPO} && git rev-parse HEAD)
+        echo "**Mandrel commit:** [$MANDREL_COMMIT](${GITHUB_SERVER_URL}/${{ inputs.repo }}/commits/$MANDREL_COMMIT)" >> $GITHUB_STEP_SUMMARY
         MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
         if [ "$MVN_LOCAL" != "" ]
         then
@@ -292,6 +311,7 @@ jobs:
     - name: Checkout MX
       run: |
         VERSION=$(jq -r .mx_version graal/common.json)
+        echo "**MX version:** [$VERSION](${GITHUB_SERVER_URL}/graalvm/mx/tree/$VERSION)" >> $GITHUB_STEP_SUMMARY
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
     - uses: actions/cache@v4
@@ -307,6 +327,8 @@ jobs:
         ${JAVA_HOME}/bin/java --version
     - name: Build graalvm native-image
       run: |
+        GRAAL_COMMIT=$(cd graal && git rev-parse HEAD)
+        echo "**Mandrel commit:** [$GRAAL_COMMIT](${GITHUB_SERVER_URL}/${{ inputs.repo }}/commits/$GRAAL_COMMIT)" >> $GITHUB_STEP_SUMMARY
         MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
         if [ "$MVN_LOCAL" != "" ]
         then
@@ -372,6 +394,7 @@ jobs:
       if: needs.build-vars.outputs.distribution == 'mandrel'
       run: |
         VERSION=${{ inputs.version }}
+        echo "**Mandrel version:** [$VERSION](${GITHUB_SERVER_URL}/graalvm/mandrel/releases/tag/$VERSION)" >> $GITHUB_STEP_SUMMARY
         curl \
           -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##mandrel-}.tar.gz \
           -o jdk.tgz
@@ -379,6 +402,7 @@ jobs:
       if: needs.build-vars.outputs.distribution == 'graalvm'
       run: |
         VERSION=${{ inputs.version }}
+        echo "**GraalVM version:** [$VERSION](${GITHUB_SERVER_URL}/oracle/graal/releases/tag/$VERSION)" >> $GITHUB_STEP_SUMMARY
         curl \
           -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-amd64-${VERSION##vm-}.tar.gz \
           -o graalvm.tgz
