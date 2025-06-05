@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.BufferedReader;
@@ -90,11 +91,11 @@ class Report implements Runnable {
 			// name prefixes. For each job prefix we keep two issues, one for
 			// quarkus integration tests and the other for mandrel integration
 			// tests.
-			final HashMap<GHIssue, String> issues = new HashMap<>();
-			final HashMap<GHIssue, String> mandrelITIssues = new HashMap<>();
+			final Map<GHIssue, String> issues = new HashMap<>();
+			final Map<GHIssue, String> mandrelITIssues = new HashMap<>();
 			// We use two more HashMaps to associate issues with known job failures
-			final HashMap<GHIssue, List<GHWorkflowJob>> failedMandrelJobs = new HashMap<>();
-			final HashMap<GHIssue, List<GHWorkflowJob>> failedMandrelITJobs = new HashMap<>();
+			final Map<GHIssue, List<GHWorkflowJob>> failedMandrelJobs = new HashMap<>();
+			final Map<GHIssue, List<GHWorkflowJob>> failedMandrelITJobs = new HashMap<>();
 
 			// Get the github issue number and repository from the logs
 			// 
@@ -153,7 +154,7 @@ class Report implements Runnable {
 	}
 
 
-	private void recordFailedJob(final HashMap<GHIssue, List<GHWorkflowJob>> failedJobs, HashMap<GHIssue, String> issues, GHWorkflowJob job) {
+	private void recordFailedJob(final Map<GHIssue, List<GHWorkflowJob>> failedJobs, Map<GHIssue, String> issues, GHWorkflowJob job) {
 		for (GHIssue issue: issues.keySet()) {
 			if (job.getName().startsWith(issues.get(issue))) {
 				List<GHWorkflowJob> failedJobsList = failedJobs.get(issue);
@@ -205,8 +206,8 @@ class Report implements Runnable {
 	}
 
 
-	private void processLogs(GitHub github, GHWorkflowJob job, HashMap<GHIssue, String> issues, HashMap<GHIssue, String> mandrelITIssues,
-							 TriConsumer<GHIssue, GHWorkflowJob, HashMap<GHIssue, String>> process, String... filters) {
+	private void processLogs(GitHub github, GHWorkflowJob job, Map<GHIssue, String> issues, Map<GHIssue, String> mandrelITIssues,
+							 TriConsumer<GHIssue, GHWorkflowJob, Map<GHIssue, String>> process, String... filters) {
 		String fullContent = getJobsLogs(job, filters);
 		if (fullContent.isEmpty()) {
 			return;
@@ -242,7 +243,7 @@ class Report implements Runnable {
 		}
 	}
 
-	private void processITJobs(GHIssue issue, GHWorkflowJob job, HashMap<GHIssue, String> issues) {
+	private void processITJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		if (issue == null) {
 			System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
 			System.exit(-1);
@@ -256,7 +257,7 @@ class Report implements Runnable {
 		}
 	}
 
-	private void processSyncJobs(GHIssue issue, GHWorkflowJob job, HashMap<GHIssue, String> issues) {
+	private void processSyncJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		try {
 			if (issue == null) {
 				System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
