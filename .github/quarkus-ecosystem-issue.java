@@ -162,7 +162,7 @@ class Report implements Runnable {
 					failedJobsList = new java.util.ArrayList<>();
 					failedJobs.put(issue, failedJobsList);
 				}
-				System.out.println(String.format("Adding job %s to the list of failed jobs for issue %s", job.getName(), issue.getHtmlUrl().toString()));
+				System.out.printf("Adding job %s to the list of failed jobs for issue %s\n", job.getName(), issue.getHtmlUrl().toString());
 				failedJobsList.add(job);
 			}
 		}
@@ -178,7 +178,7 @@ class Report implements Runnable {
 					issue.comment(comment);
 					issue.close();
 				}
-				System.out.println(String.format("Comment added on issue %s\n%s\n, the issue has also been closed", issue.getHtmlUrl().toString(), comment));
+				System.out.printf("Comment added on issue %s\n%s\n, the issue has also been closed\n", issue.getHtmlUrl().toString(), comment);
 			} else {
 				System.out.println("Nothing to do - the build passed and the issue is already closed");
 			}
@@ -201,7 +201,7 @@ class Report implements Runnable {
 			if (!dryRun) {
 				issue.comment(comment);
 			}
-			System.out.println(String.format("\nComment added on issue %s\n\n%s\n", issue.getHtmlUrl().toString(), comment));
+			System.out.printf("\nComment added on issue %s\n\n%s\n\n", issue.getHtmlUrl().toString(), comment);
 		}
 	}
 
@@ -219,7 +219,7 @@ class Report implements Runnable {
 			int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
 			String issueRepo = issueRepoMatcher.group(1);
 
-			System.out.println(String.format("Found issue https://github.com/%s/issues/%s in logs for job %s", issueRepo, issueNumber, job.getName()));
+			System.out.printf("Found issue https://github.com/%s/issues/%s in logs for job %s\n", issueRepo, issueNumber, job.getName());
 			try {
 				GHRepository issueRepository = github.getRepository(issueRepo);
 				GHIssue issue = issueRepository.getIssue(issueNumber);
@@ -232,7 +232,7 @@ class Report implements Runnable {
 		issueNumberMatcher = Pattern.compile(" mandrel-it-issue-number: (\\d+)").matcher(fullContent);
 		if (issueNumberMatcher.find()) {
 			int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
-			System.out.println(String.format("Found issue https://github.com/karm/mandrel-integration-tests/issues/%s in logs for job %s", issueNumber, job.getName()));
+			System.out.printf("Found issue https://github.com/karm/mandrel-integration-tests/issues/%s in logs for job %s\n", issueNumber, job.getName());
 			try {
 				GHRepository issueRepository = github.getRepository("karm/mandrel-integration-tests");
 				GHIssue issue = issueRepository.getIssue(issueNumber);
@@ -245,11 +245,11 @@ class Report implements Runnable {
 
 	private void processITJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		if (issue == null) {
-			System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
+			System.out.printf("Unable to find the issue %s in project %s\n", issue.getNumber(), issue.getRepository().getName());
 			System.exit(-1);
 		} else {
-			System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
-			System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
+			System.out.printf("Report issue found: %s - %s\n", issue.getTitle(), issue.getHtmlUrl().toString());
+			System.out.printf("The issue is currently %s\n", issue.getState().toString());
 			Object oldIssue = issues.put(issue, job.getName().split(JOB_TITLE_DELIMITER)[0]);
 			if (oldIssue != null) {
 				System.out.println("WARNING: The issue has already been seen, please check the workflow configuration");
@@ -260,11 +260,11 @@ class Report implements Runnable {
 	private void processSyncJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		try {
 			if (issue == null) {
-				System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
+				System.out.printf("Unable to find the issue %s in project %s\n", issue.getNumber(), issue.getRepository().getName());
 				System.exit(-1);
 			} else {
-				System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
-				System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
+				System.out.printf("Report issue found: %s - %s\n", issue.getTitle(), issue.getHtmlUrl().toString());
+				System.out.printf("The issue is currently %s\n", issue.getState().toString());
 				if (job.getConclusion().equals(Conclusion.SUCCESS)) {
 					if (isOpen(issue)) {
 						String comment = String.format("Synchronization fixed:\n* Link to latest CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId);
@@ -273,7 +273,7 @@ class Report implements Runnable {
 							issue.comment(comment);
 							issue.close();
 						}
-						System.out.println(String.format("Comment added on issue %s\n%s\n, the issue has also been closed", issue.getHtmlUrl().toString(), comment));
+						System.out.printf("Comment added on issue %s\n%s\n, the issue has also been closed\n", issue.getHtmlUrl().toString(), comment);
 					} else {
 						System.out.println("Nothing to do - the synchronization passed and the issue is already closed");
 					}
@@ -293,7 +293,7 @@ class Report implements Runnable {
 					if (!dryRun) {
 						issue.comment(comment);
 					}
-					System.out.println(String.format("\nComment added on issue %s\n\n%s\n", issue.getHtmlUrl().toString(), comment));
+					System.out.printf("\nComment added on issue %s\n\n%s\n\n", issue.getHtmlUrl().toString(), comment);
 				}
 			}
 		} catch (IOException e) {
@@ -322,10 +322,10 @@ class Report implements Runnable {
 	private String getJobsLogs(GHWorkflowJob job, String... filters) {
 		String fullContent = "";
 		try {
-			System.out.println(String.format("\nGetting logs for job %s", job.getName()));
+			System.out.printf("\nGetting logs for job %s\n", job.getName());
 			fullContent = job.downloadLogs(getLogArchiveInputStreamFunction(filters));
 		} catch (IOException e) {
-			System.out.println(String.format("Unable to get logs for job %s (%s)", job.getName(), job.getHtmlUrl()));
+			System.out.printf("Unable to get logs for job %s (%s)\n", job.getName(), job.getHtmlUrl());
 			throw new UncheckedIOException(e);
 		}
 		return fullContent;
