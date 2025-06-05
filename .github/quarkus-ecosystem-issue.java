@@ -157,11 +157,7 @@ class Report implements Runnable {
 	private void recordFailedJob(final Map<GHIssue, List<GHWorkflowJob>> failedJobs, Map<GHIssue, String> issues, GHWorkflowJob job) {
 		for (GHIssue issue: issues.keySet()) {
 			if (job.getName().startsWith(issues.get(issue))) {
-				List<GHWorkflowJob> failedJobsList = failedJobs.get(issue);
-				if (failedJobsList == null) {
-					failedJobsList = new java.util.ArrayList<>();
-					failedJobs.put(issue, failedJobsList);
-				}
+				List<GHWorkflowJob> failedJobsList = failedJobs.computeIfAbsent(issue, k -> new java.util.ArrayList<>());
 				System.out.printf("Adding job %s to the list of failed jobs for issue %s\n", job.getName(), issue.getHtmlUrl().toString());
 				failedJobsList.add(job);
 			}
