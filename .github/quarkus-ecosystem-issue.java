@@ -17,8 +17,8 @@
 //usr/bin/env jbang "$0" "$@" ; exit $?
 
 //JAVA 21
-//DEPS org.kohsuke:github-api:1.326
-//DEPS info.picocli:picocli:4.7.6
+//DEPS org.kohsuke:github-api:1.327
+//DEPS info.picocli:picocli:4.7.7
 
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHWorkflowRun.Conclusion;
