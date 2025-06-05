@@ -20,9 +20,16 @@
 //DEPS org.kohsuke:github-api:1.327
 //DEPS info.picocli:picocli:4.7.7
 
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHWorkflowJob;
+import org.kohsuke.github.GHWorkflowRun;
 import org.kohsuke.github.GHWorkflowRun.Conclusion;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.function.InputStreamFunction;
+import org.kohsuke.github.PagedIterable;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -32,10 +39,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -65,8 +70,6 @@ class Report implements Runnable {
 	@Option(names = "--dry-run", description = "Whether to actually update the issue or not")
 	private boolean dryRun;
 
-	private final HashMap<GHIssue, String> issues = new HashMap<>();
-
 	@Override
 	public void run() {
 		try {
@@ -82,7 +85,16 @@ class Report implements Runnable {
 				System.exit(0);
 			}
 
+
+			// We use HashMaps to store the issues and their corresponding job
+			// name prefixes. For each job prefix we keep two issues, one for
+			// quarkus integration tests and the other for mandrel integration
+			// tests.
+			final HashMap<GHIssue, String> issues = new HashMap<>();
+			final HashMap<GHIssue, String> mandrelITIssues = new HashMap<>();
+			// We use two more HashMaps to associate issues with known job failures
 			final HashMap<GHIssue, List<GHWorkflowJob>> failedMandrelJobs = new HashMap<>();
+			final HashMap<GHIssue, List<GHWorkflowJob>> failedMandrelITJobs = new HashMap<>();
 
 			// Get the github issue number and repository from the logs
 			// 
@@ -115,120 +127,24 @@ class Report implements Runnable {
 			listJobs.forEach(job -> {
 				// Each configuration starts with the Set distribution job
 				if (job.getName().contains("Set distribution")) {
-					processLogs(github, job, this::processITJobs, "issue-number", "issue-repo");
+					processLogs(github, job, issues, mandrelITIssues, this::processITJobs, "issue-number", "issue-repo");
 				} else if (job.getConclusion().equals(Conclusion.FAILURE) && (job.getName().contains("Q IT") || job.getName().contains("Mandrel build") || job.getName().contains("Quarkus build"))) {
-					for (GHIssue issue: issues.keySet()) {
-						if (job.getName().startsWith(issues.get(issue))) {
-							List<GHWorkflowJob> failedJobsList = failedMandrelJobs.get(issue);
-							if (failedJobsList == null) {
-								failedJobsList = new java.util.ArrayList<>();
-								failedMandrelJobs.put(issue, failedJobsList);
-							}
-							System.out.println(String.format("Adding job %s to the list of failed jobs for issue %s", job.getName(), issue.getHtmlUrl().toString()));
-							failedJobsList.add(job);
-						}
-					}
-				} else if (job.getName().contains("Q Mandrel IT") && !job.getConclusion().equals(Conclusion.SKIPPED)) {
-					String fullContent = getJobsLogs(job, "mandrel-it-issue-number",
-							"FAILURE [",
-							"Z Error:",
-							"  Time elapsed: ",
-							"Z [ERROR]   ",
-							"Z [ERROR] Failures",
-							"Z [ERROR] Tests run:");
-					if (!fullContent.isEmpty()) {
-						// Get the issue number for mandrel-integration-tests issues
-						Matcher mandrelIssueNumberMatcher = Pattern.compile(" mandrel-it-issue-number: (\\d+)").matcher(fullContent);
-						if (mandrelIssueNumberMatcher.find()) {
-							int mandrelIssueNumber = Integer.parseInt(mandrelIssueNumberMatcher.group(1));
-							System.out.println(String.format("Found issue https://github.com/karm/mandrel-integration-tests/issues/%s in logs for job %s", mandrelIssueNumber, job.getName()));
-							try {
-								GHRepository issueRepository = github.getRepository("karm/mandrel-integration-tests");
-								final GHIssue issue = issueRepository.getIssue(mandrelIssueNumber);
-								if (issue == null) {
-									System.out.println(String.format("Unable to find the issue %s in project %s", mandrelIssueNumber, "karm/mandrel-integration-tests"));
-									System.exit(-1);
-								} else {
-									System.out.println(String.format("Report issue found: %s - %s", issue.getTitle(), issue.getHtmlUrl().toString()));
-									System.out.println(String.format("The issue is currently %s", issue.getState().toString()));
-									if (job.getConclusion().equals(Conclusion.SUCCESS)) {
-										if (isOpen(issue)) {
-											String comment = String.format("Build fixed:\n* Link to latest CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId);
-											if (!dryRun) {
-												// close issue with a comment
-												issue.comment(comment);
-												issue.close();
-											}
-											System.out.println(String.format("Comment added on issue %s\n%s\n, the issue has also been closed", issue.getHtmlUrl().toString(), comment));
-										} else {
-											System.out.println("Nothing to do - the build passed and the issue is already closed");
-										}
-									} else if (job.getConclusion().equals(Conclusion.FAILURE)) {
-										StringBuilder sb = new StringBuilder();
-										if (isOpen(issue)) {
-											sb.append("The build is still failing!\n\n");
-										} else {
-											sb.append("Unfortunately, the build failed!\n\n");
-											if (!dryRun) {
-												issue.reopen();
-											}
-											System.out.println("The issue has been re-opened");
-										}
-										sb.append(String.format("Filtered Logs:\n```\n%s\n```\n\n", fullContent.lines().filter(x -> !x.contains("mandrel-it-issue-number")).collect(Collectors.joining("\n"))));
-										sb.append(String.format("Link to failing CI run: %s", job.getHtmlUrl()));
-										String comment = sb.toString();
-										if (!dryRun) {
-											issue.comment(comment);
-										}
-										System.out.println(String.format("\nComment added on issue %s\n\n%s\n", issue.getHtmlUrl().toString(), comment));
-									}
-								}
-							} catch (IOException e) {
-								throw new UncheckedIOException(e);
-							}
-						}
-					}
+					recordFailedJob(failedMandrelJobs, issues, job);
+				} else if (job.getName().contains("Q Mandrel IT") && job.getConclusion().equals(Conclusion.FAILURE)) {
+					recordFailedJob(failedMandrelITJobs, mandrelITIssues, job);
 				} else if (job.getName().startsWith("Keep graal/master in sync")) {
-					processLogs(github, job, this::processSyncJobs, "issue-number", "issue-repo");
+					processLogs(github, job, issues, null, this::processSyncJobs, "issue-number", "issue-repo");
 				}
 			});
 
 			// Process the failed jobs
 			for (GHIssue issue: issues.keySet()) {
 				List<GHWorkflowJob> failedJobs = failedMandrelJobs.get(issue);
-				if (failedJobs == null || failedJobs.isEmpty()) {
-					if (isOpen(issue)) {
-						String comment = String.format("Build fixed:\n* Link to latest CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId);
-						if (!dryRun) {
-							// close issue with a comment
-							issue.comment(comment);
-							issue.close();
-						}
-						System.out.println(String.format("Comment added on issue %s\n%s\n, the issue has also been closed", issue.getHtmlUrl().toString(), comment));
-					} else {
-						System.out.println("Nothing to do - the build passed and the issue is already closed");
-					}
-				} else {
-					StringBuilder sb = new StringBuilder();
-					if (isOpen(issue)) {
-						sb.append("The build is still failing!\n\n");
-					} else {
-						sb.append("Unfortunately, the build failed!\n\n");
-						if (!dryRun) {
-							issue.reopen();
-						}
-						System.out.println("The issue has been re-opened");
-					}
-					for (GHWorkflowJob job: failedJobs) {
-				 		processFailedJob(sb, job);
-					}
-					sb.append(String.format("Link to failing CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId));
-					String comment = sb.toString();
-					if (!dryRun) {
-						issue.comment(comment);
-					}
-					System.out.println(String.format("\nComment added on issue %s\n\n%s\n", issue.getHtmlUrl().toString(), comment));
-				}
+				reportFailedJobs(issue, failedJobs);
+			}
+			for (GHIssue issue: mandrelITIssues.keySet()) {
+				List<GHWorkflowJob> failedJobs = failedMandrelITJobs.get(issue);
+				reportFailedJobs(issue, failedJobs);
 			}
 		}
 		catch (IOException e) {
@@ -236,13 +152,66 @@ class Report implements Runnable {
 		}
 	}
 
-	
-	private void processLogs(GitHub github, GHWorkflowJob job, BiConsumer<GHIssue, GHWorkflowJob> process, String... filters) {
+
+	private void recordFailedJob(final HashMap<GHIssue, List<GHWorkflowJob>> failedJobs, HashMap<GHIssue, String> issues, GHWorkflowJob job) {
+		for (GHIssue issue: issues.keySet()) {
+			if (job.getName().startsWith(issues.get(issue))) {
+				List<GHWorkflowJob> failedJobsList = failedJobs.get(issue);
+				if (failedJobsList == null) {
+					failedJobsList = new java.util.ArrayList<>();
+					failedJobs.put(issue, failedJobsList);
+				}
+				System.out.println(String.format("Adding job %s to the list of failed jobs for issue %s", job.getName(), issue.getHtmlUrl().toString()));
+				failedJobsList.add(job);
+			}
+		}
+	}
+
+
+	private void reportFailedJobs(GHIssue issue, List<GHWorkflowJob> failedJobs) throws IOException {
+		if (failedJobs == null || failedJobs.isEmpty()) {
+			if (isOpen(issue)) {
+				String comment = String.format("Build fixed:\n* Link to latest CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId);
+				if (!dryRun) {
+					// close issue with a comment
+					issue.comment(comment);
+					issue.close();
+				}
+				System.out.println(String.format("Comment added on issue %s\n%s\n, the issue has also been closed", issue.getHtmlUrl().toString(), comment));
+			} else {
+				System.out.println("Nothing to do - the build passed and the issue is already closed");
+			}
+		} else {
+			StringBuilder sb = new StringBuilder();
+			if (isOpen(issue)) {
+				sb.append("The build is still failing!\n\n");
+			} else {
+				sb.append("Unfortunately, the build failed!\n\n");
+				if (!dryRun) {
+					issue.reopen();
+				}
+				System.out.println("The issue has been re-opened");
+			}
+			for (GHWorkflowJob job: failedJobs) {
+		 		processFailedJob(sb, job);
+			}
+			sb.append(String.format("Link to failing CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId));
+			String comment = sb.toString();
+			if (!dryRun) {
+				issue.comment(comment);
+			}
+			System.out.println(String.format("\nComment added on issue %s\n\n%s\n", issue.getHtmlUrl().toString(), comment));
+		}
+	}
+
+
+	private void processLogs(GitHub github, GHWorkflowJob job, HashMap<GHIssue, String> issues, HashMap<GHIssue, String> mandrelITIssues,
+							 TriConsumer<GHIssue, GHWorkflowJob, HashMap<GHIssue, String>> process, String... filters) {
 		String fullContent = getJobsLogs(job, filters);
 		if (fullContent.isEmpty()) {
 			return;
 		}
-		// Get the issue number and repository for mandrel issues
+		// Get the issue number and repository for quarkus integration test issues reported in the Mandrel repository
 		Matcher issueNumberMatcher = Pattern.compile(" issue-number: (\\d+)").matcher(fullContent);
 		Matcher issueRepoMatcher = Pattern.compile(" issue-repo: (.*)").matcher(fullContent);
 		if (issueNumberMatcher.find() && issueRepoMatcher.find()) {
@@ -253,14 +222,27 @@ class Report implements Runnable {
 			try {
 				GHRepository issueRepository = github.getRepository(issueRepo);
 				GHIssue issue = issueRepository.getIssue(issueNumber);
-				process.accept(issue, job);
+				process.accept(issue, job, issues);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		}
+		// Get the issue number for mandrel integration test issues reported in the mandrel integration tests repository
+		issueNumberMatcher = Pattern.compile(" mandrel-it-issue-number: (\\d+)").matcher(fullContent);
+		if (issueNumberMatcher.find()) {
+			int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
+			System.out.println(String.format("Found issue https://github.com/karm/mandrel-integration-tests/issues/%s in logs for job %s", issueNumber, job.getName()));
+			try {
+				GHRepository issueRepository = github.getRepository("karm/mandrel-integration-tests");
+				GHIssue issue = issueRepository.getIssue(issueNumber);
+				process.accept(issue, job, mandrelITIssues);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
 		}
 	}
 
-	private void processITJobs(GHIssue issue, GHWorkflowJob job) {
+	private void processITJobs(GHIssue issue, GHWorkflowJob job, HashMap<GHIssue, String> issues) {
 		if (issue == null) {
 			System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
 			System.exit(-1);
@@ -274,7 +256,7 @@ class Report implements Runnable {
 		}
 	}
 
-	private void processSyncJobs(GHIssue issue, GHWorkflowJob job) {
+	private void processSyncJobs(GHIssue issue, GHWorkflowJob job, HashMap<GHIssue, String> issues) {
 		try {
 			if (issue == null) {
 				System.out.println(String.format("Unable to find the issue %s in project %s", issue.getNumber(), issue.getRepository().getName()));
@@ -324,7 +306,13 @@ class Report implements Runnable {
 				.filter(s -> !(s.getConclusion().equals(Conclusion.SUCCESS) || s.getConclusion().equals(Conclusion.SKIPPED)))
 				.findFirst().get();
 		sb.append(String.format("  * Step: %s\n", step.getName()));
-		String fullContent = getJobsLogs(job, "FAILURE [", "Z Error:");
+		String fullContent = getJobsLogs(job, 
+							"FAILURE [",
+							"Z Error:",
+							"  Time elapsed: ",
+							"Z [ERROR]   ",
+							"Z [ERROR] Failures",
+							"Z [ERROR] Tests run:");
 		if (!fullContent.isEmpty()) {
 			sb.append(String.format("    Filtered Logs:\n```\n%s```\n\n", fullContent));
 		}
@@ -373,5 +361,10 @@ class Report implements Runnable {
 	public static void main(String... args) {
 		int exitCode = new CommandLine(new Report()).execute(args);
 		System.exit(exitCode);
+	}
+
+	@FunctionalInterface
+	interface TriConsumer<T, U, V> {
+		void accept(T t, U u, V v);
 	}
 }
