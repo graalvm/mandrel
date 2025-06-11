@@ -252,7 +252,7 @@ class Report implements Runnable {
 
 	private void processITJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		if (issue == null) {
-			System.out.printf("  - Unable to find the issue %s in project %s\n", issue.getNumber(), issue.getRepository().getName());
+			System.out.println("  - Unable to find issue on github");
 			System.exit(-1);
 		} else {
 			System.out.printf("  Issue title: %s - %s\n", issue.getTitle(), issue.getHtmlUrl().toString());
@@ -267,7 +267,7 @@ class Report implements Runnable {
 	private void processSyncJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		try {
 			if (issue == null) {
-				System.out.printf("Unable to find the issue %s in project %s\n", issue.getNumber(), issue.getRepository().getName());
+				System.out.println("  - Unable to find issue on github");
 				System.exit(-1);
 			} else {
 				System.out.printf("Report issue found: %s - %s\n", issue.getTitle(), issue.getHtmlUrl().toString());
