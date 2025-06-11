@@ -93,9 +93,9 @@ class Report implements Runnable {
 			// tests.
 			final Map<GHIssue, String> issues = new HashMap<>();
 			final Map<GHIssue, String> mandrelITIssues = new HashMap<>();
-			// We use two more HashMaps to associate issues with known job failures
+			// We use two more HashMaps to associate issues with job results
 			final Map<GHIssue, List<GHWorkflowJob>> failedMandrelJobs = new HashMap<>();
-			final Map<GHIssue, List<GHWorkflowJob>> failedMandrelITJobs = new HashMap<>();
+			final Map<GHIssue, List<GHWorkflowJob>> mandrelITJobs = new HashMap<>();
 
 			// Get the github issue number and repository from the logs
 			// 
@@ -125,14 +125,23 @@ class Report implements Runnable {
 			// of the job, and we don't need to group the jobs by issue number, since
 			// the structure of the workflow is simpler.
 			PagedIterable<GHWorkflowJob> listJobs = workflowRun.listJobs();
+			// Ensure we parse "Set distribution" jobs first as they are the ones containing the github issue numbers
 			listJobs.forEach(job -> {
-				// Each configuration starts with the Set distribution job
-				if (job.getName().contains("Set distribution")) {
-					processLogs(github, job, issues, mandrelITIssues, this::processITJobs, "issue-number", "issue-repo");
-				} else if (job.getConclusion().equals(Conclusion.FAILURE) && (job.getName().contains("Q IT") || job.getName().contains("Mandrel build") || job.getName().contains("Quarkus build"))) {
-					recordFailedJob(failedMandrelJobs, issues, job);
-				} else if (job.getName().contains("Q Mandrel IT") && job.getConclusion().equals(Conclusion.FAILURE)) {
-					recordFailedJob(failedMandrelITJobs, mandrelITIssues, job);
+						// Each configuration starts with the Set distribution job
+						if (job.getName().contains("Set distribution")) {
+							processLogs(github, job, issues, mandrelITIssues, this::processITJobs, "issue-number", "issue-repo");
+						}
+					});
+			// Parse the rest of the jobs
+			listJobs.forEach(job -> {
+				if (job.getConclusion().equals(Conclusion.FAILURE) &&
+						(job.getName().contains("Q IT") ||
+								job.getName().contains("Mandrel build") ||
+								job.getName().contains("Quarkus build") ||
+								job.getName().contains("Get test matrix"))) {
+					recordJobs(failedMandrelJobs, issues, job);
+				} else if (job.getName().contains("Q Mandrel IT")) {
+					recordJobs(mandrelITJobs, mandrelITIssues, job);
 				} else if (job.getName().startsWith("Keep graal/master in sync")) {
 					processLogs(github, job, issues, null, this::processSyncJobs, "issue-number", "issue-repo");
 				}
@@ -140,12 +149,10 @@ class Report implements Runnable {
 
 			// Process the failed jobs
 			for (GHIssue issue: issues.keySet()) {
-				List<GHWorkflowJob> failedJobs = failedMandrelJobs.get(issue);
-				reportFailedJobs(issue, failedJobs);
+				reportJobResults(issue, failedMandrelJobs.get(issue));
 			}
 			for (GHIssue issue: mandrelITIssues.keySet()) {
-				List<GHWorkflowJob> failedJobs = failedMandrelITJobs.get(issue);
-				reportFailedJobs(issue, failedJobs);
+				reportJobResults(issue, mandrelITJobs.get(issue));
 			}
 		}
 		catch (IOException e) {
@@ -154,19 +161,20 @@ class Report implements Runnable {
 	}
 
 
-	private void recordFailedJob(final Map<GHIssue, List<GHWorkflowJob>> failedJobs, Map<GHIssue, String> issues, GHWorkflowJob job) {
+	private void recordJobs(final Map<GHIssue, List<GHWorkflowJob>> recordedJobs, Map<GHIssue, String> issues, GHWorkflowJob job) {
 		for (GHIssue issue: issues.keySet()) {
 			if (job.getName().startsWith(issues.get(issue))) {
-				List<GHWorkflowJob> failedJobsList = failedJobs.computeIfAbsent(issue, k -> new java.util.ArrayList<>());
-				failedJobsList.add(job);
+				List<GHWorkflowJob> jobsList = recordedJobs.computeIfAbsent(issue, k -> new java.util.ArrayList<>());
 				System.out.printf("Adding job %s (%s) to the list of jobs for issue %s\n", job.getName(), job.getConclusion(), issue.getHtmlUrl().toString());
+				jobsList.add(job);
 			}
 		}
 	}
 
 
-	private void reportFailedJobs(GHIssue issue, List<GHWorkflowJob> failedJobs) throws IOException {
-		if (failedJobs == null || failedJobs.isEmpty()) {
+	private void reportJobResults(GHIssue issue, List<GHWorkflowJob> jobs) throws IOException {
+		if (jobs == null || jobs.isEmpty()
+				|| jobs.stream().allMatch(job -> job.getConclusion().equals(Conclusion.SUCCESS))) {
 			if (isOpen(issue)) {
 				String comment = String.format("Build fixed:\n* Link to latest CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId);
 				if (!dryRun) {
@@ -178,6 +186,8 @@ class Report implements Runnable {
 			} else {
 				System.out.printf("Nothing to do for %s - the build passed and the issue is already closed\n", issue.getHtmlUrl());
 			}
+		} else if (jobs.stream().allMatch(job -> job.getConclusion().equals(Conclusion.SKIPPED))) {
+			System.out.printf("Nothing to do for %s - the build was skipped\n", issue.getHtmlUrl());
 		} else {
 			StringBuilder sb = new StringBuilder();
 			if (isOpen(issue)) {
@@ -189,7 +199,7 @@ class Report implements Runnable {
 				}
 				System.out.println("The issue has been re-opened");
 			}
-			for (GHWorkflowJob job: failedJobs) {
+			for (GHWorkflowJob job: jobs) {
 		 		processFailedJob(sb, job);
 			}
 			sb.append(String.format("Link to failing CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId));
@@ -299,6 +309,11 @@ class Report implements Runnable {
 	}
 
 	private void processFailedJob(StringBuilder sb, GHWorkflowJob job) {
+		if (!job.getConclusion().equals(Conclusion.FAILURE) &&
+				!job.getConclusion().equals(Conclusion.STARTUP_FAILURE) &&
+				!job.getConclusion().equals(Conclusion.TIMED_OUT)) {
+			return;
+		}
 		sb.append(String.format("* [%s](%s)\n", job.getName(), job.getHtmlUrl()));
 		GHWorkflowJob.Step step = job.getSteps().stream()
 				.filter(s -> !(s.getConclusion().equals(Conclusion.SUCCESS) || s.getConclusion().equals(Conclusion.SKIPPED)))
@@ -307,6 +322,7 @@ class Report implements Runnable {
 		String fullContent = getJobsLogs(job, 
 							"FAILURE [",
 							"Z Error:",
+							"Z ##[error]",
 							"  Time elapsed: ",
 							"Z [ERROR]   ",
 							"Z [ERROR] Failures",
