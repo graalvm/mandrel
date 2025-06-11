@@ -79,7 +79,7 @@ class Report implements Runnable {
 			GHWorkflowRun workflowRun = workflowRepository.getWorkflowRun(Long.parseLong(runId));
 			Conclusion status = workflowRun.getConclusion();
 
-			System.out.println(String.format("The CI build had status %s.", status));
+			System.out.println(String.format("The CI build had status %s.\n", status));
 
 			if (status.equals(Conclusion.CANCELLED) || status.equals(Conclusion.SKIPPED)) {
 				System.out.println("Job status is `cancelled` or `skipped` - exiting");
@@ -158,8 +158,8 @@ class Report implements Runnable {
 		for (GHIssue issue: issues.keySet()) {
 			if (job.getName().startsWith(issues.get(issue))) {
 				List<GHWorkflowJob> failedJobsList = failedJobs.computeIfAbsent(issue, k -> new java.util.ArrayList<>());
-				System.out.printf("Adding job %s to the list of failed jobs for issue %s\n", job.getName(), issue.getHtmlUrl().toString());
 				failedJobsList.add(job);
+				System.out.printf("Adding job %s (%s) to the list of jobs for issue %s\n", job.getName(), job.getConclusion(), issue.getHtmlUrl().toString());
 			}
 		}
 	}
@@ -176,7 +176,7 @@ class Report implements Runnable {
 				}
 				System.out.printf("Comment added on issue %s\n%s\n, the issue has also been closed\n", issue.getHtmlUrl().toString(), comment);
 			} else {
-				System.out.println("Nothing to do - the build passed and the issue is already closed");
+				System.out.printf("Nothing to do for %s - the build passed and the issue is already closed\n", issue.getHtmlUrl());
 			}
 		} else {
 			StringBuilder sb = new StringBuilder();
@@ -215,7 +215,7 @@ class Report implements Runnable {
 			int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
 			String issueRepo = issueRepoMatcher.group(1);
 
-			System.out.printf("Found issue https://github.com/%s/issues/%s in logs for job %s\n", issueRepo, issueNumber, job.getName());
+			System.out.printf("* Found issue https://github.com/%s/issues/%s\n  in logs for job %s\n", issueRepo, issueNumber, job.getName());
 			try {
 				GHRepository issueRepository = github.getRepository(issueRepo);
 				GHIssue issue = issueRepository.getIssue(issueNumber);
@@ -228,7 +228,7 @@ class Report implements Runnable {
 		issueNumberMatcher = Pattern.compile(" mandrel-it-issue-number: (\\d+)").matcher(fullContent);
 		if (issueNumberMatcher.find()) {
 			int issueNumber = Integer.parseInt(issueNumberMatcher.group(1));
-			System.out.printf("Found issue https://github.com/karm/mandrel-integration-tests/issues/%s in logs for job %s\n", issueNumber, job.getName());
+			System.out.printf("* Found issue https://github.com/karm/mandrel-integration-tests/issues/%s\n  in logs for job %s\n", issueNumber, job.getName());
 			try {
 				GHRepository issueRepository = github.getRepository("karm/mandrel-integration-tests");
 				GHIssue issue = issueRepository.getIssue(issueNumber);
@@ -237,15 +237,16 @@ class Report implements Runnable {
 				throw new UncheckedIOException(e);
 			}
 		}
+		System.out.println();
 	}
 
 	private void processITJobs(GHIssue issue, GHWorkflowJob job, Map<GHIssue, String> issues) {
 		if (issue == null) {
-			System.out.printf("Unable to find the issue %s in project %s\n", issue.getNumber(), issue.getRepository().getName());
+			System.out.printf("  - Unable to find the issue %s in project %s\n", issue.getNumber(), issue.getRepository().getName());
 			System.exit(-1);
 		} else {
-			System.out.printf("Report issue found: %s - %s\n", issue.getTitle(), issue.getHtmlUrl().toString());
-			System.out.printf("The issue is currently %s\n", issue.getState().toString());
+			System.out.printf("  Issue title: %s - %s\n", issue.getTitle(), issue.getHtmlUrl().toString());
+			System.out.printf("  The issue is currently %s\n", issue.getState().toString());
 			Object oldIssue = issues.put(issue, job.getName().split(JOB_TITLE_DELIMITER)[0]);
 			if (oldIssue != null) {
 				System.out.println("WARNING: The issue has already been seen, please check the workflow configuration");
@@ -318,7 +319,7 @@ class Report implements Runnable {
 	private String getJobsLogs(GHWorkflowJob job, String... filters) {
 		String fullContent = "";
 		try {
-			System.out.printf("\nGetting logs for job %s\n", job.getName());
+			System.out.printf("Getting logs for job %s\n", job.getName());
 			fullContent = job.downloadLogs(getLogArchiveInputStreamFunction(filters));
 		} catch (IOException e) {
 			System.out.printf("Unable to get logs for job %s (%s)\n", job.getName(), job.getHtmlUrl());
