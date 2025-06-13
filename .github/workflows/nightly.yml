@@ -33,42 +33,42 @@ jobs:
   ####
   # Test Quarkus main with latest graal sources built as Mandrel and GraalVM
   ####
-  q-main-graal-25-latest:
-    name: "Q main G 25 latest"
+  q-main-graal-26-latest:
+    name: "Q main G 26 latest"
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
       version: "graal/master"
       build-type: "graal-source"
       jdk: "latest/ea"
-      build-stats-tag: "gha-linux-graal-qmain-glatest-jdk25ea"
+      build-stats-tag: "gha-linux-graal-qmain-glatest-jdk26ea"
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-25-latest:
-    name: "Q main M 25 latest"
+  q-main-mandrel-26-latest:
+    name: "Q main M 26 latest"
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
       version: "graal/master"
-      jdk: "25/ea"
-      issue-number: "812"
+      jdk: "26/ea"
+      issue-number: "855"
       issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "300"
-      build-stats-tag: "gha-linux-mandrel-qmain-mlatest-jdk25ea"
+      mandrel-it-issue-number: "346"
+      build-stats-tag: "gha-linux-mandrel-qmain-mlatest-jdk26ea"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
-  q-main-mandrel-25-latest-win:
-    name: "Q main M 25 latest windows"
+  q-main-mandrel-26-latest-win:
+    name: "Q main M 26 latest windows"
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: "main"
       version: "graal/master"
-      issue-number: "813"
+      issue-number: "856"
       issue-repo: "graalvm/mandrel"
-      mandrel-it-issue-number: "301"
-      jdk: "25/ea"
-      build-stats-tag: "gha-win-mandrel-qmain-mlatest-jdk25ea"
+      mandrel-it-issue-number: "347"
+      jdk: "26/ea"
+      build-stats-tag: "gha-win-mandrel-qmain-mlatest-jdk26ea"
     secrets:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
