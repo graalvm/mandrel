@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.core.jfr;
 
-import com.oracle.svm.core.annotate.TargetClass;
+const int SVM_LOCALE_INITIALIZATION_USE_DEFAULT = 0;
+const int SVM_LOCALE_INITIALIZATION_SUCCEEDED = 1;
+const int SVM_LOCALE_INITIALIZATION_OUT_OF_MEMORY = 2;
 
-@TargetClass(className = "jdk.jfr.internal.event.EventConfiguration")
-public final class Target_jdk_jfr_internal_event_EventConfiguration {
-}
+typedef struct {
+    char* format_language;
+    char* format_script;
+    char* format_country;
+    char* format_variant;
+    
+    char* display_language;
+    char* display_script;
+    char* display_country;
+    char* display_variant;
+} svm_locale_props_t;
+

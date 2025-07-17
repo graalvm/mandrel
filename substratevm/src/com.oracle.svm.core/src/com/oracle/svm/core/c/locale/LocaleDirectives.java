@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.core.jfr;
+package com.oracle.svm.core.c.locale;
 
-import com.oracle.svm.core.annotate.TargetClass;
+import java.util.Collections;
+import java.util.List;
 
-@TargetClass(className = "jdk.jfr.internal.event.EventConfiguration")
-public final class Target_jdk_jfr_internal_event_EventConfiguration {
+import org.graalvm.nativeimage.c.CContext;
+
+import com.oracle.svm.core.c.ProjectHeaderFile;
+
+class LocaleDirectives implements CContext.Directives {
+    @Override
+    public List<String> getHeaderFiles() {
+        return Collections.singletonList(ProjectHeaderFile.resolve("com.oracle.svm.native.libchelper", "include/svm_locale.h"));
+    }
 }

@@ -42,7 +42,7 @@ suite = {
   "mxversion": "7.33.0",
   "name" : "truffle",
   "version" : "24.2.2.0",
-  "release" : False,
+  "release" : True,
   "groupId" : "org.graalvm.truffle",
   "sourceinprojectwhitelist" : [],
   "url" : "http://openjdk.java.net/projects/graal",
@@ -97,13 +97,13 @@ suite = {
       "digest": "sha512:22569a011d207fb8f33e7e71162542a5748cc3daa67eec59cbdc2aeb0894c331dfb8b6100ea88529c6cea72672cbddd77ca6134ddf331685d68b3e72b4e0a914",
     },
 
-    "JCODINGS_1.0.58": {
-      "digest" : "sha512:625210aa07d1e08bf2f5fdc9da6c491a4e5a56e7db297cba1aa73636670ac1d62f3fd763716ef6ede862456b17169272ed9c8461d07100f95262163dc9c18ef8",
-      "sourceDigest" : "sha512:d0f883f658310f7ad091aea08df28f1f5fe12080d6cb266cd91aec7e34cda1d57736d32618e8632b329854367d6e4d5fc91b5eb8ac9b823b26113fae3f75f50c",
+    "JCODINGS_1.0.63": {
+      "digest" : "sha512:280e989a1af7679da82bb9adb27a8c4e08c8da09f0bb93c380a36bfe7071c62bc9e7248b634d9e04f3ab275ec0672a44f8ab41dca8c10128c4351b6302275e84",
+      "sourceDigest" : "sha512:f6843609284be7dbfdbc7530e34c15e6aea7d3a45c4ee8e6836ee42fafbb9306f7234e20d8abbfc6a13e28d885eb5d743d69bfbbf738932db1fe42e031a835e3",
       "maven": {
         "groupId": "org.jruby.jcodings",
         "artifactId": "jcodings",
-        "version": "1.0.58",
+        "version": "1.0.63",
       },
       "license": ["MIT"],
     },
@@ -176,12 +176,12 @@ suite = {
 
     "JSON" : {
       "moduleName" : "org.json",
-      "digest" : "sha512:a5cdd1ed984448d6538746429f2d1a0ec8f64f93af0e84870ce898a9f07a81d11bf27d2ee081471975772efc8a0d3d5e05541197a532066e9edb09ad032d31a3",
-      "sourceDigest" : "sha512:80b382663f1bfd31f668eeb083a0a5a1620153e195e5b030da8f4c320f6126d7183ecb11f4b1afc8408a385c0918caa9f77942376499f9723dd7134dadd57a89",
+      "digest" : "sha512:486459450e13f1e291b9ab8fa62829132171f8102b7051e904c166a9f958f04149603d8aa3e3c939301226fd5b528d5900aff9acb7953b4c87e864c97c192fcb",
+      "sourceDigest" : "sha512:b1ca3a30fbb770015a920c016cedcb315ff7a1c0145b7769460435dd1264d8820ee7a9c15129bdb42f28ae974fa3c010e99a5311773fd7b145f93d021d1ad8e6",
       "maven" : {
         "groupId" : "org.json",
         "artifactId" : "json",
-        "version" : "20231013",
+        "version" : "20250517",
       },
     },
 
@@ -1461,7 +1461,7 @@ suite = {
           "TRUFFLE_API"
       ],
       "shadedDependencies" : [
-        "truffle:JCODINGS_1.0.58",
+        "truffle:JCODINGS_1.0.63",
       ],
       "class" : "ShadedLibraryProject",
       "shade" : {
@@ -1483,34 +1483,6 @@ suite = {
         "patch" : {
           "org/jcodings/util/ArrayReader.java" : {
             "\"/tables/\"" : "\"/org/graalvm/shadowed/org/jcodings/tables/\"",
-          },
-          # Fix CESU8Encoding.leftAdjustCharHead by applying a stripped down version of:
-          # https://github.com/jruby/jcodings/pull/61/ (not in 1.0.58; remove when updating to a newer version).
-          "org/jcodings/specific/CESU8Encoding.java" : {
-"""
-  (public int leftAdjustCharHead\\(byte\\[\\] bytes, int p, int s, int end\\) {
-    if \\(s <= p\\)
-      return s;
-    int p_ = s;
-    while \\(!utf8IsLead\\(bytes\\[p_\\] & 0xff\\) && p_ > p\\)
-      p_--;)(
-    return p_;
-  })
-""" : """
-  \\1
-    if (p_ > p && s - p_ == 2 && Character.isLowSurrogate((char) utf8Decode3ByteSequence(bytes, p_))) {
-      int pSurrogatePair = p_ - 1;
-      while (!utf8IsLead(bytes[pSurrogatePair] & 0xff) && pSurrogatePair > p)
-        pSurrogatePair--;
-      if (p_ - pSurrogatePair == 3 && Character.isHighSurrogate((char) utf8Decode3ByteSequence(bytes, pSurrogatePair))) {
-        return pSurrogatePair;
-      }
-    }\\2
-
-  private static int utf8Decode3ByteSequence(byte[] bytes, int p) {
-    return ((bytes[p] & 0xF) << 12) | ((bytes[p + 1] & 0xff & 0x3f) << 6) | (bytes[p + 2] & 0xff & 0x3f);
-  }
-""",
           },
           "org/jcodings/Encoding.java" : {
             "(public static Encoding load\\([^()]*\\) \\{\\s*)[^{}]*(?:\\{[^{}]*\\}[^{}]*)*(\\s*\\})" : "\\1throw new InternalException(ErrorMessages.ERR_ENCODING_CLASS_DEF_NOT_FOUND, name);\\2"
@@ -1612,7 +1584,7 @@ suite = {
         ],
         "exports" : [
           # Qualified exports
-          "com.oracle.truffle.compiler to org.graalvm.truffle.runtime, jdk.graal.compiler, org.graalvm.nativeimage.builder, com.oracle.truffle.enterprise, com.oracle.graal.graal_enterprise, org.graalvm.truffle.runtime.svm, com.oracle.truffle.enterprise.svm",
+          "com.oracle.truffle.compiler to org.graalvm.truffle.runtime, jdk.graal.compiler, org.graalvm.nativeimage.builder, com.oracle.graal.graal_enterprise, org.graalvm.truffle.runtime.svm, com.oracle.truffle.enterprise.svm",
           "com.oracle.truffle.compiler.hotspot to org.graalvm.truffle.runtime, jdk.graal.compiler",
           "com.oracle.truffle.compiler.hotspot.libgraal to org.graalvm.truffle.runtime, jdk.graal.compiler"
         ],

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.core.jfr;
+package com.oracle.svm.core.c.locale;
 
-import com.oracle.svm.core.annotate.TargetClass;
-
-@TargetClass(className = "jdk.jfr.internal.event.EventConfiguration")
-public final class Target_jdk_jfr_internal_event_EventConfiguration {
+public record LocaleData(String country, String displayCountry, String formatCountry,
+                String language, String displayLanguage, String formatLanguage,
+                String script, String displayScript, String formatScript,
+                String variant, String displayVariant, String formatVariant) {
 }
