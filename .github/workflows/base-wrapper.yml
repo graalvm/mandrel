@@ -2,7 +2,7 @@
 #
 # gh workflow run base-wrapper.yml \
 #  -f quarkus-version=gsmet/quarkus:2.2.4-backports-1 \
-#  -f builder-image="quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11"
+#  -f builder-image="quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21"
 name: Mandrel-Quarkus tests wrapper
 
 on:
@@ -46,7 +46,7 @@ on:
           - "latest/labsjdk"
       builder-image:
         type: string
-        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21)'
         default: "null"
       build-stats-tag:
         type: string

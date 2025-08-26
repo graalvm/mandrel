@@ -38,7 +38,7 @@ on:
         default: "17/ga"
       builder-image:
         type: string
-        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21)'
         default: "null"
       issue-number:
         type: string

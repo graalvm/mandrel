@@ -13,7 +13,7 @@ on:
         default: true
       builder-image:
         type: string
-        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+        description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21)'
         default: "null"
       maven-deploy-local:
         type: string
@@ -34,7 +34,7 @@ on:
         default: "main"
       # Builder image can't be tested on Windows due to https://github.com/actions/virtual-environments/issues/1143
       # builder-image:
-      #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel:20.3-java11)'
+      #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21)'
       #   default: "null"
 
 env:
