@@ -569,9 +569,9 @@ jobs:
             # Build main module with constraint memory to ensure we can build apps on smaller machines too
             export NEW_MAX_HEAP_SIZE=-Dquarkus.native.native-image-xmx=5g
           fi
-          # Remove DB2 and Oracle modules on ARM runners as the dev services fail to run
+          # Remove DB2 module on ARM runners as the dev services fail to run, see https://github.com/quarkusio/quarkus/issues/49717
           if [[ "${{ runner.arch }}" == "ARM64" ]]; then
-            TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -viE 'db2|oracle' | paste -sd, -)
+            TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -vi 'db2' | paste -sd, -)
             echo "Filtered TEST_MODULES for ARM: $TEST_MODULES"
           fi
           ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS $NEW_MAX_HEAP_SIZE
