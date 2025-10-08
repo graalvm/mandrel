@@ -170,6 +170,8 @@ jobs:
       quarkus-version: ${{ steps.version.outputs.quarkus-version }}
       tests-matrix: ${{ steps.version.outputs.tests-matrix }}
       artifacts-suffix: ${{ steps.suffix.outputs.suffix }}
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
     - id: suffix
       run: |
@@ -186,8 +188,14 @@ jobs:
         elif $(expr match "${{ inputs.quarkus-version }}" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
         then
           export QUARKUS_VERSION=${{ inputs.quarkus-version }}
-        else
-          export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
+        elif ! [[ "${{ inputs.quarkus-version }}" =~ ^[0-9a-f]{40}$ ]];
+        then
+          sha=$(gh api repos/${{ inputs.quarkus-repo }}/commits/${{ inputs.quarkus-version }} --jq .sha || echo "")
+          if [ "$sha" != "" ]; then
+            export QUARKUS_VERSION=$sha
+          else
+            export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
+          fi
         fi
         if [ "$QUARKUS_VERSION" == "" ]
         then
