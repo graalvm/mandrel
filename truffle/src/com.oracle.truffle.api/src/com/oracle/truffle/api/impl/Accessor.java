@@ -831,6 +831,7 @@ public abstract class Accessor {
         public abstract DispatchOutputStream getEngineOut(Object engine);
 
         public abstract InputStream getEngineIn(Object engine);
+
     }
 
     public abstract static class LanguageSupport extends Support {
@@ -1285,7 +1286,7 @@ public abstract class Accessor {
         @SuppressWarnings({"unchecked"})
         public abstract <T> T unsafeCast(Object value, Class<T> type, boolean condition, boolean nonNull, boolean exact);
 
-        public abstract void flushCompileQueue(Object runtimeData);
+        public abstract void shutdownCompilationForEngine(Object engineData);
 
         public abstract Object createRuntimeData(Object engine, OptionValues engineOptions, Function<String, TruffleLogger> loggerFactory, SandboxPolicy sandboxPolicy);
 
@@ -1322,6 +1323,8 @@ public abstract class Accessor {
         public abstract boolean isLegacyCompilerOption(String key);
 
         public abstract <T> ThreadLocal<T> createTerminatingThreadLocal(Supplier<T> initialValue, Consumer<T> onThreadTermination);
+
+        public abstract void invalidateCallTarget(CallTarget target, String reason);
     }
 
     public abstract static class LanguageProviderSupport extends Support {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.graal.isolated;
+package jdk.graal.compiler.core.phases;
 
-import org.graalvm.nativeimage.IsolateThread;
+import java.util.Optional;
 
-/**
- * The {@link IsolateThread} of the compiler performing a compilation requested by a
- * {@linkplain ClientIsolateThread client}.
- */
-public interface CompilerIsolateThread extends IsolateThread {
+import jdk.graal.compiler.nodes.GraphState;
+import jdk.graal.compiler.nodes.StructuredGraph;
+import jdk.graal.compiler.phases.BasePhase;
+import jdk.graal.compiler.phases.Phase;
+
+public class EconomyMarkFixReadsPhase extends Phase {
+
+    @Override
+    public Optional<BasePhase.NotApplicable> notApplicableTo(GraphState graphState) {
+        return ALWAYS_APPLICABLE;
+    }
+
+    @Override
+    protected void run(StructuredGraph graph) {
+    }
+
+    @Override
+    public void updateGraphState(GraphState graphState) {
+        /*
+         * In economy we never allow floating reads for the sake of compile speed, thus we mark the
+         * graph as already having fix reads.
+         */
+        super.updateGraphState(graphState);
+        graphState.setAfterStage(GraphState.StageFlag.FIXED_READS);
+    }
+
+    public static final EconomyMarkFixReadsPhase SINGLETON = new EconomyMarkFixReadsPhase();
 }
