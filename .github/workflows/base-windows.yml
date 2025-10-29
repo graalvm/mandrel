@@ -139,8 +139,20 @@ jobs:
     steps:
     - id: suffix
       run: |
-        export SUFFIX=$(echo '${{ toJson(inputs) }}' | jq -j 'del(."build-stats-tag", ."mandrel-it-issue-number", ."issue-repo", ."issue-number") | to_entries[] | "-\(.value)"' | tr '":<>|*?\\r\n\/' '-')
-        echo $SUFFIX
+        # Build a suffix from inputs but ensure it's safe and has an upper bound on its length (200 characters).
+        SUFFIX_RAW=$(echo '${{ toJson(inputs) }}' | jq -j 'del(."build-stats-tag", ."mandrel-it-issue-number", ."issue-repo", ."issue-number") | to_entries[] | "-\(.value)"')
+        # Replace characters that are unsafe for artifact names with '-'
+        SUFFIX_CLEAN=$(echo "$SUFFIX_RAW" | tr '\":<>|*?\\r\\n\\/' '-' | tr -s '-')
+        # If the cleaned suffix is reasonably short, use it. Otherwise, create a short stable suffix
+        # using the run id and a short hash to guarantee length < 256.
+        MAX_LEN=200
+        if [ $(echo -n "$SUFFIX_CLEAN" | wc -c) -le $MAX_LEN ]; then
+          SUFFIX="$SUFFIX_CLEAN"
+        else
+          HASH=$(echo -n "$SUFFIX_CLEAN" | sha1sum | cut -c1-40)
+          SUFFIX="-run${GITHUB_RUN_ID}-${HASH}"
+        fi
+        echo "$SUFFIX"
         echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
     - name: Get Quarkus version and test matrix
       id: version
