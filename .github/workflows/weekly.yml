@@ -97,6 +97,7 @@ jobs:
       mandrel-it-issue-number: "379"
       mandrel-packaging-version: "25.0"
       quarkus-additional-build-args-append: "--future-defaults=all"
+      build-stats-tag: "gha-linux-mandrel-qmain-m25_0-jdk25ea-futuredefaults"
   ####
   # Test Q main and Mandrel 23.1 JDK 21
   ####
