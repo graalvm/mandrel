@@ -1,0 +1,48 @@
+name: Monthly CI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/monthly.yml'
+      - '.github/workflows/base.yml'
+      - '.github/workflows/base-windows.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/monthly.yml'
+      - '.github/workflows/base.yml'
+      - '.github/workflows/base-windows.yml'
+  schedule:
+    # Run at 00:00 on the first day of every month
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+# The following aims to reduce CI CPU cycles by:
+# 1. Cancelling any previous builds of this PR when pushing new changes to it
+# 2. Cancelling any previous builds of a branch when pushing new changes to it in a fork
+# 3. Cancelling any pending builds, but not active ones, when pushing to a branch in the main
+#    repository. This prevents us from constantly cancelling CI runs, while being able to skip
+#    intermediate builds. E.g., if we perform two pushes the first one will start a CI job and
+#    the second one will add another one to the queue; if we perform a third push while the
+#    first CI job is still running the previously queued CI job (for the second push) will be
+#    cancelled and a new CI job will be queued for the latest (third) push.
+concurrency:
+  group: "workflow = ${{ github.workflow }}, ref = ${{ github.event.ref }}, pr = ${{ github.event.pull_request.id }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'graalvm/mandrel' }}
+
+jobs:
+  ####
+  # Test Q main and Mandrel 25.0 JDK 25 with assertions enabled
+  ####
+  q-main-mandrel-25_0-future-defaults:
+    name: "Q main M 25.0 --future-defaults=all"
+    uses: ./.github/workflows/base.yml
+    with:
+      quarkus-version: "main"
+      mandrel-version: "mandrel/25.0"
+      jdk: "25/ea"
+      issue-number: "929"
+      issue-repo: "graalvm/mandrel"
+      # mandrel-it-issue-number: "399"
+      mandrel-packaging-version: "25.0"
+      quarkus-additional-build-args-append: "-ea,-esa,-J-ea,-J-esa"
+      excluded-native-test-modules: "maven"
