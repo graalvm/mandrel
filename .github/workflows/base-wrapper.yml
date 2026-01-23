@@ -64,6 +64,10 @@ on:
         type: string
         description: 'Additional arguments to append to the quarkus native build command'
         default: ''
+      excluded-native-test-modules:
+        type: string
+        description: 'Comma separated list of Quarkus modules to exclude from native tests'
+        default: ''
 
 jobs:
   process-inputs:
@@ -106,5 +110,6 @@ jobs:
       build-stats-tag: ${{ github.event.inputs.build-stats-tag }}
       gh-runner: ${{ github.event.inputs.gh-runner }}
       quarkus-additional-build-args-append: ${{ github.event.inputs.quarkus-additional-build-args }}
+      excluded-native-test-modules: ${{ github.event.inputs.excluded-native-test-modules }}
     secrets:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}

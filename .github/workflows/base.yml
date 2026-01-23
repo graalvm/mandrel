@@ -64,6 +64,10 @@ on:
         type: string
         description: 'Additional arguments to append to the quarkus native build command'
         default: ''
+      excluded-native-test-modules:
+        type: string
+        description: 'Comma-separated list of module patterns to exclude from native-tests (e.g., "db2,postgresql")'
+        default: ''
     secrets:
       ISSUE_BOT_TOKEN:
         description: 'A token used to report results in GH issues'
@@ -603,6 +607,12 @@ jobs:
           if [[ "${{ runner.arch }}" == "ARM64" ]]; then
             TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -vi -E 'db2|hibernate-orm-spatial' | paste -sd, -)
             echo "Filtered TEST_MODULES for ARM: $TEST_MODULES"
+          fi
+          # Filter out user-specified excluded modules
+          if [[ -n "${{ inputs.excluded-native-test-modules }}" ]]; then
+            EXCLUDED_PATTERN=$(echo "${{ inputs.excluded-native-test-modules }}" | tr ',' '|')
+            TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -vi -E "$EXCLUDED_PATTERN" | paste -sd, -)
+            echo "Filtered TEST_MODULES after excluding '${{ inputs.excluded-native-test-modules }}': $TEST_MODULES"
           fi
           ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS $NEW_MAX_HEAP_SIZE
       - name: Prepare failure archive (if maven failed)
