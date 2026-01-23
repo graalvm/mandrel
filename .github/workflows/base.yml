@@ -170,7 +170,7 @@ jobs:
 
   get-test-matrix:
     name: Get test matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       quarkus-version: ${{ steps.version.outputs.quarkus-version }}
       tests-matrix: ${{ steps.version.outputs.tests-matrix }}
@@ -431,7 +431,7 @@ jobs:
 
   get-jdk:
     name: Get JDK ${{ inputs.jdk }}
-    runs-on: ${{ inputs.gh-runner }}
+    runs-on: ubuntu-slim
     needs:
       - get-test-matrix
       - build-vars

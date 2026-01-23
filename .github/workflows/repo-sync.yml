@@ -15,7 +15,7 @@ permissions:
 jobs:
   graal-master:
     name: Keep graal/master in sync with upstream master
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
     - name: Checkout graal/master branch
       uses: actions/checkout@v4

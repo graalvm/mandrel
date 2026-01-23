@@ -91,7 +91,7 @@ env:
 jobs:
   build-vars:
     name: Set distribution and build-from-source variables based on build-type
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       build-from-source: ${{ steps.source-build.outputs.build-from-source }}
       distribution: ${{ steps.distro.outputs.distribution }}
@@ -136,7 +136,7 @@ jobs:
 
   get-test-matrix:
     name: Get test matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       quarkus-version: ${{ steps.version.outputs.quarkus-version }}
       tests-matrix: ${{ steps.version.outputs.tests-matrix }}

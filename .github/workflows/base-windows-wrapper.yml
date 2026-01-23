@@ -58,7 +58,7 @@ on:
 jobs:
   process-inputs:
     name: Process inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       quarkus-version: ${{ steps.process.outputs.quarkus-version }}
       quarkus-repo: ${{ steps.process.outputs.quarkus-repo }}

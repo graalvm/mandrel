@@ -19,7 +19,7 @@ on:
 jobs:
   native-tests-stats-upload:
     name: Upload build stats to collector
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
         with:
