@@ -70,14 +70,6 @@ jobs:
         path: ~/.m2/repository
         key: ${{ inputs.gh-runner }}-${{ inputs.target-os }}-${{ inputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ inputs.gh-runner }}-${{ inputs.target-os }}-${{ inputs.quarkus-version }}-maven-
-    - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
-      # See https://github.com/Karm/mandrel-integration-tests/pull/64
-      run: |
-        if [ "${{ inputs.quarkus-version }}" == "2.2" ]
-        then
-            cd quarkus
-            bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
-        fi
     # Use Java 17 to build Quarkus as that's the lowest supported JDK version currently
     - uses: actions/setup-java@v4
       with:

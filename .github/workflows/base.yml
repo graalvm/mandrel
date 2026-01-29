@@ -552,14 +552,6 @@ jobs:
             cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
             mv ~/.docker/config.json.new ~/.docker/config.json
           fi
-      - name: Change quarkus.version for Quarkus 2.2 to make mandrel-integration-test not apply quarkus_main.patch
-        # See https://github.com/Karm/mandrel-integration-tests/pull/64
-        run: |
-          if [ "${{ inputs.quarkus-version }}" == "2.2" ]
-          then
-            cd quarkus
-            bash ../workflow-mandrel/.github/update_quarkus_version.sh 2.2.999
-          fi
       - name: Build with Maven
         env:
           TEST_MODULES: ${{matrix.test-modules}}
@@ -719,11 +711,8 @@ jobs:
           cd ${MANDREL_IT_PATH}
           export PATH="${GRAALVM_HOME}/bin:$PATH"
           export QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
-          # Don't use SNAPSHOT version for 2.2 and release tags
-          if [ "${{ inputs.quarkus-version }}" == "2.2" ]
-          then
-            export QUARKUS_VERSION=2.2.999
-          elif $(expr match "${{ inputs.quarkus-version }}" "^[0-9]\+\.[0-9]\+$" > /dev/null)
+          # Don't use SNAPSHOT version for release tags
+          if $(expr match "${{ inputs.quarkus-version }}" "^[0-9]\+\.[0-9]\+$" > /dev/null)
           then
             # release branches use the branch name followed by .999-SNAPSHOT as the version
             export QUARKUS_VERSION="${{ inputs.quarkus-version }}.999-SNAPSHOT"
