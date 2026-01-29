@@ -33,8 +33,8 @@ jobs:
   ####
   # Test Q main and Mandrel 25.0 JDK 25 with assertions enabled
   ####
-  q-main-mandrel-25_0-future-defaults:
-    name: "Q main M 25.0 --future-defaults=all"
+  q-main-mandrel-25_0-assertions-enabled:
+    name: "Q main M 25.0 assertions enabled"
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
