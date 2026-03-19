@@ -92,7 +92,7 @@ jobs:
       quarkus-version: "main"
       mandrel-version: "mandrel/25.0"
       jdk: "25/ea"
-      issue-number: "917"
+      issue-number: "946"
       issue-repo: "graalvm/mandrel"
       mandrel-it-issue-number: "379"
       mandrel-packaging-version: "25.0"
