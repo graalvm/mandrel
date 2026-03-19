@@ -17,7 +17,7 @@
 //usr/bin/env jbang "$0" "$@" ; exit $?
 
 //JAVA 21
-//DEPS org.kohsuke:github-api:1.327
+//DEPS org.kohsuke:github-api:1.330
 //DEPS info.picocli:picocli:4.7.7
 
 import org.kohsuke.github.GHIssue;
@@ -195,7 +195,14 @@ class Report implements Runnable {
 			} else {
 				sb.append("Unfortunately, the build failed!\n\n");
 				if (!dryRun) {
-					issue.reopen();
+					try {
+						issue.reopen();
+					} catch (Exception e) {
+						System.out.println("ERROR: Failed to open issue: " + issue.getHtmlUrl());
+						System.out.println("ERROR: Make sure the issue is owned by @mandrel-bot and that it was not closed by another user");
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 				System.out.println("The issue has been re-opened");
 			}
