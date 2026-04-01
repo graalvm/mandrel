@@ -37,6 +37,7 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,8 @@ class Report implements Runnable {
 
 	@Option(names = "--dry-run", description = "Whether to actually update the issue or not")
 	private boolean dryRun;
+
+	private final List<String> errors = new ArrayList<>();
 
 	@Override
 	public void run() {
@@ -154,6 +157,21 @@ class Report implements Runnable {
 			for (GHIssue issue: mandrelITIssues.keySet()) {
 				reportJobResults(issue, mandrelITJobs.get(issue));
 			}
+
+			// After processing all issues, report any errors
+			if (!errors.isEmpty()) {
+				System.err.println("\n========================================");
+				System.err.println("ERRORS OCCURRED DURING PROCESSING:");
+				System.err.println("========================================");
+				for (String error : errors) {
+					// GitHub Actions workflow annotation
+					System.out.println("::error::" + error);
+					// Also to stderr for logs
+					System.err.println("  - " + error);
+				}
+				System.err.println("========================================\n");
+				System.exit(1);
+			}
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
@@ -197,14 +215,16 @@ class Report implements Runnable {
 				if (!dryRun) {
 					try {
 						issue.reopen();
+						System.out.println("The issue has been re-opened");
 					} catch (Exception e) {
-						System.out.println("ERROR: Failed to open issue: " + issue.getHtmlUrl());
-						System.out.println("ERROR: Make sure the issue is owned by @mandrel-bot and that it was not closed by another user");
-						e.printStackTrace();
-						System.exit(1);
+						String errorMsg = String.format("Failed to reopen %s: %s. Make sure the issue is owned by @mandrel-bot and that it was not closed by another user",
+							issue.getHtmlUrl(), e.getMessage());
+						errors.add(errorMsg);
+						System.err.println("ERROR: " + errorMsg);
+						System.err.println("WARN: Attempting to add comment anyway...");
+						// Continue to add comment despite reopen failure
 					}
 				}
-				System.out.println("The issue has been re-opened");
 			}
 			for (GHWorkflowJob job: jobs) {
 		 		processFailedJob(sb, job);
@@ -298,9 +318,18 @@ class Report implements Runnable {
 					} else {
 						sb.append("Unfortunately, the synchronization failed!\n\n");
 						if (!dryRun) {
-							issue.reopen();
+							try {
+								issue.reopen();
+								System.out.println("The issue has been re-opened");
+							} catch (Exception e) {
+								String errorMsg = String.format("Failed to reopen %s: %s. Make sure the issue is owned by @mandrel-bot and that it was not closed by another user",
+									issue.getHtmlUrl(), e.getMessage());
+								errors.add(errorMsg);
+								System.err.println("ERROR: " + errorMsg);
+								System.err.println("WARN: Attempting to add comment anyway...");
+								// Continue to add comment despite reopen failure
+							}
 						}
-						System.out.println("The issue has been re-opened");
 					}
 					sb.append(String.format("Link to failing CI run: %s", job.getHtmlUrl()));
 					String comment = sb.toString();
