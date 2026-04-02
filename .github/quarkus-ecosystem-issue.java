@@ -165,7 +165,7 @@ class Report implements Runnable {
 				System.err.println("========================================");
 				for (String error : errors) {
 					// GitHub Actions workflow annotation
-					System.out.println("::error::" + error);
+					System.out.println("::error::" + escapeWorkflowCommand(error));
 					// Also to stderr for logs
 					System.err.println("  - " + error);
 				}
@@ -407,7 +407,33 @@ class Report implements Runnable {
 	private static boolean isOpen(GHIssue issue) {
 		return (issue.getState() == GHIssueState.OPEN);
 	}
-	
+
+	/**
+	 * Escapes special characters for GitHub Actions workflow commands.
+	 *
+	 * Prevents workflow command injection when outputting untrusted strings.
+	 * The primary risk is newlines: if an error message contains "\n::", the newline
+	 * would create a new physical line where :: at the start becomes a new workflow
+	 * command. By escaping \n to %0A, the entire message stays on one line, so any
+	 * :: within the message has no special meaning.
+	 *
+	 * GitHub Actions decodes these sequences before display, so %0A shows as a
+	 * newline in the web UI.
+	 *
+	 * All three escapes are required per GitHub Actions toolkit implementation:
+	 * https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts
+	 * https://github.com/orgs/community/discussions/26736
+	 * - %  → %25 (must be first to avoid double-encoding the other escapes)
+	 * - \r → %0D (carriage return can also create new lines on some systems)
+	 * - \n → %0A (newline prevents command injection as explained above)
+	 */
+	private static String escapeWorkflowCommand(String message) {
+		return message
+			.replace("%", "%25")   // Must be first to avoid double-encoding
+			.replace("\r", "%0D")
+			.replace("\n", "%0A");
+	}
+
 	public static void main(String... args) {
 		int exitCode = new CommandLine(new Report()).execute(args);
 		System.exit(exitCode);
