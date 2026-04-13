@@ -72,7 +72,7 @@ suite = {
       "maven" : {
         "groupId" : "org.openjdk.jol",
         "artifactId" : "jol-core",
-        "version" : "0.16",
+        "version" : "23.1.11.0",
       },
     },
   },

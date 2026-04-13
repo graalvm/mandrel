@@ -42,7 +42,7 @@ suite = {
   "mxversion": "6.39.0",
   "name" : "truffle",
   "version" : "23.1.11.0",
-  "release" : False,
+  "release" : True,
   "groupId" : "org.graalvm.truffle",
   "sourceinprojectwhitelist" : [],
   "url" : "http://openjdk.java.net/projects/graal",
@@ -72,7 +72,7 @@ suite = {
 
     "LIBFFI_SOURCES" : {
       "resource" : True,
-      "version" : "3.4.6",
+      "version" : "23.1.11.0",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/libffi-{version}.tar.gz",
         "https://github.com/libffi/libffi/releases/download/v{version}/libffi-{version}.tar.gz",
@@ -87,7 +87,7 @@ suite = {
       "maven" : {
         "groupId" : "org.antlr",
         "artifactId" : "antlr4-runtime",
-        "version" : "4.12.0",
+        "version" : "23.1.11.0",
       }
     },
 
@@ -99,7 +99,7 @@ suite = {
 
     "TRUFFLE_JCODINGS": {
       "digest" : "sha512:455f3dc287181c185ab87c03e88cc89615f3da262358f44ea01bb3cc9f04d8e3cee7911f8a14a6403d3285d9b54812aaa48ade093a0b3ec4e594adbbda1d5387",
-      "version" : "1.0.58.1",
+      "version" : "23.1.11.0",
       "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/graalvm-shadowed-jcodings-{version}.jar"],
       "exports" : [],
       "license": ["MIT"],
@@ -117,7 +117,7 @@ suite = {
       "maven" : {
         "groupId" : "com.ibm.icu",
         "artifactId" : "icu4j",
-        "version" : "72.1",
+        "version" : "23.1.11.0",
       },
     },
     "ICU4J-CHARSET" : {
@@ -127,7 +127,7 @@ suite = {
       "maven" : {
         "groupId" : "com.ibm.icu",
         "artifactId" : "icu4j-charset",
-        "version" : "72.1",
+        "version" : "23.1.11.0",
       },
     },
 
@@ -146,7 +146,7 @@ suite = {
       "maven" : {
         "groupId" : "org.json",
         "artifactId" : "json",
-        "version" : "20231013",
+        "version" : "23.1.11.0",
       },
     },
 
@@ -156,7 +156,7 @@ suite = {
       "maven" : {
         "groupId" : "org.graalvm.visualvm.modules",
         "artifactId" : "org-graalvm-visualvm-lib-jfluid-heap",
-        "version" : "2.1.4",
+        "version" : "23.1.11.0",
       },
     },
 
@@ -166,7 +166,7 @@ suite = {
       "maven": {
         "groupId": "com.google.jimfs",
         "artifactId": "jimfs",
-        "version": "1.2",
+        "version" : "23.1.11.0",
       },
     },
 
@@ -177,7 +177,7 @@ suite = {
       "maven": {
         "groupId": "com.google.guava",
         "artifactId": "guava",
-        "version": "31.0.1-jre",
+        "version" : "23.1.11.0",
       },
     },
 

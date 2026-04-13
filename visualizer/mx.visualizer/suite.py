@@ -24,7 +24,7 @@ suite = {
       "maven" : {
         "groupId" : "org.apache.xmlgraphics",
         "artifactId" : "batik-svggen",
-        "version" : "1.12",
+        "version" : "23.1.11.0",
       },
       "license" : "Apache-2.0"
     },
@@ -34,7 +34,7 @@ suite = {
       "maven" : {
         "groupId" : "org.netbeans.api",
         "artifactId" : "org-openide-util-lookup",
-        "version" : "RELEASE122",
+        "version" : "23.1.11.0",
       },
       "license" : "Apache-2.0"
     },
@@ -44,7 +44,7 @@ suite = {
       "maven" : {
         "groupId" : "org.netbeans.api",
         "artifactId" : "org-openide-util",
-        "version" : "RELEASE122",
+        "version" : "23.1.11.0",
       },
       "license" : "Apache-2.0"
     },

@@ -3,7 +3,7 @@ suite = {
     "mxversion": "6.27.1",
     "name": "substratevm",
     "version" : "23.1.11.0",
-    "release" : False,
+    "release" : True,
     "url" : "https://github.com/oracle/graal/tree/master/substratevm",
 
     "groupId" : "org.graalvm.nativeimage",
@@ -69,7 +69,7 @@ suite = {
             "maven" : {
                 "groupId" : "xerces",
                 "artifactId" : "xercesImpl",
-                "version" : "2.6.2-jaxb-1.0.6",
+                "version" : "23.1.11.0",
            },
         },
         "LLVM_WRAPPER_SHADOWED": {
@@ -175,7 +175,7 @@ suite = {
         },
         "LLVM_LLD_STANDALONE": {
             "license" : "Apache-2.0-LLVM",
-            "version" : "16.0.1-4-gad8c248269-bg7bf7e45f73",
+            "version" : "23.1.11.0",
             "host" : "https://lafo.ssw.uni-linz.ac.at/pub/llvm-org",
             "os_arch": {
                 "darwin": {

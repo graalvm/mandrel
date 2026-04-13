@@ -42,7 +42,7 @@ suite = {
   "mxversion": "6.39.0",
   "name" : "sdk",
   "version" : "23.1.11.0",
-  "release" : False,
+  "release" : True,
   "sourceinprojectwhitelist" : [],
   "url" : "https://github.com/oracle/graal",
   "groupId" : "org.graalvm.sdk",
@@ -132,7 +132,7 @@ suite = {
       "maven": {
         "groupId": "org.jline",
         "artifactId": "jline-reader",
-        "version": "3.23.0",
+        "version" : "23.1.11.0",
       },
     },
 
@@ -143,7 +143,7 @@ suite = {
       "maven": {
         "groupId": "org.jline",
         "artifactId": "jline-terminal",
-        "version": "3.23.0",
+        "version" : "23.1.11.0",
       },
     },
 
@@ -154,11 +154,11 @@ suite = {
       "maven": {
         "groupId": "org.jline",
         "artifactId": "jline-builtins",
-        "version": "3.23.0",
+        "version" : "23.1.11.0",
       },
     },
     "LLVM_ORG" : {
-      "version" : "16.0.1-4-gad8c248269-bg39f02d0d6a",
+      "version" : "23.1.11.0",
       "host" : "https://lafo.ssw.uni-linz.ac.at/pub/llvm-org",
       "os_arch" : {
         "linux" : {
@@ -200,7 +200,7 @@ suite = {
       "license" : "Apache-2.0-LLVM",
     },
     "LLVM_ORG_COMPILER_RT_LINUX" : {
-      "version" : "16.0.1-4-gad8c248269-bg39f02d0d6a",
+      "version" : "23.1.11.0",
       "host" : "https://lafo.ssw.uni-linz.ac.at/pub/llvm-org",
       # we really want linux-amd64, also on non-linux and non-amd64 platforms for cross-compilation
       "urls" : ["{host}/compiler-rt-llvmorg-{version}-linux-amd64.tar.gz"],
@@ -208,7 +208,7 @@ suite = {
       "license" : "Apache-2.0-LLVM",
     },
     "LLVM_ORG_SRC" : {
-      "version" : "16.0.1-4-gad8c248269-bg39f02d0d6a",
+      "version" : "23.1.11.0",
       "host" : "https://lafo.ssw.uni-linz.ac.at/pub/llvm-org",
       "packedResource" : True,
       "urls" : ["{host}/llvm-src-llvmorg-{version}.tar.gz"],

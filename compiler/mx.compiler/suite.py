@@ -5,7 +5,7 @@ suite = {
 
   "groupId" : "org.graalvm.compiler",
   "version" : "23.1.11.0",
-  "release" : False,
+  "release" : True,
   "url" : "http://www.graalvm.org/",
   "developer" : {
     "name" : "GraalVM Development",
@@ -49,7 +49,7 @@ suite = {
       "maven" : {
         "groupId" : "com.google.code.java-allocation-instrumenter",
         "artifactId" : "java-allocation-instrumenter",
-        "version" : "3.1.0",
+        "version" : "23.1.11.0",
       },
       "bootClassPathAgent" : "true",
     },
@@ -75,7 +75,7 @@ suite = {
       "maven" : {
         "groupId" : "org.openjdk.jol",
         "artifactId" : "jol-cli",
-        "version" : "0.9",
+        "version" : "23.1.11.0",
         "classifier" : "full",
       },
     },
@@ -91,7 +91,7 @@ suite = {
       "maven" : {
         "groupId" : "org.ow2.asm",
         "artifactId" : "asm",
-        "version" : "9.7.1",
+        "version" : "23.1.11.0",
       },
       "license" : "BSD-new",
     },
@@ -102,7 +102,7 @@ suite = {
       "maven" : {
         "groupId" : "org.ow2.asm",
         "artifactId" : "asm-tree",
-        "version" : "9.7.1",
+        "version" : "23.1.11.0",
       },
       "dependencies" : ["ASM_9.7.1"],
       "license" : "BSD-new",
@@ -114,7 +114,7 @@ suite = {
       "maven" : {
         "groupId" : "org.ow2.asm",
         "artifactId" : "asm-util",
-        "version" : "9.7.1",
+        "version" : "23.1.11.0",
       },
       "dependencies" : ["ASM_9.7.1"],
       "license" : "BSD-new",
