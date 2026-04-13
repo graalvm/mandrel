@@ -2,8 +2,8 @@ suite = {
     "mxversion": "7.33.0",
     "name": "web-image",
     "versionConflictResolution": "latest",
-    "version": "1.0",
-    "release": True,
+    "version" : "25.0.3.0",
+    "release" : True,
     "groupId": "org.graalvm.webimage",
     "imports": {
         "suites": [
