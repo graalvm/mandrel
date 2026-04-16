@@ -1,5 +1,5 @@
 /*
- * Copyright 2020,2024 Red Hat, Inc.
+ * Copyright 2020,2026 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ class Report implements Runnable {
 			final Map<GHIssue, List<GHWorkflowJob>> mandrelITJobs = new HashMap<>();
 
 			// Get the github issue number and repository from the logs
-			// 
+			//
 			// Unfortunately it's not possible to pass information from a triggering
 			// workflow to the triggered workflow (in this case Nightly/Weekly CI to
 			// the Github Issue Updater). As a result, to work around this, we parse
@@ -355,7 +355,7 @@ class Report implements Runnable {
 				.filter(s -> !(s.getConclusion().equals(Conclusion.SUCCESS) || s.getConclusion().equals(Conclusion.SKIPPED)))
 				.findFirst().get();
 		sb.append(String.format("  * Step: %s\n", step.getName()));
-		String fullContent = getJobsLogs(job, 
+		String fullContent = getJobsLogs(job,
 							"FAILURE [",
 							"Z Error:",
 							"Z ##[error]",
@@ -380,23 +380,48 @@ class Report implements Runnable {
 		return fullContent;
 	}
 
+	private static final int CONTEXT_BEFORE = 10;
+
 	private static InputStreamFunction<String> getLogArchiveInputStreamFunction(String... filters) {
 		return (is) -> {
 			StringBuilder stringBuilder = new StringBuilder();
+			// Ring buffer for context lines before matches (like grep -B)
+			String[] ring = new String[CONTEXT_BEFORE];
+			int ringPos = 0;
+			int lineNum = 0;
+			int lastOutputLineNum = 0;
+
 			try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is))) {
 				String line;
 				while ((line = bufferedReader.readLine()) != null) {
+					lineNum++;
 					if (filters.length == 0) {
 						stringBuilder.append(line);
 						stringBuilder.append(System.lineSeparator());
 					} else {
+						boolean matched = false;
 						for (String filter : filters) {
 							if (line.contains(filter)) {
-								stringBuilder.append(line);
-								stringBuilder.append(System.lineSeparator());
+								matched = true;
 								break;
 							}
 						}
+						if (matched) {
+							// Output context lines that haven't been output yet
+							for (int i = 0; i < CONTEXT_BEFORE; i++) {
+								int idx = (ringPos + i) % CONTEXT_BEFORE;
+								int ctxLineNum = lineNum - CONTEXT_BEFORE + i;
+								if (ring[idx] != null && ctxLineNum > lastOutputLineNum) {
+									stringBuilder.append(ring[idx]);
+									stringBuilder.append(System.lineSeparator());
+								}
+							}
+							stringBuilder.append(line);
+							stringBuilder.append(System.lineSeparator());
+							lastOutputLineNum = lineNum;
+						}
+						ring[ringPos] = line;
+						ringPos = (ringPos + 1) % CONTEXT_BEFORE;
 					}
 				}
 			}
