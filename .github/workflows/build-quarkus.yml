@@ -30,13 +30,20 @@ on:
       quarkus-version:
         type: string
         description: 'Quarkus version to test (branch, tag, commit, or "latest")'
-        # "latest" is replaced by the latest release available in maven
+        default: "999-SNAPSHOT"
+      quarkus-sha:
+        type: string
+        description: 'Quarkus commit SHA'
         default: "main"
       gh-runner:
         type: string
         description: 'GHA runner to run the build on'
         # "latest" is replaced by the latest release available in maven
         default: "ubuntu-latest"
+      use-snapshot:
+        type: boolean
+        description: 'Use snapshot version of Quarkus'
+        default: false
       # Builder image can't be tested on Windows due to https://github.com/actions/virtual-environments/issues/1143
       # builder-image:
       #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21)'
@@ -59,13 +66,75 @@ jobs:
         repository: graalvm/mandrel
         fetch-depth: 1
         path: workflow-mandrel
+    - name: Try to download pre-built Quarkus SNAPSHOT
+      if: ${{ inputs.use-snapshot == true }}
+      id: download-snapshot
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -e
+
+        if [ -n "${{ inputs.maven-deploy-local }}" ]; then
+          echo "::error::Cannot use maven-deploy-local with SNAPSHOT versions. SNAPSHOT versions are downloaded from pre-built releases."
+          exit 1
+        fi
+
+        # Infer branch from version: 999-SNAPSHOT -> main, X.YY.999-SNAPSHOT -> X.YY
+        QUARKUS_VERSION="${{ inputs.quarkus-version }}"
+        if [[ "${QUARKUS_VERSION}" == "999-SNAPSHOT" ]]; then
+          QUARKUS_SNAPSHOT_BRANCH="main"
+        elif [[ "${QUARKUS_VERSION}" =~ ^([0-9]+\.[0-9]+)\.999-SNAPSHOT$ ]]; then
+          QUARKUS_SNAPSHOT_BRANCH="${BASH_REMATCH[1]}"
+        else
+          echo "::error::Invalid SNAPSHOT version format: ${QUARKUS_VERSION}. Expected '999-SNAPSHOT' or 'X.YY.999-SNAPSHOT'"
+          exit 1
+        fi
+
+        QUARKUS_SNAPSHOT_REPO="quarkusio/quarkus-ecosystem-ci"
+        PREFIX="maven-repo-${QUARKUS_SNAPSHOT_BRANCH}-"
+
+        echo "Looking for latest Quarkus snapshot release for branch: ${QUARKUS_SNAPSHOT_BRANCH}"
+
+        # Get the tag of the latest release matching the prefix
+        TAG=$(gh release list --limit 20 \
+          --repo "${QUARKUS_SNAPSHOT_REPO}" \
+          --json tagName,name \
+          --jq ".[] | select(.tagName | startswith(\"${PREFIX}\")) | .tagName" \
+          | head -n 1) || true
+
+        if [ -z "${TAG}" ]; then
+          echo "::warning::No snapshot release found for branch '${QUARKUS_SNAPSHOT_BRANCH}'. Falling back to build from source."
+          echo "snapshot-available=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "Found release: ${TAG}"
+
+        echo "Downloading Quarkus snapshot: ${TAG}"
+        if ! gh release download "${TAG}" \
+          --repo "${QUARKUS_SNAPSHOT_REPO}" \
+          --pattern "maven-repo.tar.gz" \
+          --dir /tmp; then
+          echo "::warning::Failed to download snapshot release '${TAG}'. Falling back to build from source."
+          echo "snapshot-available=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        mkdir -p ~/.m2/repository
+        tar -xzf /tmp/maven-repo.tar.gz -C ~/.m2/repository
+        rm -f /tmp/maven-repo.tar.gz
+
+        echo "snapshot-available=true" >> "$GITHUB_OUTPUT"
+        echo "Quarkus ${QUARKUS_VERSION} for branch '${QUARKUS_SNAPSHOT_BRANCH}' installed successfully."
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      if: ${{ inputs.use-snapshot != true || steps.download-snapshot.outputs.snapshot-available != 'true' }}
       with:
         repository: ${{ inputs.quarkus-repo }}
         fetch-depth: 1
-        ref: ${{ inputs.quarkus-version }}
+        ref: ${{ inputs.quarkus-sha }}
         path: ${{ env.QUARKUS_PATH }}
     - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      if: ${{ inputs.use-snapshot != true ||  steps.download-snapshot.outputs.snapshot-available != 'true' }}
       with:
         path: ~/.m2/repository
         key: ${{ inputs.gh-runner }}-${{ inputs.target-os }}-${{ inputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -76,24 +145,24 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
     - name: Download GraalVM Maven Repo
-      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      if: ${{ inputs.use-snapshot != true && inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: org-graalvm-artefacts-${{ inputs.artifacts-suffix }}
         path: .
     - name: Download GraalVM Maven Version
-      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      if: ${{ inputs.use-snapshot != true && inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: mandrel-maven-version-${{ inputs.artifacts-suffix }}
         path: .
     - name: Extract GraalVM Maven Repo and GraalVM Maven Version
-      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      if: ${{ inputs.use-snapshot != true && inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
       run: |
         tar -xzvf graalvm-maven-artefacts.tgz -C ~
         tar -xzvf graalvm-version.tgz -C $(dirname ${MANDREL_HOME})
     - name: Build quarkus with local graalvm version
-      if: ${{ inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
+      if: ${{ inputs.use-snapshot != true && inputs.build-from-source == true && inputs.builder-image == 'null' && inputs.maven-deploy-local != ''}}
       run: |
         rm -f maven_graalvm_before_build.txt maven_graalvm_after_build.txt
         find ~/.m2/repository/org/graalvm | sort > maven_graalvm_before_build.txt
@@ -105,7 +174,7 @@ jobs:
         find ~/.m2/repository/org/graalvm | sort > maven_graalvm_after_build.txt
         diff -u maven_graalvm_before_build.txt maven_graalvm_after_build.txt
     - name: Build quarkus with default graalvm version
-      if: ${{ inputs.build-from-source == false || inputs.builder-image != 'null' ||  inputs.maven-deploy-local == ''}}
+      if: ${{ (inputs.use-snapshot != true || steps.download-snapshot.outputs.snapshot-available != 'true') && (inputs.build-from-source == false || inputs.builder-image != 'null' ||  inputs.maven-deploy-local == '')}}
       run: |
         cd ${QUARKUS_PATH}
         ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly

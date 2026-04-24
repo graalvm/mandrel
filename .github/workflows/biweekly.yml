@@ -1,9 +1,9 @@
-name: Monthly CI
+name: Bi-weekly CI
 
 on:
   push:
     paths:
-      - '.github/workflows/monthly.yml'
+      - '.github/workflows/biweekly.yml'
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
       - '.github/workflows/compute-build-config.yml'
@@ -11,15 +11,15 @@ on:
       - '.github/workflows/build-quarkus.yml'
   pull_request:
     paths:
-      - '.github/workflows/monthly.yml'
+      - '.github/workflows/biweekly.yml'
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
       - '.github/workflows/compute-build-config.yml'
       - '.github/workflows/resolve-quarkus-version.yml'
       - '.github/workflows/build-quarkus.yml'
   schedule:
-    # Run at 00:00 on the first day of every month
-    - cron: '0 0 1 * *'
+    # Run every two weeks at 00:00
+    - cron: '0 0 1,15 * *'
   workflow_dispatch:
 
 # The following aims to reduce CI CPU cycles by:
@@ -37,18 +37,43 @@ concurrency:
 
 jobs:
   ####
-  # Test Q main and Mandrel 25.0 JDK 25 with assertions enabled
+  # Test Quarkus main with latest Mandrel sources and maven-deploy-local
+  # This ensures Quarkus can still build with the latest GraalVM/Mandrel SDK
   ####
-  q-main-mandrel-25_0-assertions-enabled:
-    name: "Q main M 25.0 assertions enabled"
+  q-main-mandrel-25_0-with-local-maven-and-assertions:
+    name: "Q main M 25.0 with local maven and assertions"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
       quarkus-version: "main"
       mandrel-version: "mandrel/25.0"
+      build-type: "mandrel-source"
       jdk: "25/ea"
       issue-number: "929"
       issue-repo: "graalvm/mandrel"
-      # mandrel-it-issue-number: "399"
       mandrel-packaging-version: "25.0"
       quarkus-additional-build-args-append: "-ea,-esa,-J-ea,-J-esa"
       excluded-native-test-modules: "maven"
+    secrets:
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+  ####
+  # Test Quarkus main with latest GraalVM sources and maven-deploy-local
+  # This ensures Quarkus can still build with the latest GraalVM SDK
+  ####
+  q-main-graal-master-with-local-maven-and-assertions:
+    name: "Q main G master with local maven and assertions"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    uses: ./.github/workflows/base.yml
+    with:
+      quarkus-version: "main"
+      mandrel-version: "graal/master"
+      build-type: "graal-source"
+      jdk: "latest/ea"
+      issue-number: "978"
+      issue-repo: "graalvm/mandrel"
+      quarkus-additional-build-args-append: "-ea,-esa,-J-ea,-J-esa"
+      excluded-native-test-modules: "maven"
+    secrets:
+      UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
+
+# Made with Bob

@@ -41,9 +41,9 @@ jobs:
   ####
   q-main-mandrel-25_0:
     name: "Q main M 25.0"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "mandrel/25.0"
       jdk: "25/ea"
       issue-number: "853"
@@ -56,9 +56,9 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-25_0-win:
     name: "Q main M 25.0 windows"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base-windows.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "mandrel/25.0"
       issue-number: "854"
       issue-repo: "graalvm/mandrel"
@@ -74,9 +74,9 @@ jobs:
   ####
   q-main-mandrel-25_0-arm:
     name: "Q main M 25.0 on AArch64"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "mandrel/25.0"
       mandrel-packaging-version: "25.0"
       jdk: "25/ea"
@@ -93,9 +93,9 @@ jobs:
   ####
   q-main-mandrel-25_0-future-defaults:
     name: "Q main M 25.0 --future-defaults=all"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "mandrel/25.0"
       jdk: "25/ea"
       issue-number: "946"
@@ -112,9 +112,9 @@ jobs:
   ####
   q-main-mandrel-23_1:
     name: "Q main M 23.1 JDK 21"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "mandrel/23.1"
       jdk: "21/ea"
       issue-number: "739"
@@ -127,9 +127,9 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-23_1-win:
     name: "Q main M 23.1 windows"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base-windows.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "mandrel/23.1"
       jdk: "21/ea"
       issue-number: "740"

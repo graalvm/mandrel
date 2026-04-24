@@ -7,7 +7,7 @@ on:
         type: string
         description: 'Quarkus version to test (branch, tag, commit, or "latest")'
         # "latest" is replaced by the latest release available in maven
-        default: "main"
+        default: "999-SNAPSHOT"
       quarkus-repo:
         type: string
         description: 'The Quarkus repository to be used'
@@ -308,6 +308,8 @@ jobs:
       target-os: 'windows'
       quarkus-repo: ${{ inputs.quarkus-repo }}
       quarkus-version: ${{ needs.get-test-matrix.outputs.quarkus-version }}
+      quarkus-sha: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
+      use-snapshot: ${{ fromJson(needs.get-test-matrix.outputs.use-snapshot) }}
 
   native-tests:
     name: Q IT ${{ matrix.category }}
@@ -350,13 +352,8 @@ jobs:
         with:
           repository: ${{ inputs.quarkus-repo }}
           fetch-depth: 1
-          ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
+          ref: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
           path: ${{ env.QUARKUS_PATH }}
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.m2/repository
-          key: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: base-windows-${{ needs.get-test-matrix.outputs.quarkus-version }}-maven-
       # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
@@ -384,6 +381,15 @@ jobs:
             cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
             mv ~/.docker/config.json.new ~/.docker/config.json
           fi
+      - name: Build Gradle plugins for snapshots
+        if: ${{ fromJson(needs.get-test-matrix.outputs.use-snapshot) == true && contains(matrix.test-modules, 'gradle') }}
+        shell: bash
+        run: |
+          cd ${QUARKUS_PATH}
+          # Build Gradle plugins that are not included in snapshots to avoid Gradle repository lookup
+          echo "Building Gradle plugins to local Maven repository"
+          ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly -pl devtools/gradle,devtools/gradle/gradle-application-plugin,devtools/gradle/gradle-extension-plugin -am install
+          cd -
       - name: Build with Maven
         env:
           TEST_MODULES: ${{matrix.test-modules}}
@@ -403,7 +409,7 @@ jobs:
           $opts=@()
           -split $Env:NATIVE_TEST_MAVEN_OPTS | foreach { $opts += "`"$_`"" }
           #if ( "${{ inputs.builder-image }}" -eq "null" ) {
-          mvn -f integration-tests -pl "$Env:TEST_MODULES" -amd "-Dquarkus.native.container-build=false" $opts install
+          mvn -f integration-tests -pl "$Env:TEST_MODULES" -am -amd "-Dquarkus.native.container-build=false" $opts install
           #} else {
           #  mvn -pl $do_modules "-Dquarkus.native.container-build=true" "-Dquarkus.native.builder-image=${{ inputs.builder-image }}" $opts package
           #}
@@ -522,8 +528,8 @@ jobs:
           }
           $QUARKUS_VERSION="${{ needs.get-test-matrix.outputs.quarkus-version }}"
           # Don't use SNAPSHOT version for release tags
-          if (${{ inputs.quarkus-version }} -match "^[0-9]+\.[0-9]+$") {
-            $QUARKUS_VERSION="${{ inputs.quarkus-version }}.999-SNAPSHOT"
+          if ($QUARKUS_VERSION -match "^[0-9]+\.[0-9]+$") {
+            $QUARKUS_VERSION="$QUARKUS_VERSION.999-SNAPSHOT"
           } elseif (! ($QUARKUS_VERSION -match "^.*\.(Final|CR|Alpha|Beta)[0-9]?$")) {
             $QUARKUS_VERSION="999-SNAPSHOT"
           }

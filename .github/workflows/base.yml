@@ -7,7 +7,7 @@ on:
         type: string
         description: 'Quarkus version to test (branch, tag, commit, or "latest")'
         # "latest" is replaced by the latest release available in maven
-        default: "main"
+        default: "999-SNAPSHOT"
       quarkus-repo:
         type: string
         description: 'The Quarkus repository to be used'
@@ -31,7 +31,7 @@ on:
       build-type:
         type: string
         description: 'Build distribution (Mandrel/GraalVM) from source or grab a release, and control of maven should deploy locally'
-        default: "mandrel-source"
+        default: "mandrel-source-nolocalmvn"
       jdk:
         type: string
         description: 'OpenJDK to use. One of <feature-version>/ga, <feature-version>/ea, e.g. 17/ga or 17/ea (/ga and /ea suffixes are only relevant when building from source)'
@@ -408,7 +408,9 @@ jobs:
       target-os: 'linux'
       quarkus-repo: ${{ inputs.quarkus-repo }}
       quarkus-version: ${{ needs.get-test-matrix.outputs.quarkus-version }}
+      quarkus-sha: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
       gh-runner: ${{ inputs.gh-runner }}
+      use-snapshot: ${{ fromJson(needs.get-test-matrix.outputs.use-snapshot) }}
 
   native-tests:
     name: Q IT ${{ matrix.category }}
@@ -424,6 +426,7 @@ jobs:
       # leave more space for the actual native compilation and execution
       MAVEN_OPTS: -Xmx1g
       # USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
+      COMMON_MAVEN_ARGS: "-e -B --settings .github/mvn-settings.xml --fail-at-end"
     # Ignore the following YAML Schema error
     timeout-minutes: ${{matrix.timeout}}
     strategy:
@@ -464,10 +467,11 @@ jobs:
         with:
           repository: ${{ inputs.quarkus-repo }}
           fetch-depth: 1
-          ref: ${{ needs.get-test-matrix.outputs.quarkus-version }}
+          ref: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
           path: ${{ env.QUARKUS_PATH }}
       - name: Reclaim disk space
-        run: ${QUARKUS_PATH}/.github/ci-prerequisites.sh
+        run: |
+          ${QUARKUS_PATH}/.github/ci-prerequisites.sh
       - name: Update Docker Client User Agent
         shell: bash
         run: |
@@ -475,6 +479,15 @@ jobs:
             cat <<< $(jq '.HttpHeaders += {"User-Agent": "Mandrel-CI-Docker-Client"}' ~/.docker/config.json) > ~/.docker/config.json.new
             mv ~/.docker/config.json.new ~/.docker/config.json
           fi
+      - name: Build Gradle plugins for snapshots
+        if: ${{ fromJson(needs.get-test-matrix.outputs.use-snapshot) == true && contains(matrix.test-modules, 'gradle') }}
+        shell: bash
+        run: |
+          cd ${QUARKUS_PATH}
+          # Build Gradle plugins that are not included in snapshots to avoid Gradle repository lookup
+          echo "Building Gradle plugins to local Maven repository"
+          ./mvnw ${COMMON_MAVEN_ARGS} -Dquickly -pl devtools/gradle,devtools/gradle/gradle-application-plugin,devtools/gradle/gradle-extension-plugin -am install
+          cd -
       - name: Build with Maven
         env:
           TEST_MODULES: ${{matrix.test-modules}}
@@ -521,6 +534,11 @@ jobs:
           #   https://github.com/quarkusio/quarkus/issues/51923
           if [[ "${{ runner.arch }}" == "ARM64" ]]; then
             TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -vi -E 'db2|hibernate-orm-spatial' | paste -sd, -)
+            # Quarkus snapshot builds are built on x86_64 which results in some IT failing on ARM.
+            # see https://github.com/quarkusio/quarkus/issues/51562
+            if [[ "${{ needs.get-test-matrix.outputs.use-snapshot }}" == "true" ]]; then
+              TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -vi -E 'jpa-mssql|hibernate-reactive-mssql' | paste -sd, -)
+            fi
             echo "Filtered TEST_MODULES for ARM: $TEST_MODULES"
           fi
           # Filter out user-specified excluded modules
@@ -529,6 +547,9 @@ jobs:
             TEST_MODULES=$(echo $TEST_MODULES | tr ',' '\n' | grep -vi -E "$EXCLUDED_PATTERN" | paste -sd, -)
             echo "Filtered TEST_MODULES after excluding '${{ inputs.excluded-native-test-modules }}': $TEST_MODULES"
           fi
+          # Step 1: Build and install all dependencies/dependents, skipping all tests
+          ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -DskipTests -am -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS $NEW_MAX_HEAP_SIZE
+          # Step 2: Run the actual tests ONLY on the target modules
           ./mvnw -B --settings ${QUARKUS_PATH}/.github/mvn-settings.xml -f integration-tests -pl "$TEST_MODULES" -amd $BUILDER_IMAGE $NATIVE_TEST_MAVEN_OPTS $NEW_MAX_HEAP_SIZE
       - name: Prepare failure archive (if maven failed)
         if: failure()
@@ -638,10 +659,10 @@ jobs:
           export PATH="${GRAALVM_HOME}/bin:$PATH"
           export QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
           # Don't use SNAPSHOT version for release tags
-          if $(expr match "${{ inputs.quarkus-version }}" "^[0-9]\+\.[0-9]\+$" > /dev/null)
+          if $(expr match "${QUARKUS_VERSION}" "^[0-9]\+\.[0-9]\+$" > /dev/null)
           then
             # release branches use the branch name followed by .999-SNAPSHOT as the version
-            export QUARKUS_VERSION="${{ inputs.quarkus-version }}.999-SNAPSHOT"
+            export QUARKUS_VERSION="${QUARKUS_VERSION}.999-SNAPSHOT"
           elif ! $(expr match "$QUARKUS_VERSION" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
           then
             export QUARKUS_VERSION="999-SNAPSHOT"
@@ -668,3 +689,4 @@ jobs:
         with:
           name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports-mandrel-it.tgz'
+

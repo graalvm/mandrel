@@ -20,8 +20,11 @@ on:
         description: 'JSON string of all workflow inputs for artifact suffix generation'
         required: true
     outputs:
+      quarkus-sha:
+        description: 'Quarkus commit SHA'
+        value: ${{ jobs.resolve.outputs.sha }}
       quarkus-version:
-        description: 'Resolved Quarkus version (commit SHA or release version)'
+        description: 'Quarkus artifacts version'
         value: ${{ jobs.resolve.outputs.version }}
       tests-matrix:
         description: 'Test matrix JSON'
@@ -29,15 +32,20 @@ on:
       artifacts-suffix:
         description: 'Artifact naming suffix'
         value: ${{ jobs.resolve.outputs.artifacts-suffix }}
+      use-snapshot:
+        description: 'Whether the Quarkus version is a SNAPSHOT'
+        value: ${{ jobs.resolve.outputs.use-snapshot }}
 
 jobs:
   resolve:
     name: Resolve Version and Generate Matrix
     runs-on: ubuntu-slim
     outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
       version: ${{ steps.resolve.outputs.version }}
       test-matrix: ${{ steps.matrix.outputs.test-matrix }}
       artifacts-suffix: ${{ steps.suffix.outputs.suffix }}
+      use-snapshot: ${{ steps.resolve.outputs.use-snapshot }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -56,33 +64,87 @@ jobs:
       - name: Get Quarkus version
         id: resolve
         run: |
-          if [ ${{ inputs.quarkus-version }} == "latest" ]
-          then
-            export QUARKUS_VERSION=$(curl -s https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/Final/ {print $3}' | sort -V | tail -n 1)
-          elif $(expr match "${{ inputs.quarkus-version }}" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
-          then
-            export QUARKUS_VERSION=${{ inputs.quarkus-version }}
-          elif ! [[ "${{ inputs.quarkus-version }}" =~ ^[0-9a-f]{40}$ ]];
-          then
-            sha=$(gh api repos/${{ inputs.quarkus-repo }}/commits/${{ inputs.quarkus-version }} --jq .sha || echo "")
-            if [ "$sha" != "" ]; then
-              export QUARKUS_VERSION=$sha
+          # Detect if this is a SNAPSHOT version
+          if echo "${{ inputs.quarkus-version }}" | grep -q "\-SNAPSHOT$"; then
+            set -e
+
+            # Infer branch from version: 999-SNAPSHOT -> main, X.YY.999-SNAPSHOT -> X.YY
+            QUARKUS_VERSION="${{ inputs.quarkus-version }}"
+            if [[ "${QUARKUS_VERSION}" == "999-SNAPSHOT" ]]; then
+              QUARKUS_SNAPSHOT_BRANCH="main"
+            elif [[ "${QUARKUS_VERSION}" =~ ^([0-9]+\.[0-9]+)\.999-SNAPSHOT$ ]]; then
+              QUARKUS_SNAPSHOT_BRANCH="${BASH_REMATCH[1]}"
             else
-              export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
+              echo "::error::Invalid SNAPSHOT version format: ${QUARKUS_VERSION}. Expected '999-SNAPSHOT' or 'X.YY.999-SNAPSHOT'"
+              exit 1
+            fi
+
+            QUARKUS_SNAPSHOT_REPO="quarkusio/quarkus-ecosystem-ci"
+            PREFIX="maven-repo-${QUARKUS_SNAPSHOT_BRANCH}-"
+
+            echo "Looking for latest Quarkus snapshot release for branch: ${QUARKUS_SNAPSHOT_BRANCH}"
+
+            # Get the tag of the latest release matching the prefix
+            TAG=$(gh release list --limit 20 \
+              --repo "${QUARKUS_SNAPSHOT_REPO}" \
+              --json tagName,name \
+              --jq ".[] | select(.tagName | startswith(\"${PREFIX}\")) | .tagName" \
+              | head -n 1) || true
+
+            if [ -z "${TAG}" ]; then
+              echo "::warning::No snapshot release found for branch ${QUARKUS_SNAPSHOT_BRANCH}.  Falling back to building from source."
+              QUARKUS_VERSION=${QUARKUS_SNAPSHOT_BRANCH}
+            else
+              echo "Found release: ${TAG}"
+
+              # Get release body to extract Quarkus SHA
+              RELEASE_BODY=$(gh release view "${TAG}" --repo "${QUARKUS_SNAPSHOT_REPO}" --json body --jq .body)
+              QUARKUS_SHA=$(echo "${RELEASE_BODY}" | grep -oP 'Built from https://github.com/quarkusio/quarkus/tree/\K[0-9a-f]{40}' | head -1)
+
+              if [ -z "${QUARKUS_SHA}" ]; then
+                echo "::warning::Could not extract Quarkus SHA from release '${TAG}'. Falling back to building branch ${QUARKUS_SNAPSHOT_BRANCH} from source"
+                QUARKUS_VERSION=${QUARKUS_SNAPSHOT_BRANCH}
+              else
+                echo "use-snapshot=true" >> $GITHUB_OUTPUT
+                echo "Detected SNAPSHOT version: ${{ inputs.quarkus-version }}"
+              fi
             fi
           fi
-          if [ "$QUARKUS_VERSION" == "" ]
-          then
-            export QUARKUS_VERSION=${{ inputs.quarkus-version }}
+
+          if [ -z "${QUARKUS_SHA}" ]; then
+            echo "use-snapshot=false" >> $GITHUB_OUTPUT
+            echo "Not a SNAPSHOT version: ${{ inputs.quarkus-version }}"
+
+            if [ ${{ inputs.quarkus-version }} == "latest" ]
+            then
+              QUARKUS_VERSION=$(curl -s https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/version/ {print $3}'  | grep -v -E 'Alpha|Beta|CR' | sort -V | tail -n 1)
+            elif [ -z "${QUARKUS_VERSION}" ]; then
+              QUARKUS_VERSION=${{ inputs.quarkus-version }}
+            fi
+
+            sha=$(gh api repos/${{ inputs.quarkus-repo }}/commits/${QUARKUS_VERSION} --jq .sha 2>/dev/null || echo "")
+            if [ -n "$sha" ]; then
+              QUARKUS_SHA=$sha
+            else
+              sha=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${QUARKUS_VERSION}$\|refs/tags/${QUARKUS_VERSION}$" | cut -f 1)
+              if [ -n "$sha" ]; then
+                QUARKUS_SHA=$sha
+              else
+                echo "::error::Could not resolve SHA for version: ${QUARKUS_VERSION}"
+                exit 1
+              fi
+            fi
           fi
+          echo "Quarkus SHA: ${QUARKUS_SHA}"
+          echo "sha=${QUARKUS_SHA}" >> "$GITHUB_OUTPUT"
           echo ${QUARKUS_VERSION}
           echo "version=${QUARKUS_VERSION}" >> $GITHUB_OUTPUT
-          echo "**Quarkus version:** [${QUARKUS_VERSION}](${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }}/commits/${QUARKUS_VERSION})" >> $GITHUB_STEP_SUMMARY
-      
+          echo "**Quarkus version:** [${QUARKUS_VERSION}](${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }}/commits/${QUARKUS_SHA})" >> $GITHUB_STEP_SUMMARY
+
       - name: Get test matrix
         id: matrix
         run: |
-          curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${{ steps.resolve.outputs.version }}/.github/native-tests.json
+          curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${{ steps.resolve.outputs.sha }}/.github/native-tests.json
           tests_json=$(jq -c --arg os "${{ inputs.os-filter }}" '.include |= map(select(.["os-name"] | startswith($os)))' native-tests.json)
           echo ${tests_json}
           echo "test-matrix=${tests_json}" >> $GITHUB_OUTPUT

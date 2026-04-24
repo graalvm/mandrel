@@ -41,11 +41,11 @@ jobs:
   ####
   q-main-graal-25-latest:
     name: "Q main G 25 latest"
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
-      quarkus-version: "main"
       mandrel-version: "graal/master"
-      build-type: "graal-source"
+      build-type: "graal-source-nolocalmvn"
       jdk: "latest/ea"
       build-stats-tag: "gha-linux-graal-qmain-glatest-jdk25ea"
       issue-repo: "graalvm/mandrel"

@@ -10,9 +10,9 @@ on:
     inputs:
       quarkus-version:
         type: string
-        description: 'Quarkus version to test `<repo>:<version>` (branch, tag, commit, or "latest")'
+        description: 'Quarkus version to test `<repo>:<version>`. The `<version>` can be a branch, tag, commit, or "latest".'
         # "latest" is replaced by the latest release available in maven
-        default: "quarkusio/quarkus:main"
+        default: "quarkusio/quarkus:999-SNAPSHOT"
       graalvm-version:
         type: string
         description: 'Mandrel version to test `<repo>:<version>` (branch, tag, or commit)'
@@ -73,14 +73,16 @@ jobs:
     steps:
       - id: process
         run: |
-          echo "quarkus-repo=$(echo ${{ github.event.inputs.quarkus-version }} | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
-          echo "quarkus-version=$(echo ${{ github.event.inputs.quarkus-version }} | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
+          QUARKUS_INPUT="${{ github.event.inputs.quarkus-version }}"
+          echo "quarkus-repo=$(echo $QUARKUS_INPUT | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
+          echo "quarkus-version=$(echo $QUARKUS_INPUT | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
           echo "mandrel-repo=$(echo ${{ github.event.inputs.graalvm-version }} | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
           echo "mandrel-version=$(echo ${{ github.event.inputs.graalvm-version }} | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
           echo "mandrel-packaging-repo=$(echo ${{ github.event.inputs.mandrel-packaging-version }} | cut -d ':' -f 1)" >> $GITHUB_OUTPUT
           echo "mandrel-packaging-version=$(echo ${{ github.event.inputs.mandrel-packaging-version }} | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
   delegate:
+    needs: process-inputs
     uses: ./.github/workflows/base-windows.yml
     with:
       quarkus-version: ${{ needs.process-inputs.outputs.quarkus-version }}
