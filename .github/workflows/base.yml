@@ -99,144 +99,19 @@ env:
 
 jobs:
   build-vars:
-    name: Set distribution, build-from-source, and maven-deploy-local variables based on build-type
-    runs-on: ${{ inputs.gh-runner }}
-    outputs:
-      build-from-source: ${{ steps.source-build.outputs.build-from-source }}
-      distribution: ${{ steps.distro.outputs.distribution }}
-      maven-deploy-local: ${{ steps.maven-deploy-local.outputs.maven-deploy-local }}
-      architecture: ${{ steps.arch.outputs.architecture }}
-    steps:
-    - name: Log inputs
-      run: |
-        echo "Inputs:"
-        echo '${{ toJson(inputs) }}' | jq . | tr -d '"' | sed 's/,$//g'
-    - name: Dump inputs to GITHUB_STEP_SUMMARY in markdown table format
-      run: |
-        echo "## Inputs" >> $GITHUB_STEP_SUMMARY
-        echo "| Input | Value |" >> $GITHUB_STEP_SUMMARY
-        echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-        echo '${{ toJson(inputs) }}' | jq -r 'to_entries[] | "| \(.key) | `\(.value)` |"' >> $GITHUB_STEP_SUMMARY
-    - name: Set build-from-source output
-      id: source-build
-      run: |
-        echo "${{ inputs.build-type }}"
-        bfs_token=$(echo ${{ inputs.build-type }} | cut -d'-' -f2)
-        if [ "${bfs_token}" == "release" ]
-        then
-          source_build=false
-        elif [ "${bfs_token}" == "source" ]
-        then
-          source_build=true
-        else
-          echo "Unexpected input 'build-type' = ${{ inputs.build-type }}"
-          exit 1
-        fi
-        echo "source_build=$source_build"
-        echo "build-from-source=$source_build" >> $GITHUB_OUTPUT
-    - name: Set distribution output
-      id: distro
-      run: |
-        bfs_token=$(echo ${{ inputs.build-type }} | cut -d'-' -f1)
-        if [ "${bfs_token}" == "graal" ]
-        then
-          distro="graalvm"
-        elif [ "${bfs_token}" == "mandrel" ]
-        then
-          distro="mandrel"
-        else
-          echo "Unexpected input 'build-type' = ${{ inputs.build-type }}"
-          exit 1
-        fi
-        echo "distro=$distro"
-        echo "distribution=$distro" >> $GITHUB_OUTPUT
-    - name: Set maven-deploy-local output
-      id: maven-deploy-local
-      run: |
-        bfs_token=$(echo ${{ inputs.build-type }} | cut -d'-' -f3)
-        if [ "${bfs_token}" == "nolocalmvn" ]
-        then
-          maven_deploy_local=""
-        else
-          maven_deploy_local="--maven-deploy-local"
-        fi
-        echo "maven_deploy_local=$maven_deploy_local"
-        echo "maven-deploy-local=$maven_deploy_local" >> $GITHUB_OUTPUT
-    - name: Set architecture output
-      id: arch
-      run: |
-        if [ "${{ runner.arch }}" == "X64" ]
-        then
-          ARCH="amd64"
-        else
-          ARCH="aarch64"
-        fi
-        echo "architecture=$ARCH" >> $GITHUB_OUTPUT
+    name: Compute build configuration
+    uses: ./.github/workflows/compute-build-config.yml
+    with:
+      build-type: ${{ inputs.build-type }}
 
   get-test-matrix:
-    name: Get test matrix
-    runs-on: ubuntu-slim
-    outputs:
-      quarkus-version: ${{ steps.version.outputs.quarkus-version }}
-      tests-matrix: ${{ steps.version.outputs.tests-matrix }}
-      artifacts-suffix: ${{ steps.suffix.outputs.suffix }}
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-    - id: suffix
-      run: |
-       # Build a suffix from inputs but ensure it's safe and has an upper bound on its length (200 characters).
-        SUFFIX_RAW=$(echo '${{ toJson(inputs) }}' | jq -j 'del(."build-stats-tag", ."mandrel-it-issue-number", ."issue-repo", ."issue-number") | to_entries[] | "-\(.value)"')
-        # Replace characters that are unsafe for artifact names with '-'
-        SUFFIX_CLEAN=$(echo "$SUFFIX_RAW" | tr '":<>|*?\r\n\/' '-' | tr -s '-')
-        # If the cleaned suffix is reasonably short, use it. Otherwise, create a short stable suffix
-        # using the run id and a short hash to guarantee length < 256.
-        MAX_LEN=200
-        if [ $(echo -n "$SUFFIX_CLEAN" | wc -c) -le $MAX_LEN ]; then
-          SUFFIX="$SUFFIX_CLEAN"
-        else
-          HASH=$(echo -n "$SUFFIX_CLEAN" | sha1sum | cut -c1-40)
-          SUFFIX="-run${GITHUB_RUN_ID}-${HASH}"
-        fi
-        echo "$SUFFIX"
-        echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
-        echo "**artifacts-suffix:** ${SUFFIX}" >> $GITHUB_STEP_SUMMARY
-    - name: Get Quarkus version and test matrix
-      id: version
-      run: |
-        if [ ${{ inputs.quarkus-version }} == "latest" ]
-        then
-          export QUARKUS_VERSION=$(curl -s https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/Final/ {print $3}' | sort -V | tail -n 1)
-        elif $(expr match "${{ inputs.quarkus-version }}" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
-        then
-          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
-        elif ! [[ "${{ inputs.quarkus-version }}" =~ ^[0-9a-f]{40}$ ]];
-        then
-          sha=$(gh api repos/${{ inputs.quarkus-repo }}/commits/${{ inputs.quarkus-version }} --jq .sha || echo "")
-          if [ "$sha" != "" ]; then
-            export QUARKUS_VERSION=$sha
-          else
-            export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
-          fi
-        fi
-        if [ "$QUARKUS_VERSION" == "" ]
-        then
-          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
-        fi
-        echo ${QUARKUS_VERSION}
-        echo "quarkus-version=${QUARKUS_VERSION}" >> $GITHUB_OUTPUT
-        curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
-        tests_json=$(jq -c '.include |= map(select(.["os-name"] | startswith("ubuntu")))' native-tests.json)
-        echo ${tests_json}
-        echo "tests-matrix=${tests_json}" >> $GITHUB_OUTPUT
-        echo "**Quarkus version:** [$QUARKUS_VERSION](${GITHUB_SERVER_URL}/quarkusio/quarkus/commits/$QUARKUS_VERSION)" >> $GITHUB_STEP_SUMMARY
-        echo "<details>" >> $GITHUB_STEP_SUMMARY
-        echo "<summary>Test matrix:</summary>" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo '```json' >> $GITHUB_STEP_SUMMARY
-        jq '.include |= map(select(.["os-name"] | startswith("ubuntu")))' native-tests.json | tee -a $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        echo "</details>" >> $GITHUB_STEP_SUMMARY
+    name: Resolve Quarkus version and test matrix
+    uses: ./.github/workflows/resolve-quarkus-version.yml
+    with:
+      quarkus-version: ${{ inputs.quarkus-version }}
+      quarkus-repo: ${{ inputs.quarkus-repo }}
+      workflow-inputs: ${{ toJson(inputs) }}
+      os-filter: "ubuntu"
   setup-temurin-api-url:
     name: Set the Temurin API download URL
     runs-on: ubuntu-slim
@@ -305,14 +180,17 @@ jobs:
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
         restore-keys: ${{ runner.os }}-mx-
     - name: Get OpenJDK with static libs
+      id: get-jdk
       run: |
         if [ "${{ runner.arch }}" == "X64" ]
         then
           ARCH="x64"
+          ARCH_MANDREL="amd64"
         else
           ARCH="aarch64"
+          ARCH_MANDREL="aarch64"
         fi
-        echo "architecture=$ARCH" >> $GITHUB_OUTPUT
+        echo "architecture=$ARCH_MANDREL" >> $GITHUB_OUTPUT
         curl -sL ${TEMURIN_API_URL}/linux/${ARCH}/jdk/hotspot/normal/eclipse -o jdk.tar.gz
         curl -sL ${TEMURIN_API_URL}/linux/${ARCH}/staticlibs/hotspot/normal/eclipse -o jdk-static-libs.tar.gz
         mkdir -p ${JAVA_HOME}
@@ -338,7 +216,7 @@ jobs:
           --archive-suffix tar.gz \
           "${{needs.build-vars.outputs.maven-deploy-local}}"
         ${MANDREL_HOME}/bin/native-image --version
-        mv mandrel-java*-linux-${{ needs.build-vars.outputs.architecture }}*.tar.gz ${{ github.workspace }}/jdk.tgz
+        mv mandrel-java*-linux-${{ steps.get-jdk.outputs.architecture }}*.tar.gz ${{ github.workspace }}/jdk.tgz
         if [ "$MVN_LOCAL" != "" ]
         then
           rm -rf graalvm-maven-artefacts.tgz && tar -czvf graalvm-maven-artefacts.tgz -C ~ .m2/repository/org/graalvm
@@ -474,13 +352,25 @@ jobs:
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == false && inputs.builder-image == 'null'
     steps:
+    - name: Determine architecture from gh-runner
+      id: arch
+      run: |
+        # Parse architecture from gh-runner input (e.g., "ubuntu-latest" -> amd64, "ubuntu-24.04-arm" -> aarch64)
+        if echo "${{ inputs.gh-runner }}" | grep -qi "arm"; then
+          ARCH="aarch64"
+        else
+          ARCH="amd64"
+        fi
+        echo "architecture=$ARCH" >> $GITHUB_OUTPUT
+        echo "Architecture: $ARCH"
+    
     - name: Get Mandrel ${{ inputs.mandrel-version }}
       if: needs.build-vars.outputs.distribution == 'mandrel'
       run: |
         VERSION=${{ inputs.mandrel-version }}
         echo "**Mandrel version:** [$VERSION](${GITHUB_SERVER_URL}/graalvm/mandrel/releases/tag/$VERSION)" >> $GITHUB_STEP_SUMMARY
         curl \
-          -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-${{ needs.build-vars.outputs.architecture }}-${VERSION##mandrel-}.tar.gz \
+          -sL ${GITHUB_SERVER_URL}/graalvm/mandrel/releases/download/${VERSION}/mandrel-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-${{ steps.arch.outputs.architecture }}-${VERSION##mandrel-}.tar.gz \
           -o jdk.tgz
     - name: Get GraalVM CE ${{ inputs.mandrel-version }}
       if: needs.build-vars.outputs.distribution == 'graalvm'
@@ -488,7 +378,7 @@ jobs:
         VERSION=${{ inputs.mandrel-version }}
         echo "**GraalVM version:** [$VERSION](${GITHUB_SERVER_URL}/oracle/graal/releases/tag/$VERSION)" >> $GITHUB_STEP_SUMMARY
         curl \
-          -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-${{ needs.build-vars.outputs.architecture }}-${VERSION##vm-}.tar.gz \
+          -sL ${GITHUB_SERVER_URL}/graalvm/graalvm-ce-builds/releases/download/${VERSION}/graalvm-ce-java$(echo ${{ inputs.jdk }} | cut -d / -f 1)-linux-${{ steps.arch.outputs.architecture }}-${VERSION##vm-}.tar.gz \
           -o graalvm.tgz
         mkdir -p ${JAVA_HOME}
         tar xzvf graalvm.tgz -C ${JAVA_HOME} --strip-components=1

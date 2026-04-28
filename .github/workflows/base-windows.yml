@@ -90,97 +90,19 @@ env:
 
 jobs:
   build-vars:
-    name: Set distribution and build-from-source variables based on build-type
-    runs-on: ubuntu-slim
-    outputs:
-      build-from-source: ${{ steps.source-build.outputs.build-from-source }}
-      distribution: ${{ steps.distro.outputs.distribution }}
-    steps:
-    - name: Log inputs
-      run: |
-        echo "Inputs:"
-        echo '${{ toJson(inputs) }}' | jq . | tr -d '"' | sed 's/,$//g'
-    - name: Set build-from-source output
-      id: source-build
-      run: |
-        echo "${{ inputs.build-type }}"
-        bfs_token=$(echo ${{ inputs.build-type }} | cut -d'-' -f2)
-        if [ "${bfs_token}" == "release" ]
-        then
-          source_build=false
-        elif [ "${bfs_token}" == "source" ]
-        then
-          source_build=true
-        else
-          echo "Unexpected input 'build-type' = ${{ inputs.build-type }}"
-          exit 1
-        fi
-        echo "source_build=$source_build"
-        echo "build-from-source=$source_build" >> $GITHUB_OUTPUT
-    - name: Set distribution output
-      id: distro
-      run: |
-        bfs_token=$(echo ${{ inputs.build-type }} | cut -d'-' -f1)
-        if [ "${bfs_token}" == "graal" ]
-        then
-          distro="graalvm"
-        elif [ "${bfs_token}" == "mandrel" ]
-        then
-          distro="mandrel"
-        else
-          echo "Unexpected input 'build-type' = ${{ inputs.build-type }}"
-          exit 1
-        fi
-        echo "distro=$distro"
-        echo "distribution=$distro" >> $GITHUB_OUTPUT
+    name: Compute build configuration
+    uses: ./.github/workflows/compute-build-config.yml
+    with:
+      build-type: ${{ inputs.build-type }}
 
   get-test-matrix:
-    name: Get test matrix
-    runs-on: ubuntu-slim
-    outputs:
-      quarkus-version: ${{ steps.version.outputs.quarkus-version }}
-      tests-matrix: ${{ steps.version.outputs.tests-matrix }}
-      artifacts-suffix: ${{ steps.suffix.outputs.suffix }}
-    steps:
-    - id: suffix
-      run: |
-        # Build a suffix from inputs but ensure it's safe and has an upper bound on its length (200 characters).
-        SUFFIX_RAW=$(echo '${{ toJson(inputs) }}' | jq -j 'del(."build-stats-tag", ."mandrel-it-issue-number", ."issue-repo", ."issue-number") | to_entries[] | "-\(.value)"')
-        # Replace characters that are unsafe for artifact names with '-'
-        SUFFIX_CLEAN=$(echo "$SUFFIX_RAW" | tr '\":<>|*?\\r\\n\\/' '-' | tr -s '-')
-        # If the cleaned suffix is reasonably short, use it. Otherwise, create a short stable suffix
-        # using the run id and a short hash to guarantee length < 256.
-        MAX_LEN=200
-        if [ $(echo -n "$SUFFIX_CLEAN" | wc -c) -le $MAX_LEN ]; then
-          SUFFIX="$SUFFIX_CLEAN"
-        else
-          HASH=$(echo -n "$SUFFIX_CLEAN" | sha1sum | cut -c1-40)
-          SUFFIX="-run${GITHUB_RUN_ID}-${HASH}"
-        fi
-        echo "$SUFFIX"
-        echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
-    - name: Get Quarkus version and test matrix
-      id: version
-      run: |
-        if [ ${{ inputs.quarkus-version }} == "latest" ]
-        then
-          export QUARKUS_VERSION=$(curl -s https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml | awk -F"[<>]" '/Final/ {print $3}' | sort -V | tail -n 1)
-        elif $(expr match "${{ inputs.quarkus-version }}" "^.*\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?$" > /dev/null)
-        then
-          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
-        else
-          export QUARKUS_VERSION=$(git ls-remote ${GITHUB_SERVER_URL}/${{ inputs.quarkus-repo }} | grep "refs/heads/${{ inputs.quarkus-version }}$\|refs/tags/${{ inputs.quarkus-version }}$" | cut -f 1)
-        fi
-        if [ "$QUARKUS_VERSION" == "" ]
-        then
-          export QUARKUS_VERSION=${{ inputs.quarkus-version }}
-        fi
-        echo ${QUARKUS_VERSION}
-        echo "quarkus-version=${QUARKUS_VERSION}" >> $GITHUB_OUTPUT
-        curl --output native-tests.json https://raw.githubusercontent.com/${{ inputs.quarkus-repo }}/${QUARKUS_VERSION}/.github/native-tests.json
-        tests_json=$(jq -c '.include |= map(select(.["os-name"] | startswith("windows")))' native-tests.json)
-        echo ${tests_json}
-        echo "tests-matrix=${tests_json}" >> $GITHUB_OUTPUT
+    name: Resolve Quarkus version and test matrix
+    uses: ./.github/workflows/resolve-quarkus-version.yml
+    with:
+      quarkus-version: ${{ inputs.quarkus-version }}
+      quarkus-repo: ${{ inputs.quarkus-repo }}
+      workflow-inputs: ${{ toJson(inputs) }}
+      os-filter: "windows"
 
   build-mandrel:
     name: Mandrel build

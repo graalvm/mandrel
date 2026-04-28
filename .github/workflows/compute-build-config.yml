@@ -1,0 +1,83 @@
+name: Compute Build Configuration
+
+on:
+  workflow_call:
+    inputs:
+      build-type:
+        type: string
+        description: 'Build type (e.g., mandrel-source, graal-release)'
+        required: true
+    outputs:
+      build-from-source:
+        description: 'Whether to build from source'
+        value: ${{ jobs.compute.outputs.build-from-source }}
+      distribution:
+        description: 'Distribution (mandrel or graalvm)'
+        value: ${{ jobs.compute.outputs.distribution }}
+      maven-deploy-local:
+        description: 'Maven deploy local flag'
+        value: ${{ jobs.compute.outputs.maven-deploy-local }}
+
+jobs:
+  compute:
+    name: Parse and Validate Configuration
+    runs-on: ubuntu-slim
+    outputs:
+      build-from-source: ${{ steps.parse.outputs.build-from-source }}
+      distribution: ${{ steps.parse.outputs.distribution }}
+      maven-deploy-local: ${{ steps.parse.outputs.maven-deploy-local }}
+    steps:
+      
+      - name: Validate and parse build-type
+        id: parse
+        run: |
+          BUILD_TYPE="${{ inputs.build-type }}"
+          
+          # Validate format
+          if [[ ! "$BUILD_TYPE" =~ ^(mandrel|graal)-(source|release)(-nolocalmvn)?$ ]]; then
+            echo "::error::Invalid build-type: $BUILD_TYPE"
+            echo "::error::Expected format: (mandrel|graal)-(source|release)[-nolocalmvn]"
+            echo "::error::Examples: mandrel-source, graal-release, mandrel-source-nolocalmvn"
+            exit 1
+          fi
+          
+          # Extract distribution
+          DIST_TOKEN=$(echo "$BUILD_TYPE" | cut -d'-' -f1)
+          if [ "$DIST_TOKEN" == "graal" ]; then
+            DISTRIBUTION="graalvm"
+          elif [ "$DIST_TOKEN" == "mandrel" ]; then
+            DISTRIBUTION="mandrel"
+          else
+            echo "::error::Unexpected distribution token: $DIST_TOKEN"
+            exit 1
+          fi
+          echo "distribution=$DISTRIBUTION" >> $GITHUB_OUTPUT
+          
+          # Extract build mode
+          BUILD_MODE=$(echo "$BUILD_TYPE" | cut -d'-' -f2)
+          if [ "$BUILD_MODE" == "source" ]; then
+            BUILD_FROM_SOURCE="true"
+          elif [ "$BUILD_MODE" == "release" ]; then
+            BUILD_FROM_SOURCE="false"
+          else
+            echo "::error::Unexpected build mode: $BUILD_MODE"
+            exit 1
+          fi
+          echo "build-from-source=$BUILD_FROM_SOURCE" >> $GITHUB_OUTPUT
+          
+          # Extract maven flag
+          MAVEN_TOKEN=$(echo "$BUILD_TYPE" | cut -d'-' -f3)
+          if [ "$MAVEN_TOKEN" == "nolocalmvn" ]; then
+            MAVEN_DEPLOY_LOCAL=""
+          else
+            MAVEN_DEPLOY_LOCAL="--maven-deploy-local"
+          fi
+          echo "maven-deploy-local=$MAVEN_DEPLOY_LOCAL" >> $GITHUB_OUTPUT
+          
+          # Log results to summary
+          echo "## Build Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Distribution | \`$DISTRIBUTION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build from source | \`$BUILD_FROM_SOURCE\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Maven deploy local | \`$MAVEN_DEPLOY_LOCAL\` |" >> $GITHUB_STEP_SUMMARY
