@@ -6,11 +6,17 @@ on:
       - '.github/workflows/nightly.yml'
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
+      - '.github/workflows/compute-build-config.yml'
+      - '.github/workflows/resolve-quarkus-version.yml'
+      - '.github/workflows/build-quarkus.yml'
   pull_request:
     paths:
       - '.github/workflows/nightly.yml'
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
+      - '.github/workflows/compute-build-config.yml'
+      - '.github/workflows/resolve-quarkus-version.yml'
+      - '.github/workflows/build-quarkus.yml'
   schedule:
     # Don't run on weekends as merges are infrequent
     - cron: '15 0 * * 2-6'

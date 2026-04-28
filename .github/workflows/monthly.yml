@@ -6,11 +6,17 @@ on:
       - '.github/workflows/monthly.yml'
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
+      - '.github/workflows/compute-build-config.yml'
+      - '.github/workflows/resolve-quarkus-version.yml'
+      - '.github/workflows/build-quarkus.yml'
   pull_request:
     paths:
       - '.github/workflows/monthly.yml'
       - '.github/workflows/base.yml'
       - '.github/workflows/base-windows.yml'
+      - '.github/workflows/compute-build-config.yml'
+      - '.github/workflows/resolve-quarkus-version.yml'
+      - '.github/workflows/build-quarkus.yml'
   schedule:
     # Run at 00:00 on the first day of every month
     - cron: '0 0 1 * *'
