@@ -60,6 +60,9 @@ class Report implements Runnable {
 	// will be included in the match.
 	private static final String JOB_TITLE_DELIMITER = "(?<=( / ))";
 
+	// GitHub's maximum comment body size is 65536 characters
+	private static final int MAX_COMMENT_LENGTH = 65536;
+
 	@Option(names = "token", description = "Github token to use when calling the Github API", required = true)
 	private String token;
 
@@ -207,11 +210,11 @@ class Report implements Runnable {
 		} else if (jobs.stream().allMatch(job -> job.getConclusion().equals(Conclusion.SKIPPED))) {
 			System.out.printf("Nothing to do for %s - the build was skipped\n", issue.getHtmlUrl());
 		} else {
-			StringBuilder sb = new StringBuilder();
+			String preamble;
 			if (isOpen(issue)) {
-				sb.append("The build is still failing!\n\n");
+				preamble = "The build is still failing!\n\n";
 			} else {
-				sb.append("Unfortunately, the build failed!\n\n");
+				preamble = "Unfortunately, the build failed!\n\n";
 				if (!dryRun) {
 					try {
 						issue.reopen();
@@ -226,11 +229,49 @@ class Report implements Runnable {
 					}
 				}
 			}
-			for (GHWorkflowJob job: jobs) {
-		 		processFailedJob(sb, job);
+
+			// Try with full context first
+			int contextLines = CONTEXT_BEFORE;
+			String comment = null;
+
+			while (contextLines >= 0) {
+				StringBuilder sb = new StringBuilder(preamble);
+
+				for (GHWorkflowJob job: jobs) {
+					processFailedJob(sb, job, contextLines);
+				}
+				sb.append(String.format("Link to failing CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId));
+
+				comment = sb.toString();
+
+				if (comment.length() <= MAX_COMMENT_LENGTH) {
+					if (contextLines < CONTEXT_BEFORE) {
+						System.out.printf("WARNING: Reduced context lines from %d to %d to fit GitHub's comment limit\n",
+							CONTEXT_BEFORE, contextLines);
+					}
+					break;
+				}
+
+				// Reduce context and try again
+				contextLines = contextLines > 5 ? contextLines - 3 : contextLines > 0 ? contextLines - 1 : -1;
+
+				if (contextLines < 0) {
+					System.err.println("ERROR: Unable to fit comment within GitHub's limit even with no context");
+					// Add truncation notice
+
+					String truncated = comment.substring(0, MAX_COMMENT_LENGTH - 100);
+					// Count unclosed code blocks, and add a closing  if needed
+					if (countOccurrences(truncated, "```") % 2 != 0) {
+						truncated += "\n```";
+					}
+					comment = truncated + "\n\n... (output truncated - too many failures) ...\n";
+
+					System.out.println("Comment size after truncation: " + comment.length() + " characters");
+
+					break;
+				}
 			}
-			sb.append(String.format("Link to failing CI run: https://github.com/%s/actions/runs/%s", thisRepo, runId));
-			String comment = sb.toString();
+
 			if (!dryRun) {
 				issue.comment(comment);
 			}
@@ -241,7 +282,7 @@ class Report implements Runnable {
 
 	private void processLogs(GitHub github, GHWorkflowJob job, Map<GHIssue, String> issues, Map<GHIssue, String> mandrelITIssues,
 							 TriConsumer<GHIssue, GHWorkflowJob, Map<GHIssue, String>> process, String... filters) {
-		String fullContent = getJobsLogs(job, filters);
+		String fullContent = getJobsLogs(job, 0, filters);
 		if (fullContent.isEmpty()) {
 			return;
 		}
@@ -344,7 +385,7 @@ class Report implements Runnable {
 		}
 	}
 
-	private void processFailedJob(StringBuilder sb, GHWorkflowJob job) {
+	private void processFailedJob(StringBuilder sb, GHWorkflowJob job, int contextLines) {
 		if (!job.getConclusion().equals(Conclusion.FAILURE) &&
 				!job.getConclusion().equals(Conclusion.STARTUP_FAILURE) &&
 				!job.getConclusion().equals(Conclusion.TIMED_OUT)) {
@@ -355,7 +396,7 @@ class Report implements Runnable {
 				.filter(s -> !(s.getConclusion().equals(Conclusion.SUCCESS) || s.getConclusion().equals(Conclusion.SKIPPED)))
 				.findFirst().get();
 		sb.append(String.format("  * Step: %s\n", step.getName()));
-		String fullContent = getJobsLogs(job,
+		String fullContent = getJobsLogs(job, contextLines,
 							"FAILURE [",
 							"Z Error:",
 							"Z ##[error]",
@@ -368,11 +409,11 @@ class Report implements Runnable {
 		}
 	}
 
-	private String getJobsLogs(GHWorkflowJob job, String... filters) {
+	private String getJobsLogs(GHWorkflowJob job, int contextLines, String... filters) {
 		String fullContent = "";
 		try {
 			System.out.printf("Getting logs for job %s\n", job.getName());
-			fullContent = job.downloadLogs(getLogArchiveInputStreamFunction(filters));
+			fullContent = job.downloadLogs(getLogArchiveInputStreamFunction(contextLines, filters));
 		} catch (IOException e) {
 			System.out.printf("Unable to get logs for job %s (%s)\n", job.getName(), job.getHtmlUrl());
 			throw new UncheckedIOException(e);
@@ -382,11 +423,11 @@ class Report implements Runnable {
 
 	private static final int CONTEXT_BEFORE = 10;
 
-	private static InputStreamFunction<String> getLogArchiveInputStreamFunction(String... filters) {
+	private static InputStreamFunction<String> getLogArchiveInputStreamFunction(int contextLines, String... filters) {
 		return (is) -> {
 			StringBuilder stringBuilder = new StringBuilder();
 			// Ring buffer for context lines before matches (like grep -B)
-			String[] ring = new String[CONTEXT_BEFORE];
+			String[] ring = contextLines > 0 ? new String[contextLines] : new String[0];
 			int ringPos = 0;
 			int lineNum = 0;
 			int lastOutputLineNum = 0;
@@ -408,9 +449,9 @@ class Report implements Runnable {
 						}
 						if (matched) {
 							// Output context lines that haven't been output yet
-							for (int i = 0; i < CONTEXT_BEFORE; i++) {
-								int idx = (ringPos + i) % CONTEXT_BEFORE;
-								int ctxLineNum = lineNum - CONTEXT_BEFORE + i;
+							for (int i = 0; i < contextLines; i++) {
+								int idx = (ringPos + i) % contextLines;
+								int ctxLineNum = lineNum - contextLines + i;
 								if (ring[idx] != null && ctxLineNum > lastOutputLineNum) {
 									stringBuilder.append(ring[idx]);
 									stringBuilder.append(System.lineSeparator());
@@ -420,8 +461,10 @@ class Report implements Runnable {
 							stringBuilder.append(System.lineSeparator());
 							lastOutputLineNum = lineNum;
 						}
-						ring[ringPos] = line;
-						ringPos = (ringPos + 1) % CONTEXT_BEFORE;
+						if (contextLines > 0) {
+							ring[ringPos] = line;
+							ringPos = (ringPos + 1) % contextLines;
+						}
 					}
 				}
 			}
@@ -457,6 +500,19 @@ class Report implements Runnable {
 			.replace("%", "%25")   // Must be first to avoid double-encoding
 			.replace("\r", "%0D")
 			.replace("\n", "%0A");
+	}
+
+	/**
+	 * Counts occurrences of a substring within a string
+	 */
+	private static int countOccurrences(String str, String substring) {
+		int count = 0;
+		int index = 0;
+		while ((index = str.indexOf(substring, index)) != -1) {
+			count++;
+			index += substring.length();
+		}
+		return count;
 	}
 
 	public static void main(String... args) {
