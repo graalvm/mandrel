@@ -171,7 +171,7 @@ jobs:
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -180,7 +180,7 @@ jobs:
       shell: bash
       run: find . -name '*svm_err_*pid*.md' | tar czvf test-reports.tgz -T -
     - name: Upload failure Archive (if maven failed)
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: failure()
       with:
         name: mandrel-reports-native-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -236,7 +236,7 @@ jobs:
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist GraalVM CE build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -245,7 +245,7 @@ jobs:
       shell: bash
       run: find . -name '*svm_err_*pid*.md' | tar czvf test-reports.tgz -T -
     - name: Upload failure Archive (if maven failed)
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: failure()
       with:
         name: graal-reports-native-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -286,7 +286,7 @@ jobs:
       shell: bash
       run: tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel or GraalVM
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -416,7 +416,7 @@ jobs:
             -o -name '*svm_err_*pid*.md' \
             -o -wholename '*/quarkus/integration-tests/*/target/quarkus.log' | tar czvf test-reports.tgz -T -
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: win-test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -427,7 +427,7 @@ jobs:
         run: find . -name '*runner*.json' | tar czvf build-stats.tgz -T -
       - name: Upload build JSON stats
         if: inputs.build-stats-tag != 'null'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
@@ -534,7 +534,7 @@ jobs:
         shell: bash
         run: tar czvf test-reports-mandrel-it.tgz ./testsuite/target/archived-logs/
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: win-test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}

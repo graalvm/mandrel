@@ -225,19 +225,19 @@ jobs:
           mv graalvm-version.tgz ${{ github.workspace }}
         fi
     - name: Persist Mandrel build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
     - name: Persist local maven repository
       if: needs.build-vars.outputs.maven-deploy-local != ''
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
     - name: Persist GraalVM maven version
       if: needs.build-vars.outputs.maven-deploy-local != ''
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-version.tgz
@@ -246,7 +246,7 @@ jobs:
       shell: bash
       run: find . -name '*svm_err_*pid*.md' | tar czvf test-reports.tgz -T -
     - name: Upload failure Archive (if maven failed)
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: failure()
       with:
         name: mandrel-reports-native-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -317,19 +317,19 @@ jobs:
     - name: Tar GraalVM
       run: tar czvf jdk.tgz  -C $(dirname ${MANDREL_HOME}) $(basename ${MANDREL_HOME})
     - name: Persist GraalVM build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
     - name: Persist local maven repository
       if: needs.build-vars.outputs.maven-deploy-local != ''
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
     - name: Persist GraalVM maven version
       if: needs.build-vars.outputs.maven-deploy-local != ''
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-version.tgz
@@ -338,7 +338,7 @@ jobs:
       shell: bash
       run: find . -name '*svm_err_*pid*.md' | tar czvf test-reports.tgz -T -
     - name: Upload failure Archive (if maven failed)
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: failure()
       with:
         name: graal-reports-native-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -386,7 +386,7 @@ jobs:
         ${JAVA_HOME}/bin/native-image --version
         tar czvf jdk.tgz -C $(dirname ${JAVA_HOME}) $(basename ${JAVA_HOME})
     - name: Persist Mandrel or GraalVM
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
@@ -539,7 +539,7 @@ jobs:
             -o -name '*svm_err_*pid*.md' \
             -o -wholename '*/quarkus/integration-tests/*/target/quarkus.log' | tar czvf test-reports.tgz -T -
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
@@ -550,7 +550,7 @@ jobs:
         run: find . -name '*runner*.json' | tar czvf build-stats.tgz -T -
       - name: Upload build JSON stats
         if: ${{ always() && inputs.build-stats-tag != 'null' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
@@ -663,7 +663,7 @@ jobs:
         if: failure()
         run: tar czvf test-reports-mandrel-it.tgz ${MANDREL_IT_PATH}/testsuite/target/archived-logs/
       - name: Upload failure Archive (if maven failed)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
