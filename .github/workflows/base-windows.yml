@@ -112,7 +112,7 @@ jobs:
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
@@ -128,7 +128,7 @@ jobs:
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
@@ -194,7 +194,7 @@ jobs:
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
@@ -332,7 +332,7 @@ jobs:
       - name: Support longpaths on Windows
         if: startsWith(matrix.os-name, 'windows')
         run: git config --global core.longpaths true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: startsWith(matrix.os-name, 'windows')
         with:
           repository: graalvm/mandrel
@@ -346,7 +346,7 @@ jobs:
       - name: Extract Maven Repo
         shell: bash
         run: tar -xzf maven-repo.tgz -C ~
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.quarkus-repo }}
           fetch-depth: 1
@@ -465,12 +465,12 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: Karm/mandrel-integration-tests
           fetch-depth: 1
