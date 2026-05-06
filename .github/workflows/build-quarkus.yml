@@ -65,7 +65,7 @@ jobs:
         fetch-depth: 1
         ref: ${{ inputs.quarkus-version }}
         path: ${{ env.QUARKUS_PATH }}
-    - uses: actions/cache@v4
+    - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ~/.m2/repository
         key: ${{ inputs.gh-runner }}-${{ inputs.target-os }}-${{ inputs.quarkus-version }}-maven-${{ hashFiles('**/pom.xml') }}
