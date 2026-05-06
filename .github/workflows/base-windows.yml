@@ -339,7 +339,7 @@ jobs:
           fetch-depth: 1
           path: workflow-mandrel
       - name: Download Maven Repo
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: windows-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -363,7 +363,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Download Mandrel or GraalVM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -475,7 +475,7 @@ jobs:
           repository: Karm/mandrel-integration-tests
           fetch-depth: 1
       - name: Download Maven Repo
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: windows-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -488,7 +488,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Download Mandrel or GraalVM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: win-jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .

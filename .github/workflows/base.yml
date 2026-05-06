@@ -436,7 +436,7 @@ jobs:
           fetch-depth: 1
           path: workflow-mandrel
       - name: Download Maven Repo
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -450,7 +450,7 @@ jobs:
           java-version: '17'
       - name: Download Mandrel or GraalVM
         if: inputs.builder-image == 'null'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -599,7 +599,7 @@ jobs:
           fetch-depth: 1
           path: ${{ env.MANDREL_IT_PATH }}
       - name: Download Maven Repo
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-maven-repo-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
@@ -612,7 +612,7 @@ jobs:
           java-version: '17'
       - name: Download Mandrel or GraalVM
         if: inputs.builder-image == 'null'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: .
