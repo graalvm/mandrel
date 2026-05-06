@@ -160,7 +160,7 @@ jobs:
         ref: ${{ inputs.mandrel-version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -267,7 +267,7 @@ jobs:
         ref: ${{ inputs.mandrel-version }}
         path: graal
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.8'
     - name: Checkout MX
