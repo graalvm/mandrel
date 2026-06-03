@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly" # Options: daily, weekly, monthly
+    groups:
+      # Group updates to avoid PR spam
+      actions-updates:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "[CI] Update GitHub Actions"
+      include: "scope"

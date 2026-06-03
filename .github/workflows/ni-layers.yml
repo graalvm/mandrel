@@ -63,7 +63,7 @@ jobs:
         matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
     - name: Checkout oracle/graal
-      uses: actions/checkout@v4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     - name: Build GraalVM JDK
       uses: ./.github/actions/build-graalvm
       with:
@@ -74,12 +74,12 @@ jobs:
       shell: bash
       run: tar -czvhf graalvm.tgz -C $(dirname ${GRAALVM_HOME}) $(basename ${GRAALVM_HOME})
     - name: Persist GraalVM JDK build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: graalvm
         path: graalvm.tgz
     - name: Setup python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Populate matrix
@@ -99,21 +99,21 @@ jobs:
         coordinates: ${{ fromJson(needs. build-graalvm-and-populate-matrix.outputs.matrix).coordinates }}
     steps:
       - name: Checkout oracle/graal
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Download GraalVM JDK build
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: graalvm
           path: .
       - name: Extract GraalVM JDK build
         run: tar -xzvf graalvm.tgz -C $(dirname ${GRAALVM_HOME})
       - name: "Setup JAVA_HOME"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '${{ env.PYTHON_VERSION }}'
       - name: Build layer
