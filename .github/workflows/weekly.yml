@@ -2,6 +2,8 @@ name: Weekly CI
 
 on:
   push:
+    branches-ignore:
+      - 'dependabot/**'
     paths:
       - '.github/workflows/weekly.yml'
       - '.github/workflows/base.yml'
