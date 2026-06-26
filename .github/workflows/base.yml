@@ -160,7 +160,7 @@ jobs:
         ref: ${{ inputs.mandrel-version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -174,7 +174,7 @@ jobs:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
         path: ${{ env.MANDREL_PACKAGING_REPO }}
-    - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+    - uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
@@ -267,7 +267,7 @@ jobs:
         ref: ${{ inputs.mandrel-version }}
         path: graal
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -276,7 +276,7 @@ jobs:
         echo "**MX version:** [$VERSION](${GITHUB_SERVER_URL}/graalvm/mx/tree/$VERSION)" >> $GITHUB_STEP_SUMMARY
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
         ./mx/mx --version
-    - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+    - uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
       with:
         path: ~/.mx
         key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
@@ -447,7 +447,7 @@ jobs:
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
       # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
-      - uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+      - uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -627,7 +627,7 @@ jobs:
       - name: Extract Maven Repo
         run: tar -xzvf maven-repo.tgz -C ~
       # Use Java 17 for Quarkus as it doesn't work with Java 21 yet
-      - uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+      - uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
         with:
           distribution: 'temurin'
           java-version: '17'
