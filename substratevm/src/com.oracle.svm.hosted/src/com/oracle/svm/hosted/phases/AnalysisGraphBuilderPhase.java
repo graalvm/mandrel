@@ -32,8 +32,8 @@ import java.util.List;
 
 import com.oracle.graal.pointsto.infrastructure.OriginalMethodProvider;
 import com.oracle.graal.pointsto.meta.AnalysisMethod;
-import com.oracle.svm.core.bootstrap.BootstrapMethodConfiguration;
 import com.oracle.svm.hosted.SVMHost;
+import com.oracle.svm.hosted.bootstrap.BootstrapMethodConfiguration;
 import com.oracle.svm.hosted.code.SubstrateCompilationDirectives;
 import com.oracle.svm.util.ModuleSupport;
 

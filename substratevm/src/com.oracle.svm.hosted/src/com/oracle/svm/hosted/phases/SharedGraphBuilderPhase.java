@@ -55,10 +55,10 @@ import com.oracle.graal.pointsto.meta.AnalysisMethod;
 import com.oracle.graal.pointsto.meta.AnalysisType;
 import com.oracle.svm.common.meta.MultiMethod;
 import com.oracle.svm.core.ForeignSupport;
-import com.oracle.svm.core.bootstrap.BootstrapMethodConfiguration;
-import com.oracle.svm.core.bootstrap.BootstrapMethodConfiguration.BootstrapMethodRecord;
 import com.oracle.svm.core.bootstrap.BootstrapMethodInfo;
 import com.oracle.svm.core.bootstrap.BootstrapMethodInfo.ExceptionWrapper;
+import com.oracle.svm.core.bootstrap.BootstrapMethodInfoCache;
+import com.oracle.svm.core.bootstrap.BootstrapMethodInfoCache.BootstrapMethodRecord;
 import com.oracle.svm.core.deopt.DeoptimizationSupport;
 import com.oracle.svm.core.graal.nodes.DeoptEntryBeginNode;
 import com.oracle.svm.core.graal.nodes.DeoptEntryNode;
@@ -75,6 +75,7 @@ import com.oracle.svm.core.util.VMError;
 import com.oracle.svm.hosted.ExceptionSynthesizer;
 import com.oracle.svm.hosted.LinkAtBuildTimeSupport;
 import com.oracle.svm.hosted.SharedArenaSupport;
+import com.oracle.svm.hosted.bootstrap.BootstrapMethodConfiguration;
 import com.oracle.svm.hosted.code.FactoryMethodSupport;
 import com.oracle.svm.hosted.code.SubstrateCompilationDirectives;
 import com.oracle.svm.hosted.nodes.DeoptProxyNode;
@@ -1488,7 +1489,7 @@ public abstract class SharedGraphBuilderPhase extends GraphBuilderPhase.Instance
                 /* Step 1: Initialize the BootstrapMethodInfo. */
 
                 BootstrapMethodRecord bootstrapMethodRecord = new BootstrapMethodRecord(bci, cpi, ((AnalysisMethod) method).getMultiMethod(MultiMethod.ORIGINAL_METHOD));
-                BootstrapMethodInfo bootstrapMethodInfo = BootstrapMethodConfiguration.singleton().getBootstrapMethodInfoCache().computeIfAbsent(bootstrapMethodRecord,
+                BootstrapMethodInfo bootstrapMethodInfo = BootstrapMethodInfoCache.singleton().getBootstrapMethodInfoCache().computeIfAbsent(bootstrapMethodRecord,
                                 key -> new BootstrapMethodInfo());
                 ConstantNode bootstrapMethodInfoNode = ConstantNode.forConstant(getSnippetReflection().forObject(bootstrapMethodInfo), getMetaAccess(), getGraph());
 

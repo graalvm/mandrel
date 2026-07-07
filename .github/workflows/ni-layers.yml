@@ -71,7 +71,7 @@ jobs:
         components: 'Native Image,Native Image Configure Tool'
         jdk-version: '25'
     - name: Set up JAVA_HOME
-      uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+      uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
       with:
         distribution: 'temurin'
         java-version: ${{ env.JAVA_VERSION }}
@@ -84,7 +84,7 @@ jobs:
         name: graalvm
         path: graalvm.tgz
     - name: Setup python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '${{ env.PYTHON_VERSION }}'
     - name: Populate matrix
@@ -113,12 +113,12 @@ jobs:
       - name: Extract GraalVM JDK build
         run: tar -xzvf graalvm.tgz -C $(dirname ${GRAALVM_HOME})
       - name: "Setup JAVA_HOME"
-        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
       - name: Setup python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '${{ env.PYTHON_VERSION }}'
       - name: Build layer

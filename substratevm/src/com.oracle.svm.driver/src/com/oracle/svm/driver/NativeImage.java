@@ -1958,6 +1958,7 @@ public class NativeImage {
 
     private static Set<String> getRequiredModules(ModuleReference mref) {
         return mref.descriptor().requires().stream()
+                        .filter(r -> !r.modifiers().contains(ModuleDescriptor.Requires.Modifier.STATIC))
                         .map(ModuleDescriptor.Requires::name)
                         .collect(Collectors.toSet());
     }

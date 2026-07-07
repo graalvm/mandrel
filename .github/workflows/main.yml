@@ -183,7 +183,7 @@ jobs:
         ref: ${{ env.MX_VERSION }}
         path: ${{ env.MX_PATH }}
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.8'
     - name: Get OpenJDK with static libs and jmods
@@ -239,7 +239,7 @@ jobs:
       run: ${MX_PATH}/mx --primary-suite-path ${PRIMARY} --java-home=${JAVA_HOME} gate --strict-mode ${{ matrix.env.GATE_OPTS }}
       if: ${{ matrix.env.GATE_TAGS == '' }}
   build-graalvm-windows:
-    name: /substratevm on Windows
+    name: /substratevm on Windows + JFR tests
     runs-on: windows-2022
     timeout-minutes: 60
     env:
@@ -260,7 +260,7 @@ jobs:
         ref: ${{ env.MX_VERSION }}
         path: ${{ env.MX_PATH }}
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.8'
     - name: Get OpenJDK with static libs and jmods
@@ -284,3 +284,8 @@ jobs:
       run: |
         native-image --version
         native-image -m jdk.httpserver
+    - name: JFR unit tests
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call ${{ env.MX_PATH }}\mx.cmd -p substratevm native-unittest com.oracle.svm.test.jfr
