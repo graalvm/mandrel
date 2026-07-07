@@ -29,7 +29,9 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ResolvedModule;
 import java.util.Optional;
 
+import org.graalvm.nativeimage.ImageSingletons;
 import org.graalvm.nativeimage.hosted.RuntimeResourceAccess;
+import org.graalvm.nativeimage.impl.RuntimeClassInitializationSupport;
 
 import com.oracle.svm.core.feature.AutomaticallyRegisteredFeature;
 import com.oracle.svm.core.feature.InternalFeature;
@@ -54,6 +56,11 @@ class JDKRegistrations extends JNIRegistrationUtil implements InternalFeature {
          * and even more after JDK 17.
          */
         rerunClassInit(a, "java.io.Console");
+
+        /* Starting with JDK 21.0.11, Password caches Console state in this holder class. */
+        optionalClazz(a, "sun.security.util.Password$ConsoleHolder")
+                        .ifPresent(clazz -> ImageSingletons.lookup(RuntimeClassInitializationSupport.class).initializeAtRunTime(clazz,
+                                        "ConsoleHolder has a static field of type Console, which is initialized at run time"));
 
         /*
          * Holds system and user library paths derived from the `java.library.path` and

@@ -80,6 +80,7 @@ public final class NonmovableArrays {
     private static final UninterruptibleUtils.AtomicLong runtimeArraysInExistence = new UninterruptibleUtils.AtomicLong(0);
 
     private static final OutOfMemoryError OUT_OF_MEMORY_ERROR = new OutOfMemoryError("Could not allocate nonmovable array");
+    private static final NegativeArraySizeException NEGATIVE_ARRAY_SIZE_EXCEPTION = new NegativeArraySizeException();
 
     @SuppressWarnings("unchecked")
     @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
@@ -88,6 +89,9 @@ public final class NonmovableArrays {
             Class<?> componentType = arrayType.getComponentType();
             Object array = Array.newInstance(componentType, length);
             return (T) (componentType.isPrimitive() ? new HostedNonmovableArray<>(array) : new HostedNonmovableObjectArray<>(array));
+        }
+        if (length < 0) {
+            throw NEGATIVE_ARRAY_SIZE_EXCEPTION;
         }
         DynamicHub hub = SubstrateUtil.cast(arrayType, DynamicHub.class);
         assert LayoutEncoding.isArray(hub.getLayoutEncoding());
@@ -159,7 +163,7 @@ public final class NonmovableArrays {
         }
         assert srcPos >= 0 && destPos >= 0 && length >= 0 && srcPos + length <= lengthOf(src) && destPos + length <= lengthOf(dest);
         assert readHub(src) == readHub(dest) : "copying is only allowed with same component types";
-        UnmanagedMemoryUtil.copy(addressOf(src, srcPos), addressOf(dest, destPos), WordFactory.unsigned(length << readElementShift(dest)));
+        UnmanagedMemoryUtil.copy(addressOf(src, srcPos), addressOf(dest, destPos), WordFactory.unsigned(length).shiftLeft(readElementShift(dest)));
     }
 
     /** Provides an array for which {@link NonmovableArray#isNull()} returns {@code true}. */
@@ -285,7 +289,7 @@ public final class NonmovableArrays {
         Pointer destAddressAtPos = Word.objectToUntrackedPointer(dest).add(LayoutEncoding.getArrayElementOffset(destHub.getLayoutEncoding(), destPos));
         if (LayoutEncoding.isPrimitiveArray(destHub.getLayoutEncoding())) {
             Pointer srcAddressAtPos = addressOf(src, srcPos);
-            JavaMemoryUtil.copyPrimitiveArrayForward(srcAddressAtPos, destAddressAtPos, WordFactory.unsigned(length << readElementShift(src)));
+            JavaMemoryUtil.copyPrimitiveArrayForward(srcAddressAtPos, destAddressAtPos, WordFactory.unsigned(length).shiftLeft(readElementShift(src)));
         } else { // needs barriers
             Object[] destArr = (Object[]) dest;
             for (int i = 0; i < length; i++) {
@@ -406,7 +410,8 @@ public final class NonmovableArrays {
     @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
     public static <T extends PointerBase> T addressOf(NonmovableArray<?> array, int index) {
         assert index >= 0 && index <= lengthOf(array);
-        return (T) getArrayBase(array).add(index << readElementShift(array));
+        UnsignedWord offset = WordFactory.unsigned(index).shiftLeft(readElementShift(array));
+        return (T) getArrayBase(array).add(offset);
     }
 
     /** Reads the value at the given index in an object array. */

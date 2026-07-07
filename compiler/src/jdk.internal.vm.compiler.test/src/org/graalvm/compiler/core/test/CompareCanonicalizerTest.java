@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,22 @@
  */
 package org.graalvm.compiler.core.test;
 
+import org.graalvm.compiler.core.common.type.StampFactory;
+import org.graalvm.compiler.core.common.type.StampPair;
+import org.graalvm.compiler.nodes.ConstantNode;
+import org.graalvm.compiler.nodes.LogicConstantNode;
+import org.graalvm.compiler.nodes.LogicNode;
+import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ParameterNode;
 import org.graalvm.compiler.nodes.ReturnNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.ConditionalNode;
+import org.graalvm.compiler.nodes.calc.IntegerLessThanNode;
+import org.graalvm.compiler.nodes.calc.IntegerNormalizeCompareNode;
 import org.graalvm.compiler.nodes.calc.IntegerTestNode;
+import jdk.vm.ci.meta.JavaKind;
 import org.junit.Test;
 
 public class CompareCanonicalizerTest extends GraalCompilerTest {
@@ -123,6 +132,17 @@ public class CompareCanonicalizerTest extends GraalCompilerTest {
     public static boolean integerTest4(int x, int y) {
         int c = 10;
         return (x & y) == (10 - c);
+    }
+
+    @Test
+    public void testLongMinValueLessThanNormalizeCompare() {
+        ParameterNode x = new ParameterNode(0, StampPair.createSingle(StampFactory.forKind(JavaKind.Long)));
+        ParameterNode y = new ParameterNode(1, StampPair.createSingle(StampFactory.forKind(JavaKind.Long)));
+        IntegerNormalizeCompareNode normalizeCompare = new IntegerNormalizeCompareNode(x, y, JavaKind.Long, false);
+        LogicNode result = IntegerLessThanNode.create(getConstantReflection(), getMetaAccess(), getInitialOptions(), null, ConstantNode.forLong(Long.MIN_VALUE), normalizeCompare, NodeView.DEFAULT);
+
+        assertTrue(result instanceof LogicConstantNode);
+        assertTrue(((LogicConstantNode) result).getValue());
     }
 
     @Test
