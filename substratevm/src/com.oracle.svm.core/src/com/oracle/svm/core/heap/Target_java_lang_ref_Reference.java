@@ -123,6 +123,11 @@ public final class Target_java_lang_ref_Reference<T> {
     @KeepOriginal
     native T get();
 
+    @Substitute
+    T get0() {
+        return ReferenceInternals.getReferent(ReferenceInternals.uncast(this));
+    }
+
     @KeepOriginal
     native void clear();
 

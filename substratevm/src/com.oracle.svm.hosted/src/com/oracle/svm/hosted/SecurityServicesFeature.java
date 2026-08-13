@@ -71,6 +71,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.crypto.Cipher;
+import javax.crypto.KEM;
 import javax.crypto.KeyAgreement;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
@@ -198,7 +199,7 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
         List<Class<?>> classList = new ArrayList<>(List.of(
                         AlgorithmParameterGenerator.class, AlgorithmParameters.class,
                         CertPathBuilder.class, CertPathValidator.class, CertStore.class, CertificateFactory.class,
-                        Cipher.class, Configuration.class, KeyAgreement.class, KeyFactory.class,
+                        Cipher.class, Configuration.class, KEM.class, KeyAgreement.class, KeyFactory.class,
                         KeyGenerator.class, KeyManagerFactory.class, KeyPairGenerator.class,
                         KeyStore.class, Mac.class, MessageDigest.class, SSLContext.class,
                         SecretKeyFactory.class, SecureRandom.class, Signature.class, TrustManagerFactory.class));
@@ -720,7 +721,9 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
      */
     private static Map<String, Set<Service>> computeAvailableServices() {
         Map<String, Set<Service>> availableServices = new HashMap<>();
-        for (Provider provider : Security.getProviders()) {
+        List<Provider> providers = new ArrayList<>(Arrays.asList(Security.getProviders()));
+        addInternalHybridProviders(providers);
+        for (Provider provider : providers) {
             for (Service s : provider.getServices()) {
                 if (isValid(s)) {
                     availableServices.computeIfAbsent(s.getType(), t -> new HashSet<>()).add(s);
@@ -728,6 +731,22 @@ public class SecurityServicesFeature extends JNIRegistrationUtil implements Inte
             }
         }
         return availableServices;
+    }
+
+    /**
+     * Add internal JDK providers that are not part of the system provider list but provide services
+     * needed at runtime. For example, the JSSE HybridProvider provides KEM services for TLS 1.3
+     * hybrid key exchange (JEP 527).
+     */
+    private static void addInternalHybridProviders(List<Provider> providers) {
+        try {
+            Class<?> hybridProviderClass = ReflectionUtil.lookupClass("sun.security.ssl.HybridProvider");
+            Provider hybridProvider = ReflectionUtil.readStaticField(hybridProviderClass, "PROVIDER");
+            providers.add(hybridProvider);
+        } catch (ReflectionUtil.ReflectionUtilError e) {
+            // HybridProvider not available in this JDK version. Available in OpenJDK 25.0.5 and
+            // better.
+        }
     }
 
     /**
