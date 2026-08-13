@@ -170,20 +170,20 @@ jobs:
       MX_RUNS_STYLE: ${{ contains(matrix.env.GATE_TAGS, 'style') || matrix.env.GATE_TAGS == '' }}
     steps:
     - name: Checkout graalvm-community-25u/master
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ github.ref }} # Lock ref to current branch to avoid fetching others
         fetch-depth: "${{ env.MX_RUNS_STYLE && '0' || '1' }}" # The style gate needs the full commit history for checking copyright years
     - name: Determine mx version
       run: echo "MX_VERSION=$(jq -r '.mx_version' common.json)" >> ${GITHUB_ENV}
     - name: Checkout graalvm/mx
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: graalvm/mx.git
         ref: ${{ env.MX_VERSION }}
         path: ${{ env.MX_PATH }}
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.8'
     - name: Get OpenJDK with static libs and jmods
@@ -212,9 +212,7 @@ jobs:
       run: sudo apt install gdb
     - name: Install style dependencies
       if: ${{ env.MX_RUNS_STYLE == 'true' }}
-      run: |
-        sudo apt install python3-pip python-setuptools
-        sudo pip install $(jq -r '[.pip | to_entries[] | join("")] | join(" ")' common.json)
+      run: ${MX_PYTHON} -m pip install $(jq -r '[.pip | to_entries[] | join("")] | join(" ")' common.json)
     - name: Install additional pip packages
       if: ${{ matrix.env.PIP_PACKAGES != '' }}
       run: ${MX_PYTHON} -m pip install ${{ matrix.env.PIP_PACKAGES }}
@@ -247,20 +245,20 @@ jobs:
       PYTHONIOENCODING: 'utf-8'
     steps:
     - name: Checkout graalvm-community-jdk25u/master
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ github.ref }} # Lock ref to current branch to avoid fetching others
     - name: Determine mx version
       shell: bash
       run: echo "MX_VERSION=$(jq -r '.mx_version' common.json)" >> ${GITHUB_ENV}
     - name: Checkout graalvm/mx
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: graalvm/mx.git
         ref: ${{ env.MX_VERSION }}
         path: ${{ env.MX_PATH }}
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.8'
     - name: Get OpenJDK with static libs and jmods
