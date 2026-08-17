@@ -1236,6 +1236,16 @@ public class HotSpotGraphBuilderPlugins {
                 return Options.ForceExplicitReachabilityFence.getValue(b.getOptions());
             }
         });
+        r.register(new InlineOnlyInvocationPlugin("get0", Receiver.class) {
+            @Override
+            public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver) {
+                ValueNode offset = b.add(ConstantNode.forLong(HotSpotReplacementsUtil.referentOffset(b.getMetaAccess())));
+                AddressNode address = b.add(new OffsetAddressNode(receiver.get(), offset));
+                FieldLocationIdentity locationIdentity = new FieldLocationIdentity(HotSpotReplacementsUtil.referentField(b.getMetaAccess()));
+                b.addPush(JavaKind.Object, new JavaReadNode(JavaKind.Object, address, locationIdentity, BarrierType.REFERENCE_GET, MemoryOrderMode.PLAIN, true));
+                return true;
+            }
+        });
         r.register(new InlineOnlyInvocationPlugin("refersTo0", Receiver.class, Object.class) {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode o) {
