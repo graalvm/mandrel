@@ -445,6 +445,25 @@ public final class UnimplementedGraalIntrinsics {
             }
         }
 
+        // JDK-8348561
+        add(toBeInvestigated,
+                        "sun/security/provider/ML_DSA.implDilithiumAlmostInverseNtt([I[I)I",
+                        "sun/security/provider/ML_DSA.implDilithiumAlmostNtt([I[I)I",
+                        "sun/security/provider/ML_DSA.implDilithiumDecomposePoly([I[I[III)I",
+                        "sun/security/provider/ML_DSA.implDilithiumMontMulByConstant([II)I",
+                        "sun/security/provider/ML_DSA.implDilithiumNttMult([I[I[I)I",
+                        "sun/security/provider/SHA3Parallel.doubleKeccak([J[J)I");
+
+        // JDK-8349721
+        add(toBeInvestigated,
+                        "com/sun/crypto/provider/ML_KEM.implKyber12To16([BI[SI)I",
+                        "com/sun/crypto/provider/ML_KEM.implKyberAddPoly([S[S[S)I",
+                        "com/sun/crypto/provider/ML_KEM.implKyberAddPoly([S[S[S[S)I",
+                        "com/sun/crypto/provider/ML_KEM.implKyberBarrettReduce([S)I",
+                        "com/sun/crypto/provider/ML_KEM.implKyberInverseNtt([S[S)I",
+                        "com/sun/crypto/provider/ML_KEM.implKyberNtt([S[S)I",
+                        "com/sun/crypto/provider/ML_KEM.implKyberNttMult([S[S[S[S)I");
+
         // These are known to be implemented down stream
         add(enterprise, // @formatter:off
                         "java/lang/Integer.toString(I)Ljava/lang/String;",

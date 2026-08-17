@@ -47,6 +47,7 @@ import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
 import org.graalvm.compiler.replacements.SnippetSubstitutionNode;
 import org.graalvm.compiler.replacements.nodes.AESNode;
+import org.graalvm.compiler.replacements.nodes.MessageDigestNode;
 import org.graalvm.compiler.replacements.nodes.CipherBlockChainingAESNode;
 import org.graalvm.compiler.replacements.nodes.CounterModeAESNode;
 import org.junit.Assert;
@@ -417,7 +418,18 @@ public class HotSpotCryptoSubstitutionTest extends HotSpotGraalCompilerTest {
 
     @Test
     public void testSha3() {
-        Assume.assumeTrue("SHA3 not supported", runtime().getVMConfig().sha3ImplCompress != 0L);
+        // Starting with JDK 21.0.13 (see JDK-8387330), HotSpot provides SHA3 C++ stubs on
+        // AMD64, so useSHA3Intrinsics() returns true. However, this test compiles
+        // implCompress0 as a Graal intrinsic, which requires a Graal LIR emitter for the
+        // target architecture. SHA3 only has a LIR emitter for AArch64
+        // (AArch64LIRGenerator.emitSha3ImplCompress), not AMD64, so we must also check
+        // SHA3Node.isSupported(arch).
+        //
+        // This does not affect correctness at runtime: on unsupported architectures,
+        // implCompress0 is added to UnimplementedGraalIntrinsics' ignore list and Graal
+        // compiles it as a regular method call. The HotSpot C++ stubs are still used by
+        // DigestBaseSnippets for the multi-block path.
+        Assume.assumeTrue("SHA3 not supported", runtime().getVMConfig().useSHA3Intrinsics() && MessageDigestNode.SHA3Node.isSupported(getArchitecture()));
         testWithInstalledIntrinsic("sun.security.provider.SHA3", "implCompress0", "testDigest", "SHA3-512", getData());
     }
 
