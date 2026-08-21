@@ -112,14 +112,14 @@ jobs:
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'mandrel'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
         ref: ${{ inputs.mandrel-version }}
         path: ${{ env.MANDREL_REPO }}
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -128,7 +128,7 @@ jobs:
         git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} mx
         ./mx/mx --version
       shell: bash
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: ${{ inputs.mandrel-packaging-repo }}
         ref: ${{ inputs.mandrel-packaging-version }}
@@ -194,14 +194,14 @@ jobs:
       - build-vars
     if: fromJson(needs.build-vars.outputs.build-from-source) == true && needs.build-vars.outputs.distribution == 'graalvm'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: ${{ inputs.mandrel-repo }}
         fetch-depth: 1
         ref: ${{ inputs.mandrel-version }}
         path: graal
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.8'
     - name: Checkout MX
@@ -334,7 +334,7 @@ jobs:
       - name: Support longpaths on Windows
         if: startsWith(matrix.os-name, 'windows')
         run: git config --global core.longpaths true
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: startsWith(matrix.os-name, 'windows')
         with:
           repository: graalvm/mandrel
@@ -348,14 +348,14 @@ jobs:
       - name: Extract Maven Repo
         shell: bash
         run: tar -xzf maven-repo.tgz -C ~
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.quarkus-repo }}
           fetch-depth: 1
           ref: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
           path: ${{ env.QUARKUS_PATH }}
       # Use Java 17 for Quarkus 3.x and Java 21 for all other versions
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: ${{ (startsWith(inputs.quarkus-version, '3.') && endsWith(inputs.quarkus-version, '-SNAPSHOT')) && '17' || '21' }}
@@ -471,12 +471,12 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: graalvm/mandrel
           fetch-depth: 1
           path: workflow-mandrel
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Karm/mandrel-integration-tests
           fetch-depth: 1
@@ -489,7 +489,7 @@ jobs:
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
       # Use Java 17 for Quarkus 3.x and Java 21 for all other versions
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: ${{ (startsWith(inputs.quarkus-version, '3.') && endsWith(inputs.quarkus-version, '-SNAPSHOT')) && '17' || '21' }}
