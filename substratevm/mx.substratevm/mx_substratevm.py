@@ -561,6 +561,17 @@ def native_unittests_task(extra_build_args=None):
         if mx.is_windows():
             mx_unittest.add_global_ignore_glob('com.oracle.svm.test.SecurityServiceTest')
 
+    # com.oracle.svm.test.lambda needs image-wide build args that must not affect the other tests:
+    # exact reachability metadata makes any missing registration a hard error, and the tests assert
+    # that behaviour. Upstream scopes these per test class with @NativeImageBuildArgs, added in
+    # b18968bfef3, which this release does not have, so build a dedicated image instead. Drop this
+    # in favour of the annotation if that infrastructure is ever backported.
+    native_unittest(['com.oracle.svm.test.lambda', '--build-args', _native_unittest_features] +
+                    additional_build_args +
+                    ['--exact-reachability-metadata=com.oracle.svm.test.lambda'] +
+                    svm_experimental_options(['-H:ConfigurationResourceRoots=com/oracle/svm/test/lambda/serializablemetadata']))
+    mx_unittest.add_global_ignore_glob('com.oracle.svm.test.lambda.*')
+
     native_unittest(['--build-args', _native_unittest_features] + additional_build_args)
 
 
@@ -2643,3 +2654,29 @@ import org.graalvm.nativeimage.Platforms;
             shaded = line.replace("org.capnproto", "com.oracle.svm.shaded.org.capnproto")
             f.write(shaded)
         f.write('}\n')
+
+
+class SVMDriverUnittestsConfig(mx_unittest.MxUnittestConfig):
+
+    def __init__(self):
+        super().__init__('svm-driver-unittest')
+
+    def apply(self, config):
+        vmArgs, mainClass, mainClassArgs = config
+
+        vmArgs.extend([
+            '--add-exports=jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED',
+            '--add-exports=jdk.internal.vm.ci/jdk.vm.ci.meta.annotation=ALL-UNNAMED',
+            '--add-exports=jdk.internal.vm.ci/jdk.vm.ci.meta.annotation=jdk.graal.compiler.vmaccess',
+            '--add-exports=jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED',
+            '--add-exports=jdk.graal.compiler/jdk.graal.compiler.phases.util=ALL-UNNAMED',
+            '--add-exports=jdk.graal.compiler/jdk.graal.compiler.util.json=ALL-UNNAMED',
+            '--add-exports=java.base/jdk.internal.module=jdk.graal.compiler.vmaccess',
+        ])
+
+        mainClassArgs.extend(['-JUnitOpenPackages', 'jdk.internal.vm.ci/*=jdk.graal.compiler,ALL-UNNAMED'])
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.nativeimage/*=ALL-UNNAMED'])
+
+        return (vmArgs, mainClass, mainClassArgs)
+
+mx_unittest.register_unittest_config(SVMDriverUnittestsConfig())

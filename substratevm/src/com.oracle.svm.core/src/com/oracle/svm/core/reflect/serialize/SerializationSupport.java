@@ -44,6 +44,7 @@ import com.oracle.svm.core.BuildPhaseProvider;
 import com.oracle.svm.core.SubstrateUtil;
 import com.oracle.svm.core.configure.RuntimeConditionSet;
 import com.oracle.svm.core.hub.DynamicHub;
+import com.oracle.svm.core.hub.PredefinedClassesSupport;
 import com.oracle.svm.core.layeredimagesingleton.LayeredImageSingletonBuilderFlags;
 import com.oracle.svm.core.layeredimagesingleton.LayeredImageSingletonSupport;
 import com.oracle.svm.core.layeredimagesingleton.MultiLayeredImageSingleton;
@@ -247,6 +248,7 @@ public class SerializationSupport implements MultiLayeredImageSingleton, Seriali
                 previousConditions.addCondition(cnd);
             }
         }
+        PredefinedClassesSupport.registerSerializableLambdasForCapturingClass(lambdaCapturingClass);
     }
 
     @Platforms(Platform.HOSTED_ONLY.class)

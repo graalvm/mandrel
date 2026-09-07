@@ -424,7 +424,7 @@ final class SerializationBuilder extends ConditionalConfigurationRegistry implem
             RuntimeReflection.register(java.io.ObjectOutputStream.class);
 
             if (denyRegistry.isAllowed(serializationTargetClass)) {
-                addOrQueueConstructorAccessors(cnd, serializationTargetClass, getHostVM().dynamicHub(serializationTargetClass));
+                addOrQueueConstructorAccessors(cnd, serializationTargetClass);
 
                 Class<?> superclass = serializationTargetClass.getSuperclass();
                 if (superclass != null) {
@@ -440,13 +440,13 @@ final class SerializationBuilder extends ConditionalConfigurationRegistry implem
         });
     }
 
-    private void addOrQueueConstructorAccessors(ConfigurationCondition cnd, Class<?> serializationTargetClass, DynamicHub hub) {
+    private void addOrQueueConstructorAccessors(ConfigurationCondition cnd, Class<?> serializationTargetClass) {
         if (pendingConstructorRegistrations != null) {
             // cannot yet create constructor accessor -> add to pending
-            pendingConstructorRegistrations.add(() -> registerConstructorAccessors(cnd, serializationTargetClass, hub));
+            pendingConstructorRegistrations.add(() -> registerConstructorAccessors(cnd, serializationTargetClass, getHostVM().dynamicHub(serializationTargetClass)));
         } else {
             // can already run the registration
-            registerConstructorAccessors(cnd, serializationTargetClass, hub);
+            registerConstructorAccessors(cnd, serializationTargetClass, getHostVM().dynamicHub(serializationTargetClass));
         }
     }
 

@@ -26,8 +26,14 @@ package com.oracle.svm.hosted.config;
 
 import static com.oracle.svm.core.MissingRegistrationUtils.throwMissingRegistrationErrors;
 
+import java.io.ObjectStreamClass;
+import java.io.ObjectStreamField;
+import java.io.Serializable;
+import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.List;
 
@@ -42,7 +48,11 @@ import com.oracle.svm.configure.ConfigurationTypeDescriptor;
 import com.oracle.svm.configure.NamedConfigurationTypeDescriptor;
 import com.oracle.svm.hosted.ImageClassLoader;
 import com.oracle.svm.hosted.reflect.ReflectionDataBuilder;
+import com.oracle.svm.util.ReflectionUtil;
 import com.oracle.svm.util.TypeResult;
+
+import jdk.graal.compiler.java.LambdaUtils;
+import jdk.vm.ci.meta.JavaKind;
 
 public class ReflectionRegistryAdapter extends RegistryAdapter {
     private final RuntimeReflectionSupport reflectionSupport;
@@ -182,7 +192,41 @@ public class ReflectionRegistryAdapter extends RegistryAdapter {
 
     @Override
     public void registerAsSerializable(ConfigurationCondition condition, Class<?> clazz) {
+        if (LambdaUtils.isLambdaClass(clazz) && Serializable.class.isAssignableFrom(clazz)) {
+            registerLambdaCapturingClassForDeserialization(condition, clazz);
+            reflectionSupport.register(condition, false, ReflectionUtil.lookupMethod(clazz, "writeReplace"));
+            serializationSupport.register(condition, SerializedLambda.class);
+            registerSerializedLambdaFieldTypes(condition);
+            for (Field field : clazz.getDeclaredFields()) {
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    registerSerializationFieldType(condition, field.getType());
+                }
+            }
+        }
         serializationSupport.register(condition, clazz);
+    }
+
+    private void registerLambdaCapturingClassForDeserialization(ConfigurationCondition condition, Class<?> lambdaClass) {
+        Class<?> lambdaCapturingClass = ReflectionUtil.lookupClass(false, LambdaUtils.capturingClass(lambdaClass.getName()),
+                        lambdaClass.getClassLoader());
+        Method deserializeLambdaMethod = ReflectionUtil.lookupMethod(lambdaCapturingClass, "$deserializeLambda$",
+                        SerializedLambda.class);
+        reflectionSupport.register(condition, false, lambdaCapturingClass);
+        reflectionSupport.register(condition, false, deserializeLambdaMethod);
+    }
+
+    private void registerSerializedLambdaFieldTypes(ConfigurationCondition condition) {
+        ObjectStreamClass serializedLambdaDescriptor = ObjectStreamClass.lookup(SerializedLambda.class);
+        for (ObjectStreamField field : serializedLambdaDescriptor.getFields()) {
+            registerSerializationFieldType(condition, field.getType());
+        }
+    }
+
+    private void registerSerializationFieldType(ConfigurationCondition condition, Class<?> fieldType) {
+        Class<?> serializationFieldType = fieldType.isPrimitive()
+                        ? JavaKind.fromJavaClass(fieldType).toBoxedJavaClass()
+                        : fieldType;
+        serializationSupport.register(condition, serializationFieldType);
     }
 
     @Override

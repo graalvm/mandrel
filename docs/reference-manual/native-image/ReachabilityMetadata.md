@@ -694,6 +694,35 @@ To specify a proxy class for serialization, use the following entry:
 }
 ```
 
+For lambda classes:
+
+```json
+{
+  "reflection": [
+    {
+      "type": {
+        "lambda": {
+          "declaringClass": "com.example.LambdaHost",
+          "declaringMethod": {
+            "name": "declaringMethodName",
+            "parameterTypes": []
+          },
+          "interfaces": [
+            "com.example.SerializableFunction"
+          ]
+        }
+      },
+      "serializable": true
+    }
+  ]
+}
+```
+
+For each lambda class matched by a descriptor marked `"serializable": true`, Native Image also
+registers the lambda capturing class, its synthetic lambda deserialization method, the
+serialized-lambda carrier type, the carrier's serialized field types, and statically declared
+captured field types.
+
 In rare cases an application might explicitly make calls to:
 ```java
     ReflectionFactory.newConstructorForSerialization(Class<?> cl, Constructor<?> constructorToCall);
