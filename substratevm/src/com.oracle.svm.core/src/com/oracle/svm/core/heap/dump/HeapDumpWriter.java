@@ -473,7 +473,6 @@ public class HeapDumpWriter {
     }
 
     private void teardown(HeapDumpError error) {
-
         metadata.teardown();
 
         assert f.isNull() || error != null || file().getUnflushedDataSize(f) == 0;

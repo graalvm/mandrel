@@ -3,6 +3,7 @@
 This changelog summarizes major changes to GraalVM Native Image.
 
 ## GraalVM for JDK 25
+* (GR-49923) Make bundle path maps portable across platforms. Bundle format version is now 1.0. Bundles prior to 1.0 can still be used (backward compatible).
 * (GR-74889) Added Windows support for Native Image JFR recordings and heap dumps.
 * (GR-76386) Move `native-image-configure extract-sbom` to GraalVM Community Edition.
 * (GR-52276) (GR-61959) Add support for Arena.ofShared().
