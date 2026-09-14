@@ -428,11 +428,11 @@ jobs:
           name: win-test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports.tgz'
       - name: Collect build JSON stats
-        if: inputs.build-stats-tag != 'null'
+        if: ${{ always() && inputs.build-stats-tag != 'null' }}
         shell: bash
         run: find . -name '*runner*.json' | tar czvf build-stats.tgz -T -
       - name: Upload build JSON stats
-        if: inputs.build-stats-tag != 'null'
+        if: ${{ always() && inputs.build-stats-tag != 'null' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}

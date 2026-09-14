@@ -37,12 +37,32 @@ jobs:
           COLLECTOR_URL: https://collector.foci.life/api/v1/image-stats
         shell: bash
         run: |
-          ls ./build-stats-*/
+          # In actions/download-artifact@v8 and later when the pattern
+          # matches exactly ONE artifact it downloads the artifact
+          # contents directly into the destination directory rather than
+          # creating a per-artifact sub-directory.  Multiple matches
+          # still create sub-directories.  We therefore look for
+          # tarballs in both locations so the script works regardless of
+          # how many test categories produced stats.
+          IMPORT_SCRIPT=$(realpath ./workflow-mandrel/.github/import_stats.sh)
+          shopt -s nullglob
+          tarballs=(./build-stats-*/build-stats.tgz)
+          if [ -f ./build-stats.tgz ]; then
+            tarballs+=(./build-stats.tgz)
+          fi
+          if [ ${#tarballs[@]} -eq 0 ]; then
+            echo "::warning::No build-stats artifacts found, nothing to upload"
+            exit 0
+          fi
           echo "Tag for stat upload is going to be: '${BUILD_STATS_TAG}'"
-          for directory in ./build-stats-*/; do
-            echo "Processing $directory"
-            cd "$directory"
-            tar -xvf build-stats.tgz
-            DIR=./quarkus TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash ../workflow-mandrel/.github/import_stats.sh
-            cd -
+          echo "Processing ${#tarballs[@]} build-stats tarball(s)"
+          for tarball in "${tarballs[@]}"; do
+            echo "Processing $(realpath "$tarball")"
+            workdir=$(mktemp -d)
+            tar -xvf "$(realpath "$tarball")" -C "$workdir"
+            (
+              cd "$workdir"
+              DIR=quarkus TAG="${BUILD_STATS_TAG}" TOKEN="${UPLOAD_TOKEN}" URL="${COLLECTOR_URL}" bash "${IMPORT_SCRIPT}"
+            )
+            rm -rf "$workdir"
           done
