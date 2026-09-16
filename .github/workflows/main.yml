@@ -191,7 +191,7 @@ jobs:
       with:
         java-version: ${{ matrix.env.JDK_VERSION }}
         java-home: ${{ env.JAVA_HOME }}
-        release-type: 'ea'
+        release-type: 'ga'
     - name: Fetch Tools OpenJDK
       env: ${{ matrix.env }}
       if: ${{ matrix.env.TOOLS_JDK_VERSION != '' }}
@@ -268,7 +268,7 @@ jobs:
       with:
         java-version: '25'
         java-home: ${{ env.JAVA_HOME }}
-        release-type: 'ea'
+        release-type: 'ga'
     - name: Build GraalVM via cmd.exe
       shell: cmd
       run: |
