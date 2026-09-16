@@ -85,6 +85,8 @@ env:
   MX_PYTHON: python3.8
   # Enforce experimental option checking in CI (GR-47922)
   NATIVE_IMAGE_EXPERIMENTAL_OPTIONS_ARE_FATAL: "true"
+  # Ignore JVMCI checks since there is no OpenJDK 25.0.4.1.1+1 release available
+  JVMCI_VERSION_CHECK: ignore
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -103,6 +105,7 @@ jobs:
               JDK_VERSION: "25"
               TOOLS_JDK_VERSION: "21"
               GATE_TAGS: "style,fullbuild,test"
+              GATE_OPTS: "--extra-vm-argument=-Dpolyglotimpl.DisableVersionChecks=true"
               PRIMARY: "compiler"
           - env:
               JDK_VERSION: "25"
@@ -283,7 +286,7 @@ jobs:
     - name: Test GraalVM
       run: |
         native-image --version
-        native-image -m jdk.httpserver
+        native-image -EJVMCI_VERSION_CHECK -m jdk.httpserver
     - name: JFR unit tests
       shell: cmd
       run: |
