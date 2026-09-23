@@ -24,10 +24,13 @@
  */
 package jdk.graal.compiler.nodes.loop;
 
+import java.util.Collection;
+
 import jdk.graal.compiler.core.common.type.IntegerStamp;
 import jdk.graal.compiler.core.common.type.Stamp;
 import jdk.graal.compiler.debug.Assertions;
 import jdk.graal.compiler.debug.GraalError;
+import jdk.graal.compiler.nodes.LogicNode;
 import jdk.graal.compiler.nodes.NodeView;
 import jdk.graal.compiler.nodes.ValueNode;
 import jdk.graal.compiler.nodes.calc.AddNode;
@@ -36,7 +39,9 @@ import jdk.graal.compiler.nodes.calc.IntegerConvertNode;
 import jdk.graal.compiler.nodes.calc.NegateNode;
 import jdk.graal.compiler.nodes.calc.SubNode;
 import jdk.graal.compiler.phases.common.util.LoopUtility;
+import jdk.graal.compiler.replacements.nodes.arithmetic.IntegerAddExactOverflowNode;
 import jdk.graal.compiler.replacements.nodes.arithmetic.IntegerExactArithmeticNode;
+import jdk.graal.compiler.replacements.nodes.arithmetic.IntegerSubExactOverflowNode;
 
 public class DerivedOffsetInductionVariable extends DerivedInductionVariable {
 
@@ -139,7 +144,7 @@ public class DerivedOffsetInductionVariable extends DerivedInductionVariable {
      * here {@code reverseIv} stride node is actually {@code i} negated since the IV is not
      * {@code i op off} but {@code off op i} where {@code op} is a subtraction.
      */
-    private boolean isMaskedNegateStride() {
+    boolean isMaskedNegateStride() {
         return value instanceof SubNode && base.valueNode() == value.getY();
     }
 
@@ -186,6 +191,35 @@ public class DerivedOffsetInductionVariable extends DerivedInductionVariable {
     @Override
     public ValueNode extremumNode(boolean assumeLoopEntered, Stamp stamp, ValueNode maxTripCount) {
         return op(base.extremumNode(assumeLoopEntered, stamp, maxTripCount), IntegerConvertNode.convert(offset, stamp, graph(), NodeView.DEFAULT));
+    }
+
+    @Override
+    protected ValueNode collectLocalEndpointOverflowConditions(boolean assumeLoopEntered, Stamp stamp, ValueNode effectiveMaxTripCount, ValueNode baseEndpoint,
+                    Collection<LogicNode> conditions) {
+        GraalError.guarantee(stamp instanceof IntegerStamp, "Expected integer stamp for %s but got %s", this, stamp);
+        GraalError.guarantee(baseEndpoint != null, "Expected base endpoint for %s", this);
+        ValueNode offsetValue = offset;
+        if (!offsetValue.stamp(NodeView.DEFAULT).isCompatible(stamp)) {
+            offsetValue = IntegerConvertNode.convert(offsetValue, stamp, graph(), NodeView.DEFAULT);
+        }
+        if (value instanceof AddNode) {
+            LogicNode addOverflow = IntegerAddExactOverflowNode.create(baseEndpoint, offsetValue);
+            if (!addOverflow.isContradiction()) {
+                conditions.add(graph().addOrUniqueWithInputs(addOverflow));
+            }
+        } else {
+            GraalError.guarantee(value instanceof SubNode, "Expected subtraction-based offset induction variable for %s but got %s", this, value);
+            LogicNode subOverflow;
+            if (base.valueNode() == value.getY()) {
+                subOverflow = IntegerSubExactOverflowNode.create(offsetValue, baseEndpoint);
+            } else {
+                subOverflow = IntegerSubExactOverflowNode.create(baseEndpoint, offsetValue);
+            }
+            if (!subOverflow.isContradiction()) {
+                conditions.add(graph().addOrUniqueWithInputs(subOverflow));
+            }
+        }
+        return op(baseEndpoint, offsetValue);
     }
 
     @Override
