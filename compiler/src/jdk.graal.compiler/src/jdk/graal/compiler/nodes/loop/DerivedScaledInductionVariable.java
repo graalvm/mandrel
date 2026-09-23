@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,15 +26,20 @@ package jdk.graal.compiler.nodes.loop;
 
 import static jdk.graal.compiler.nodes.loop.MathUtil.mul;
 
+import java.util.Collection;
+
 import jdk.graal.compiler.core.common.type.IntegerStamp;
 import jdk.graal.compiler.core.common.type.Stamp;
+import jdk.graal.compiler.debug.GraalError;
 import jdk.graal.compiler.nodes.ConstantNode;
+import jdk.graal.compiler.nodes.LogicNode;
 import jdk.graal.compiler.nodes.NodeView;
 import jdk.graal.compiler.nodes.ValueNode;
 import jdk.graal.compiler.nodes.calc.IntegerConvertNode;
 import jdk.graal.compiler.nodes.calc.NegateNode;
 import jdk.graal.compiler.nodes.util.GraphUtil;
 import jdk.graal.compiler.phases.common.util.LoopUtility;
+import jdk.graal.compiler.replacements.nodes.arithmetic.IntegerMulExactOverflowNode;
 
 public class DerivedScaledInductionVariable extends DerivedInductionVariable {
 
@@ -175,6 +180,22 @@ public class DerivedScaledInductionVariable extends DerivedInductionVariable {
     @Override
     public ValueNode extremumNode(boolean assumeLoopEntered, Stamp stamp, ValueNode maxTripCount) {
         return mul(graph(), base.extremumNode(assumeLoopEntered, stamp, maxTripCount), IntegerConvertNode.convert(scale, stamp, graph(), NodeView.DEFAULT));
+    }
+
+    @Override
+    protected ValueNode collectLocalEndpointOverflowConditions(boolean assumeLoopEntered, Stamp stamp, ValueNode effectiveMaxTripCount, ValueNode baseEndpoint,
+                    Collection<LogicNode> conditions) {
+        GraalError.guarantee(stamp instanceof IntegerStamp, "Expected integer stamp for %s but got %s", this, stamp);
+        GraalError.guarantee(baseEndpoint != null, "Expected base endpoint for %s", this);
+        ValueNode convertedScale = scale;
+        if (!convertedScale.stamp(NodeView.DEFAULT).isCompatible(stamp)) {
+            convertedScale = IntegerConvertNode.convert(convertedScale, stamp, graph(), NodeView.DEFAULT);
+        }
+        LogicNode mulOverflow = IntegerMulExactOverflowNode.create(baseEndpoint, convertedScale);
+        if (!mulOverflow.isContradiction()) {
+            conditions.add(graph().addOrUniqueWithInputs(mulOverflow));
+        }
+        return mul(graph(), baseEndpoint, convertedScale);
     }
 
     @Override
