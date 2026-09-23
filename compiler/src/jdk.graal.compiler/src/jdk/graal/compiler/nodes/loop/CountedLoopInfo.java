@@ -801,6 +801,32 @@ public class CountedLoopInfo {
         }
     }
 
+    /**
+     * Creates an overflow guard condition, that is the condition such that if it is satisfied, the
+     * induction variable will overflow, and we have to treat the loop as a non-counted one.
+     * <p>
+     * For example, given this loop:
+     * {@snippet :
+     * for (int i = 0; i < limit; i += 2) {
+     * }
+     * }
+     * Most of the time, this loop will execute a limited amount of iterations, and the value of
+     * {@code i} inside the loop body will be in the interval {@code [0, limit)}. However, in the
+     * rare cases that {@code limit == Integer.MAX_VALUE}, the addition {@code i += 2} will
+     * overflow, and the loop would not terminate. In those cases, We cannot treat the loop as a
+     * counted loop. As a result, we insert a guard for those circumstances. The guard is
+     * conservative, that is it will catch all cases where the calculation of the induction variable
+     * overflows, and it may catch cases where the calculation does not actually overflow. In the
+     * example, the guard would be:
+     * {@snippet :
+     * if (limit > Integer.MAX_VALUE - 1) {
+     *     deoptimize();
+     * }
+     * }
+     * This method creates the aforementioned guard, it has the value {@code true} if the
+     * calculation may overflow, and {@code false} if it cannot, in such cases assumptions about
+     * counted loops hold.
+     */
     public LogicNode createOverflowGuardCondition() {
         StructuredGraph graph = getLimitCheckedIV().valueNode().graph();
         if (counterNeverOverflows()) {
