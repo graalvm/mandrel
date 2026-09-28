@@ -224,17 +224,6 @@ public class DerivedConvertedInductionVariable extends DerivedInductionVariable 
     }
 
     @Override
-    protected ValueNode collectLocalExtremumOverflowConditions(boolean assumeLoopEntered, Stamp extremumStamp, ValueNode effectiveMaxTripCount, ValueNode baseExtremum,
-                    Collection<LogicNode> conditions) {
-        GraalError.guarantee(baseExtremum != null, "Expected base extremum for %s", this);
-        /*
-         * A pure integer conversion does not add new extremum arithmetic of its own. The base IV's
-         * overflow conditions already cover the computation whose result is being converted.
-         */
-        return IntegerConvertNode.convert(baseExtremum, extremumStamp, value instanceof ZeroExtendNode, graph(), NodeView.DEFAULT);
-    }
-
-    @Override
     public ValueNode exitValueNode() {
         return op(base.exitValueNode(), true);
     }
