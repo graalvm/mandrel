@@ -263,6 +263,8 @@ def native_image_context(common_args=None, hosted_assertions=True, native_image_
         '-H:+EnforceMaxRuntimeCompileMethods',
         '-H:Path=' + svmbuild_dir(),
     ])
+    if os.environ.get('JVMCI_VERSION_CHECK'):
+        base_args += ['-EJVMCI_VERSION_CHECK']  # Propagate this env var when running native image from mx
     if mx.get_opts().verbose:
         base_args += ['--verbose']
     if mx.get_opts().very_verbose:
