@@ -109,10 +109,7 @@ public class JVMCIVersionCheckOpenJDKTest extends GraalCompilerTest {
     public void compareToMinVersion() {
         if (checkVersionProperties(getMinVersionMap(minVersion), javaVmVersion)) {
             if (!expectSuccess) {
-                String versionCheck = System.getenv("JVMCI_VERSION_CHECK");
-                if (!"warn".equals(versionCheck) && !"ignore".equals(versionCheck)) {
-                    Assert.fail(String.format("Expected %s to be older than %s", javaVmVersion, minVersion));
-                }
+                Assert.fail(String.format("Expected %s to be older than %s", javaVmVersion, minVersion));
             }
         } else {
             if (expectSuccess) {
