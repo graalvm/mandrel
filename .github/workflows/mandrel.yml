@@ -28,20 +28,20 @@ concurrency:
 
 jobs:
   q-main-ea:
-    name: "Q main M 25.0 EA"
+    name: "Q main M 25.0 GA"
     uses: graalvm/mandrel/.github/workflows/base.yml@default
     with:
       quarkus-version: "main"
       mandrel-repo: ${{ github.repository }}
       mandrel-version: ${{ github.ref }}
       mandrel-packaging-version: "25.0"
-      jdk: "25/ea"
+      jdk: "25/ga"
   q-main-ea-win:
-    name: "Q main M 25.0 windows EA"
+    name: "Q main M 25.0 windows GA"
     uses: graalvm/mandrel/.github/workflows/base-windows.yml@default
     with:
       quarkus-version: "main"
       mandrel-repo: ${{ github.repository }}
       mandrel-version: ${{ github.ref }}
       mandrel-packaging-version: "25.0"
-      jdk: "25/ea"
+      jdk: "25/ga"
