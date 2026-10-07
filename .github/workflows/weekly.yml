@@ -72,15 +72,15 @@ jobs:
       ISSUE_BOT_TOKEN: ${{ secrets.MANDREL_BOT_TOKEN }}
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   ####
-  # Test Q 3.39 and Mandrel 25.0 JDK 25
+  # Test Q 3.40 and Mandrel 25.0 JDK 25
   ####
-  q-3_39-mandrel-25_0:
-    name: "Q 3.39 M 25.0"
+  q-3_40-mandrel-25_0:
+    name: "Q 3.40 M 25.0"
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/base.yml
     with:
       mandrel-version: "mandrel/25.0"
-      quarkus-version: "3.39.999-SNAPSHOT"
+      quarkus-version: "3.40.999-SNAPSHOT"
       jdk: "25/ea"
       issue-number: "997"
       issue-repo: "graalvm/mandrel"
