@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,8 @@ import com.oracle.svm.hosted.c.NativeLibraries;
 import com.oracle.svm.hosted.c.codegen.CCompilerInvoker;
 import com.oracle.svm.hosted.c.libc.HostedLibCBase;
 import com.oracle.svm.hosted.jdk.JNIRegistrationSupport;
+
+import static com.oracle.svm.core.SubstrateOptions.SpawnIsolates;
 
 public abstract class CCLinkerInvocation implements LinkerInvocation {
 
@@ -258,10 +260,12 @@ public abstract class CCLinkerInvocation implements LinkerInvocation {
             super(imageKind, nativeLibs, symbols);
             additionalPreOptions.add("-z");
             additionalPreOptions.add("noexecstack");
-            if (SubstrateOptions.ForceNoROSectionRelocations.getValue()) {
-                additionalPreOptions.add("-fuse-ld=gold");
-                additionalPreOptions.add("-Wl,--rosegment");
-            }
+
+            // The linker should fail if DT_TEXTREL is needed, otherwise the image won't work on
+            // SELinux. If SpawnIsolates are disabled, this won't work as dynamic relocations
+            // are needed for heap access.
+            additionalPreOptions.add("-z");
+            additionalPreOptions.add(SpawnIsolates.getValue() ? "text" : "notext");
 
             if (SubstrateOptions.RemoveUnusedSymbols.getValue()) {
                 /* Perform garbage collection of unused input sections. */
