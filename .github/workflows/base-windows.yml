@@ -356,7 +356,7 @@ jobs:
           ref: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
           path: ${{ env.QUARKUS_PATH }}
       # Use Java 17 for Quarkus 3.x and Java 21 for all other versions
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: ${{ (startsWith(inputs.quarkus-version, '3.') && endsWith(inputs.quarkus-version, '-SNAPSHOT')) && '17' || '21' }}
@@ -491,7 +491,7 @@ jobs:
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
       # Use Java 17 for Quarkus 3.x and Java 21 for all other versions
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: ${{ (startsWith(inputs.quarkus-version, '3.') && endsWith(inputs.quarkus-version, '-SNAPSHOT')) && '17' || '21' }}
