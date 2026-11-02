@@ -659,18 +659,7 @@ jobs:
         run: |
           cd ${MANDREL_IT_PATH}
           export PATH="${GRAALVM_HOME}/bin:$PATH"
-          export QUARKUS_VERSION=${{ needs.get-test-matrix.outputs.quarkus-version }}
-          # Don't use SNAPSHOT version for release tags
-          if $(expr match "${QUARKUS_VERSION}" "^[0-9]\+\.[0-9]\+$" > /dev/null)
-          then
-            # release branches use the branch name followed by .999-SNAPSHOT as the version
-            export QUARKUS_VERSION="${QUARKUS_VERSION}.999-SNAPSHOT"
-          elif ! $(expr match "$QUARKUS_VERSION" "^.*\(\.\(Final\|CR\|Alpha\|Beta\)[0-9]\?\|-SNAPSHOT\)$" > /dev/null)
-          then
-            # QUARKUS_VERSION neither '999-SNAPSHOT', '3.999-SNAPSHOT' or
-            # '3.37' or '3.33.1.Final' etc.
-            export QUARKUS_VERSION="999-SNAPSHOT"
-          fi
+          export QUARKUS_VERSION="${{ needs.build-quarkus.outputs.quarkus-version }}"
           echo $QUARKUS_VERSION
           if [[ ${{ inputs.builder-image }} == "null" ]]
           then
