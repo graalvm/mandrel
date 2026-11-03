@@ -145,6 +145,8 @@ jobs:
   build-mandrel:
     name: Mandrel build
     runs-on: ${{ inputs.gh-runner }}
+    outputs:
+      mandrel-commit: ${{ steps.build-mandrel.outputs.mandrel-commit }}
     needs:
       - get-test-matrix
       - build-vars
@@ -200,8 +202,10 @@ jobs:
         ${JAVA_HOME}/bin/java --version
         echo "**Java version:** $(grep JAVA_RUNTIME_VERSION ${JAVA_HOME}/release | cut -d '=' -f 2)" >> $GITHUB_STEP_SUMMARY
     - name: Build Mandrel
+      id: build-mandrel
       run: |
         MANDREL_COMMIT=$(cd ${MANDREL_REPO} && git rev-parse HEAD)
+        echo "mandrel-commit=${MANDREL_COMMIT}" >> "$GITHUB_OUTPUT"
         echo "**Mandrel commit:** [$MANDREL_COMMIT](${GITHUB_SERVER_URL}/${{ inputs.repo }}/commits/$MANDREL_COMMIT)" >> $GITHUB_STEP_SUMMARY
         MVN_LOCAL="${{needs.build-vars.outputs.maven-deploy-local}}"
         if [ "$MVN_LOCAL" != "" ]
@@ -693,4 +697,89 @@ jobs:
         with:
           name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports-mandrel-it.tgz'
+
+  native-unittests:
+    name: Mandrel native unittests
+    if: always() && needs.build-mandrel.result == 'success'
+    needs:
+      - build-mandrel
+      - get-test-matrix
+    runs-on: ${{ inputs.gh-runner }}
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: ${{ inputs.mandrel-repo }}
+        fetch-depth: 1
+        ref: ${{ needs.build-mandrel.outputs.mandrel-commit }}
+        path: ${{ env.MANDREL_REPO }}
+    - name: Set up Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: '3.8'
+    - name: Checkout MX
+      run: |
+        VERSION=$(jq -r .mx_version ${MANDREL_REPO}/common.json)
+        git clone ${GITHUB_SERVER_URL}/graalvm/mx --depth 1 --branch ${VERSION} ${MX_PATH}
+        ./mx/mx --version
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.mx
+        key: ${{ runner.os }}-mx-${{ hashFiles('**/suite.py') }}
+        restore-keys: ${{ runner.os }}-mx-
+    - name: Download Mandrel
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        path: .
+    - name: Extract Mandrel
+      run: |
+        mkdir -p ${GRAALVM_HOME}
+        tar -xzvf jdk.tgz -C ${GRAALVM_HOME} --strip-components=1
+        ${GRAALVM_HOME}/bin/native-image --version
+        # mx detects bin/native-image and requires GRAALVM_VERSION in the JDK's release file.
+        # Patch only this job's copy so Mandrel can also serve as mx's JDK.
+        if ! grep -q '^GRAALVM_VERSION=' "${GRAALVM_HOME}/release"; then
+          grep '^GRAALVM_VERSION=' "${GRAALVM_HOME}/mandrel.release" >> "${GRAALVM_HOME}/release"
+        fi
+    - name: Build and run native unittests
+      run: |
+        export JAVA_HOME=${GRAALVM_HOME}
+        # Same as mandrel-packaging, Mandrel is built without jlinking
+        MX_ARGS=(--java-home=${JAVA_HOME} --no-jlinking)
+        # JDKs without jmods need NO_JMODS, older mx versions don't support it
+        if [ ! -d ${JAVA_HOME}/jmods ]
+        then
+          MX_ARGS+=(--jmods-dir NO_JMODS)
+        fi
+        cd ${MANDREL_REPO}/substratevm
+        # Workaround https://github.com/oracle/graal/pull/14893: accept Mandrel's vendor version
+        JCMD_TEST=src/com.oracle.svm.test/src/com/oracle/svm/test/jcmd/JCmdTest.java
+        if [ -f "${JCMD_TEST}" ]
+        then
+          sed -i 's/assertOutputContainsStrings(jcmd, "GraalVM");/assertOutputContainsStrings(jcmd, System.getProperty("java.vendor.version"));/' "${JCMD_TEST}"
+        fi
+        ${MX_PATH}/mx "${MX_ARGS[@]}" build --dependencies SVM_TESTS,JUNIT_SUPPORT,NATIVE_IMAGE_JUNIT_SUPPORT
+        # Mandrel doesn't ship the junit macro, add it to the Mandrel under test
+        JUNIT_MACRO=${GRAALVM_HOME}/lib/svm/macros/junit
+        mkdir -p ${JUNIT_MACRO}
+        cp $(${MX_PATH}/mx "${MX_ARGS[@]}" paths --output NATIVE_IMAGE_JUNIT_SUPPORT)/* ${JUNIT_MACRO}
+        for DIST in JUNIT_SUPPORT mx:JUNIT_TOOL mx:JUNIT mx:HAMCREST
+        do
+          cp $(${MX_PATH}/mx "${MX_ARGS[@]}" paths ${DIST}) ${JUNIT_MACRO}
+        done
+        # The gate uses the native-image of the mx-built GraalVM home, point it to Mandrel instead
+        MX_GRAALVM_HOME=$(${MX_PATH}/mx "${MX_ARGS[@]}" graalvm-home)
+        mkdir -p $(dirname ${MX_GRAALVM_HOME})
+        ln -s ${GRAALVM_HOME} ${MX_GRAALVM_HOME}
+        ${MX_PATH}/mx "${MX_ARGS[@]}" gate --tags native_unittests
+    - name: Prepare failure archive (if tests failed)
+      if: failure()
+      run: find . -name '*svm_err_*pid*.md' | tar czvf test-reports.tgz -T -
+    - name: Upload failure Archive (if tests failed)
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      if: failure()
+      with:
+        name: test-reports-native-unittests-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
+        path: 'test-reports.tgz'
 
