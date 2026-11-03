@@ -48,6 +48,10 @@ on:
       # builder-image:
       #   description: 'The builder image to use instead of a release or building from source (e.g. quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21)'
       #   default: "null"
+    outputs:
+      quarkus-version:
+        description: 'Quarkus Maven artifacts version'
+        value: ${{ jobs.build-quarkus.outputs.quarkus-version }}
 
 env:
   QUARKUS_PATH: quarkus
@@ -58,6 +62,8 @@ jobs:
   build-quarkus:
     name: Quarkus build
     runs-on: ${{ inputs.gh-runner }}
+    outputs:
+      quarkus-version: ${{ steps.quarkus-version.outputs.version }}
     strategy:
       fail-fast: false
     steps:
@@ -135,6 +141,26 @@ jobs:
         fetch-depth: 1
         ref: ${{ inputs.quarkus-sha }}
         path: ${{ env.QUARKUS_PATH }}
+    - name: Determine Quarkus Maven version
+      id: quarkus-version
+      shell: bash
+      env:
+        SNAPSHOT_AVAILABLE: ${{ steps.download-snapshot.outputs.snapshot-available }}
+        SNAPSHOT_VERSION: ${{ inputs.quarkus-version }}
+      run: |
+        if [[ "$SNAPSHOT_AVAILABLE" == "true" ]]; then
+          QUARKUS_VERSION="$SNAPSHOT_VERSION"
+        else
+          # Read the project version, skipping the parent POM's version.
+          QUARKUS_VERSION=$(awk -F '[<>]' '/<parent>/,/<\/parent>/ { next } /<version>/ { print $3; exit }' "${QUARKUS_PATH}/pom.xml")
+          if [[ -z "$QUARKUS_VERSION" ]]; then
+            echo "::error::Quarkus project version is missing from pom.xml"
+            exit 1
+          fi
+        fi
+
+        echo "Quarkus Maven version: $QUARKUS_VERSION"
+        echo "version=$QUARKUS_VERSION" >> "$GITHUB_OUTPUT"
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       if: ${{ inputs.use-snapshot != true ||  steps.download-snapshot.outputs.snapshot-available != 'true' }}
       with:
