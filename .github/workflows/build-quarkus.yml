@@ -220,6 +220,7 @@ jobs:
       with:
         name: ${{ inputs.target-os }}-maven-repo-${{ inputs.artifacts-suffix }}
         path: maven-repo.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Delete Local Quarkus Artifacts From Cache
       run: |
         rm -r ~/.m2/repository/io/quarkus

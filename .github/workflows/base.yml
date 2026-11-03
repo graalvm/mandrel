@@ -229,18 +229,21 @@ jobs:
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Persist local maven repository
       if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Persist GraalVM maven version
       if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-version.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Prepare failure archive (if maven failed)
       if: failure()
       shell: bash
@@ -251,6 +254,7 @@ jobs:
       with:
         name: mandrel-reports-native-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: 'test-reports.tgz'
+        compression-level: 0 # The tarball is already gzipped.
 
   build-graal:
     name: GraalVM CE build
@@ -321,18 +325,21 @@ jobs:
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Persist local maven repository
       if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: org-graalvm-artefacts-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-maven-artefacts.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Persist GraalVM maven version
       if: needs.build-vars.outputs.maven-deploy-local != ''
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: mandrel-maven-version-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: graalvm-version.tgz
+        compression-level: 0 # The tarball is already gzipped.
     - name: Prepare failure archive (if maven failed)
       if: failure()
       shell: bash
@@ -343,6 +350,7 @@ jobs:
       with:
         name: graal-reports-native-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: 'test-reports.tgz'
+        compression-level: 0 # The tarball is already gzipped.
 
   get-jdk:
     name: Get JDK ${{ inputs.jdk }}
@@ -390,6 +398,7 @@ jobs:
       with:
         name: jdk-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
         path: jdk.tgz
+        compression-level: 0 # The tarball is already gzipped.
 
   build-quarkus:
     name: Quarkus build
@@ -566,6 +575,7 @@ jobs:
         with:
           name: test-reports-native-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports.tgz'
+          compression-level: 0 # The tarball is already gzipped.
       - name: Collect build JSON stats
         if: ${{ always() && inputs.build-stats-tag != 'null' }}
         shell: bash
@@ -576,6 +586,7 @@ jobs:
         with:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
+          compression-level: 0 # The tarball is already gzipped.
 
   native-tests-stats-upload:
     name: Upload build stats to collector
@@ -682,4 +693,5 @@ jobs:
         with:
           name: test-reports-mandrel-it-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'test-reports-mandrel-it.tgz'
+          compression-level: 0 # The tarball is already gzipped.
 
