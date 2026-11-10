@@ -483,9 +483,30 @@ jobs:
           fetch-depth: 1
           ref: ${{ needs.get-test-matrix.outputs.quarkus-sha }}
           path: ${{ env.QUARKUS_PATH }}
-      - name: Reclaim disk space
+      - name: Reclaim disk space if needed
+        # GitHub only guarantees 14 GiB free on the root disk of hosted runners, while the runners
+        # currently ship with 80+ GiB free, and the purge takes 2-6 minutes per job (~1 minute on ARM).
+        # Only run it when the free space is below what the category needs: the categories pulling
+        # the DB2 and Oracle container images (~13 GiB on disk together with the other databases)
+        # peak at ~17-20 GiB, every other category peaks below 10 GiB. The thresholds add headroom.
+        # Hence REQUIRED_FREE_GIB is 25 for categories whose test modules contain db2 or oracle,
+        # and 15 for all other categories.
+        env:
+          REQUIRED_FREE_GIB: ${{ (contains(matrix.test-modules, 'db2') || contains(matrix.test-modules, 'oracle')) && '25' || '15' }}
         run: |
+          df -h
+          # Check the filesystems the job writes to (workspace, Maven repository, container images)
+          # instead of assuming they all live on /, and use the one with the least free space.
+          DOCKER_ROOT=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || echo /var/lib/docker)
+          [ -d "${DOCKER_ROOT}" ] || DOCKER_ROOT=/
+          AVAILABLE_GIB=$(df --output=avail -BG "${GITHUB_WORKSPACE}" "${HOME}" "${DOCKER_ROOT}" | tail -n +2 | tr -dc '0-9\n' | sort -n | head -n 1)
+          if [ "${AVAILABLE_GIB}" -ge "${REQUIRED_FREE_GIB}" ]; then
+            echo "${AVAILABLE_GIB} GiB free, at least ${REQUIRED_FREE_GIB} GiB required, skipping the purge"
+            exit 0
+          fi
+          echo "Only ${AVAILABLE_GIB} GiB free, at least ${REQUIRED_FREE_GIB} GiB required, reclaiming disk space"
           ${QUARKUS_PATH}/.github/ci-prerequisites.sh
+          df -h
       - name: Update Docker Client User Agent
         shell: bash
         run: |
@@ -591,6 +612,10 @@ jobs:
           name: build-stats-${{matrix.category}}-${{ needs.get-test-matrix.outputs.artifacts-suffix }}
           path: 'build-stats.tgz'
           compression-level: 0 # The tarball is already gzipped.
+      # Always print free space at the end for insight
+      - name: Print free disk space
+        if: always()
+        run: df -h
 
   native-tests-stats-upload:
     name: Upload build stats to collector
