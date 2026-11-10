@@ -1,6 +1,6 @@
 suite = {
     "name": "vm",
-    "version" : "25.0.5.0",
+    "version" : "25.0.5.1",
     "release" : True,
     "mxversion": "7.34.1",
     "release" : True,
