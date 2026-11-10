@@ -33,6 +33,9 @@ on:
 #    the second one will add another one to the queue; if we perform a third push while the
 #    first CI job is still running the previously queued CI job (for the second push) will be
 #    cancelled and a new CI job will be queued for the latest (third) push.
+#
+# Note that push events only run the jobs in forks (see the per-job `if`), so in the main
+# repository a push only ever cancels a pending run from an earlier push.
 concurrency:
   group: "workflow = ${{ github.workflow }}, ref = ${{ github.event.ref }}, pr = ${{ github.event.pull_request.id }}"
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'graalvm/mandrel' }}
@@ -43,7 +46,9 @@ jobs:
   ####
   q-main-mandrel-25_0:
     name: "Q main M 25.0"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base.yml
     with:
       mandrel-version: "mandrel/25.0"
@@ -58,7 +63,9 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-main-mandrel-25_0-win:
     name: "Q main M 25.0 windows"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base-windows.yml
     with:
       mandrel-version: "mandrel/25.0"
@@ -76,7 +83,9 @@ jobs:
   ####
   q-3_40-mandrel-25_0:
     name: "Q 3.40 M 25.0"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base.yml
     with:
       mandrel-version: "mandrel/25.0"
@@ -95,7 +104,9 @@ jobs:
   ####
   q-main-mandrel-25_0-arm:
     name: "Q main M 25.0 on AArch64"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base.yml
     with:
       mandrel-version: "mandrel/25.0"
@@ -114,7 +125,9 @@ jobs:
   ####
   q-main-mandrel-25_0-future-defaults:
     name: "Q main M 25.0 --future-defaults=all"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base.yml
     with:
       mandrel-version: "mandrel/25.0"
@@ -133,7 +146,9 @@ jobs:
   ####
   q-3_27-mandrel-23_1:
     name: "Q 3.27 M 23.1 JDK 21"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base.yml
     with:
       mandrel-version: "mandrel/23.1"
@@ -151,7 +166,9 @@ jobs:
       UPLOAD_COLLECTOR_TOKEN: ${{ secrets.UPLOAD_COLLECTOR_TOKEN }}
   q-3_27-mandrel-23_1-win:
     name: "Q 3.27 M 23.1 windows"
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # Skip draft PRs. Skip push events in graalvm/mandrel: the PR run already covered the change and the
+    # schedule covers the default branch. Pushes to forks still run so a branch can be tested before opening a PR.
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (github.event_name != 'push' || github.repository != 'graalvm/mandrel') }}
     uses: ./.github/workflows/base-windows.yml
     with:
       mandrel-version: "mandrel/23.1"
