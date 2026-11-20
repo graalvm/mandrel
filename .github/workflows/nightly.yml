@@ -12,6 +12,7 @@ on:
       - '.github/workflows/resolve-quarkus-version.yml'
       - '.github/workflows/build-quarkus.yml'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/nightly.yml'
       - '.github/workflows/base.yml'
