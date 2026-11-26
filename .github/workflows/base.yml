@@ -644,7 +644,7 @@ jobs:
       # -Xmx1g => leave more space for the actual native compilation and execution
       # -Dmaven.model.dependencyInterpolation.full=true => Workaround maven 3.10 issue https://github.com/quarkusio/quarkus/issues/57381
       MAVEN_OPTS: "-Xmx1g -Dmaven.model.dependencyInterpolation.full=true"
-      # Don't perform performance checks since GH runners are not that stable
+      # Run perfcheck tests, but keep performance thresholds non-fatal on shared runners.
       FAIL_ON_PERF_REGRESSION: false
       # USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
     timeout-minutes: 80
@@ -704,9 +704,10 @@ jobs:
           if [[ ${{ inputs.builder-image }} == "null" ]]
           then
             ${GRAALVM_HOME}/bin/native-image --version
+            echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
             mvn clean verify -Dquarkus.native.native-image-xmx=13g \
               -Dquarkus.version=$QUARKUS_VERSION \
-              -Ptestsuite
+              -Ptestsuite -DincludeTags=reproducers,perfcheck,runtimes
           else
             mvn clean verify -Dquarkus.native.native-image-xmx=13g \
               -Dquarkus.version=$QUARKUS_VERSION \
